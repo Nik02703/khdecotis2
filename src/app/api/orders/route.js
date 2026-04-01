@@ -15,7 +15,7 @@ export async function GET() {
       ]);
     }
     
-    const orders = await Order.find({}).sort({ createdAt: -1 }).limit(10).populate('user', 'name email');
+    const orders = await Order.find({}).sort({ createdAt: -1 });
     
     if (orders.length === 0) {
       // Fallback if connected but empty
