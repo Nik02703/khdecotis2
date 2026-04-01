@@ -11,12 +11,12 @@ export default function CartPage() {
   const [couponInput, setCouponInput] = useState('');
   const [couponMessage, setCouponMessage] = useState({ text: '', type: '' });
 
-  const handleApplyCoupon = () => {
+  const handleApplyCoupon = async () => {
     if (!couponInput) {
       setCouponMessage({ text: 'Please enter a coupon code.', type: 'error' });
       return;
     }
-    const res = applyCoupon(couponInput);
+    const res = await applyCoupon(couponInput);
     setCouponMessage({ text: res.message, type: res.success ? 'success' : 'error' });
     if (res.success) setCouponInput('');
   };

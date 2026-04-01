@@ -37,6 +37,8 @@ export function OrderProvider({ children }) {
 
   useEffect(() => {
     setIsMounted(true);
+    
+    // Fast initial load from local storage
     const storedOrders = localStorage.getItem('khd_orders');
     if (storedOrders) {
       try {
@@ -47,8 +49,34 @@ export function OrderProvider({ children }) {
       }
     } else {
       setOrders(DUMMY_ORDERS);
-      saveOrdersSafely(DUMMY_ORDERS);
     }
+
+    // Background sync with Global MongoDB
+    fetch('/api/orders')
+      .then(res => {
+        if (!res.ok) throw new Error('DB Error');
+        return res.json();
+      })
+      .then(data => {
+        if (data && Array.isArray(data) && data.length > 0 && !data[0].error) {
+          const mappedDbOrders = data.map(dbOrder => ({
+            id: dbOrder.orderId || `#KHD-${String(dbOrder._id).substring(String(dbOrder._id).length - 4).toUpperCase()}`,
+            name: dbOrder.name || (dbOrder.user && dbOrder.user.name) || 'Unknown Customer',
+            email: dbOrder.email || 'customer@example.com',
+            date: dbOrder.dateString || new Date(dbOrder.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            total: dbOrder.totalString || `₹${dbOrder.totalAmount || 0}`,
+            status: dbOrder.status || 'Pending',
+            color: dbOrder.color || (dbOrder.status === 'Delivered' ? '#dcfce7' : '#fef3c7'),
+            text: dbOrder.text || (dbOrder.status === 'Delivered' ? '#16a34a' : '#d97706'),
+            items: dbOrder.items || (dbOrder.payload ? dbOrder.payload.length : 1),
+            payload: dbOrder.payload || []
+          }));
+          
+          setOrders(mappedDbOrders);
+          saveOrdersSafely(mappedDbOrders);
+        }
+      })
+      .catch(err => console.warn('Global DB Order sync neglected:', err));
   }, []);
 
   const addOrder = (orderData) => {

@@ -87,7 +87,7 @@ export function CartProvider({ children }) {
     }
   };
 
-  const applyCoupon = (code) => {
+  const applyCoupon = async (code) => {
     const cleanCode = code.toUpperCase().trim();
     
     // 1. Fallback built-in standards
@@ -99,21 +99,18 @@ export function CartProvider({ children }) {
       return { success: true, message: `Coupon ${cleanCode} applied! ₹500 off.` };
     }
 
-    // 2. Dynamically verify against custom admin-generated coupons
+    // 2. Dynamically verify against custom admin-generated coupons via global MongoDB
     try {
-      if (typeof window !== 'undefined') {
-        const storedAdminCoupons = localStorage.getItem('khd_coupons');
-        if (storedAdminCoupons) {
-          const customCoupons = JSON.parse(storedAdminCoupons);
-          const customMatch = customCoupons.find(c => c.code === cleanCode);
-          if (customMatch) {
-            setCoupon({ code: customMatch.code, type: customMatch.type, value: customMatch.value });
-            return { success: true, message: `Coupon ${customMatch.code} applied! ${customMatch.type === 'percent' ? customMatch.value + '%' : '₹' + customMatch.value} off.` };
-          }
+      const res = await fetch(`/api/coupons?code=${cleanCode}`);
+      if (res.ok) {
+        const customMatch = await res.json();
+        if (customMatch && !customMatch.error) {
+          setCoupon({ code: customMatch.code, type: customMatch.type, value: customMatch.value });
+          return { success: true, message: `Coupon ${customMatch.code} applied! ${customMatch.type === 'percent' ? customMatch.value + '%' : '₹' + customMatch.value} off.` };
         }
       }
     } catch (e) {
-      console.warn("Failed to parse custom coupons", e);
+      console.warn("Failed to fetch custom coupons natively via MongoDB", e);
     }
 
     return { success: false, message: 'Invalid or expired coupon code' };

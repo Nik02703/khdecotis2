@@ -42,29 +42,34 @@ export default function AdminPage() {
   const [tmpSizeName, setTmpSizeName] = useState('');
   const [tmpSizeDim, setTmpSizeDim] = useState('');
 
-  const handleCreateCoupon = (e) => {
+  const handleCreateCoupon = async (e) => {
     e.preventDefault();
     if (!newCoupon.code || !newCoupon.discount) return alert('Coupon code and discount % are required.');
     
-    let existing = [];
     try {
-      const stored = localStorage.getItem('khd_coupons');
-      if (stored) existing = JSON.parse(stored);
-    } catch (err) {}
-    
-    const couponObj = {
-      code: newCoupon.code.toUpperCase().trim(),
-      type: 'percent',
-      value: parseInt(newCoupon.discount, 10),
-      active: true
-    };
-    
-    existing.push(couponObj);
-    localStorage.setItem('khd_coupons', JSON.stringify(existing));
-    
-    alert(`Coupon ${couponObj.code} generated and pushed to global storefront!`);
-    setNewCoupon({ code: '', discount: '', maxUses: '' });
-    setActiveTab('dashboard');
+      const couponObj = {
+        code: newCoupon.code.toUpperCase().trim(),
+        type: 'percent',
+        value: parseInt(newCoupon.discount, 10),
+        maxUses: newCoupon.maxUses ? parseInt(newCoupon.maxUses, 10) : 1000,
+        active: true
+      };
+
+      const res = await fetch('/api/coupons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(couponObj)
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to generate coupon in DB');
+
+      alert(`Coupon ${couponObj.code} generated and pushed to global DB successfully!`);
+      setNewCoupon({ code: '', discount: '', maxUses: '' });
+      setActiveTab('dashboard');
+    } catch (err) {
+      alert(`Database Error: ${err.message}`);
+    }
   };
 
   const handlePublish = (e) => {
