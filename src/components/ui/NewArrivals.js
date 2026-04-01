@@ -51,7 +51,7 @@ export default function NewArrivals() {
               category: product.category,
               price: String(product.price).replace(',',''),
               oldPrice: String(product.oldPrice).replace(',',''),
-              discount: '40% OFF',
+
               images: product.images
             }} />
           ))}

@@ -15,7 +15,7 @@ export default function MinimalProductCarousel({ title, products = [] }) {
 
   return (
     <div style={{ marginTop: '4rem', fontFamily: 'Inter, sans-serif' }}>
-      <h2 style={{ fontSize: '1.25rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '1.5rem', color: '#000', letterSpacing: '0.5px' }}>
+      <h2 style={{ fontSize: '1.25rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '1.5rem', color: '#000', letterSpacing: '0.5px', marginLeft: '16px' }}>
         {title}
       </h2>
 
@@ -27,6 +27,8 @@ export default function MinimalProductCarousel({ title, products = [] }) {
             gap: '16px', 
             overflowX: 'auto', 
             scrollbarWidth: 'none', 
+            paddingLeft: '16px',
+            paddingRight: '16px',
             paddingBottom: '16px',
             scrollBehavior: 'smooth'
           }}
@@ -66,28 +68,7 @@ export default function MinimalProductCarousel({ title, products = [] }) {
           ))}
         </div>
 
-        {/* Circular Arrow Button mirroring Photo 2 */}
-        <button 
-          onClick={scrollRight}
-          style={{ 
-            position: 'absolute', 
-            right: 0, 
-            background: '#fff', 
-            border: '1.5px solid #2aaa7d', 
-            color: '#2aaa7d', 
-            width: '40px', 
-            height: '40px', 
-            borderRadius: '50%', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-            zIndex: 10
-          }}
-        >
-          <ArrowRight size={20} />
-        </button>
+
       </div>
 
       <style dangerouslySetInnerHTML={{__html: `

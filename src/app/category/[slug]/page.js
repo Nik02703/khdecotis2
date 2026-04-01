@@ -11,6 +11,8 @@ export default function CategoryDetailsPage({ params }) {
 
   const [sortOrder, setSortOrder] = useState('popular');
   const [filterPrice, setFilterPrice] = useState('all');
+  const [isMobileSortOpen, setIsMobileSortOpen] = useState(false);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const { products, isMounted } = useProducts();
 
   // Derive products specifically for this category constraint
@@ -42,10 +44,9 @@ export default function CategoryDetailsPage({ params }) {
     return pool;
   }, [slug, sortOrder, filterPrice, products]);
 
-  if (!isMounted) return null;
-
   return (
-    <div className="container animate-fade-in" style={{ padding: '4rem 1rem', minHeight: '80vh' }}>
+    <>
+      <div className="container animate-fade-in" style={{ padding: '4rem 1rem', minHeight: '80vh' }}>
       
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '4rem' }}>
         <h1 style={{ fontSize: '3rem', fontFamily: 'Playfair Display, serif', fontWeight: 600, color: '#0f172a', margin: '0 0 1rem 0' }}>{categoryName}</h1>
@@ -75,7 +76,7 @@ export default function CategoryDetailsPage({ params }) {
       </div>
 
       {filteredProducts.length > 0 ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '2.5rem' }}>
+        <div className="product-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '2.5rem', paddingBottom: '80px' }}>
            {filteredProducts.map((p, idx) => (
              <ProductCard key={p._id || p.id || `prod_${idx}`} product={p} />
            ))}
@@ -86,20 +87,102 @@ export default function CategoryDetailsPage({ params }) {
           <button onClick={() => { setFilterPrice('all'); setSortOrder('popular'); }} style={{ marginTop: '1rem', background: 'transparent', color: '#2563eb', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Clear Filters</button>
         </div>
       )}
+      </div>
+
+      {/* Mobile Bottom Sticky Bar */}
+      <div className="mobile-bottom-actions">
+        <button onClick={() => setIsMobileSortOpen(true)} className="bottom-action-btn" style={{ background: 'transparent', border: 'none' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
+          Sort By
+        </button>
+        <div style={{ width: '1px', background: '#e2e8f0', height: '24px' }} />
+        <button onClick={() => setIsMobileFilterOpen(true)} className="bottom-action-btn" style={{ background: 'transparent', border: 'none' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+          Filters
+        </button>
+      </div>
+
+      {isMobileSortOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 999999, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', transition: 'opacity 0.3s' }}>
+          <div style={{ background: '#fff', width: '100%', borderTopLeftRadius: '16px', borderTopRightRadius: '16px', padding: '24px', transform: 'translateY(0)', transition: 'transform 0.3s' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>Sort by</h3>
+              <button onClick={() => setIsMobileSortOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </div>
+            {[
+              { id: 'popular', label: 'POPULAR' },
+              { id: 'lowToHigh', label: 'LOWEST PRICE' },
+              { id: 'highToLow', label: 'HIGHEST PRICE' },
+              { id: 'newest', label: 'NEW TO OLD' }
+            ].map(opt => (
+              <div 
+                key={opt.id} 
+                onClick={() => { setSortOrder(opt.id); setIsMobileSortOpen(false); }}
+                style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 0', borderBottom: '1px solid #f1f5f9', cursor: 'pointer', background: sortOrder === opt.id ? '#f8fafc' : 'transparent', borderRadius: sortOrder === opt.id ? '8px' : '0', paddingLeft: sortOrder === opt.id ? '12px' : '0', transition: 'all 0.2s' }}
+              >
+                <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: sortOrder === opt.id ? '6px solid #fbbf24' : '1px solid #cbd5e1', background: '#fff' }} />
+                <span style={{ fontWeight: sortOrder === opt.id ? 700 : 500, fontSize: '1rem', color: '#111' }}>{opt.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isMobileFilterOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 999999, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', transition: 'opacity 0.3s' }}>
+          <div style={{ background: '#fff', width: '100%', borderTopLeftRadius: '16px', borderTopRightRadius: '16px', padding: '24px', transform: 'translateY(0)', transition: 'transform 0.3s' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>Filter by Price</h3>
+              <button onClick={() => setIsMobileFilterOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </div>
+            {[
+              { id: 'all', label: 'ALL PRICES' },
+              { id: 'under1000', label: 'UNDER ₹1,000' },
+              { id: '1000to3000', label: '₹1,000 TO ₹3,000' },
+              { id: 'above3000', label: 'ABOVE ₹3,000' }
+            ].map(opt => (
+              <div 
+                key={opt.id} 
+                onClick={() => { setFilterPrice(opt.id); setIsMobileFilterOpen(false); }}
+                style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 0', borderBottom: '1px solid #f1f5f9', cursor: 'pointer', background: filterPrice === opt.id ? '#f8fafc' : 'transparent', borderRadius: filterPrice === opt.id ? '8px' : '0', paddingLeft: filterPrice === opt.id ? '12px' : '0', transition: 'all 0.2s' }}
+              >
+                <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: filterPrice === opt.id ? '6px solid #fbbf24' : '1px solid #cbd5e1', background: '#fff' }} />
+                <span style={{ fontWeight: filterPrice === opt.id ? 700 : 500, fontSize: '1rem', color: '#111' }}>{opt.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <style dangerouslySetInnerHTML={{__html: `
+        .mobile-bottom-actions { display: none; }
         @media (max-width: 600px) {
-          .filter-bar {
-            flex-direction: column;
-            align-items: stretch !important;
-            gap: 16px;
-            padding: 1rem !important;
+          .filter-bar { display: none !important; }
+          .mobile-bottom-actions {
+            display: flex !important;
+            position: fixed;
+            bottom: 0px !important;
+            left: 0px;
+            width: 100vw;
+            background: #fff;
+            border-top: 1px solid #e2e8f0;
+            z-index: 99999;
+            align-items: center;
+            padding: 16px 0;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+            transform: translateZ(0); /* Hardware lock for iOS sticky bug */
           }
-          .filter-group {
-            justify-content: space-between;
+          .bottom-action-btn {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            gap: 8px; font-weight: 600; color: #0f172a; position: relative;
+          }
+          .product-grid {
+             grid-template-columns: repeat(2, 1fr) !important;
+             gap: 12px !important;
+             padding-bottom: 80px;
           }
         }
       `}} />
-    </div>
+    </>
   );
 }

@@ -10,7 +10,6 @@ export default function Header() {
   const { getCartCount } = useCart();
   const count = getCartCount();
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const hoverTimeout = useRef(null);
 
@@ -33,9 +32,7 @@ export default function Header() {
       <header className={styles.header}>
         <div className={`container ${styles.inner}`}>
           <div className={styles.leftGroup}>
-            <button className={styles.mobileMenuBtn} onClick={() => setIsMobileMenuOpen(true)}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-            </button>
+            <SidebarMenu isProfileIcon={false} />
             {/* Sidebar menu completely removed as requested, nav actions migrating to profile dropdown */}
             <Link href="/" className={styles.logo}>
               <img src="/logo.png" alt="KH Decotis" className={styles.logoImage} />
@@ -104,7 +101,7 @@ export default function Header() {
             </div>
 
             <div className={styles.megaMenuItem}>
-              <Link href="/category/decor" className={styles.megaMenuLink}>Decor & Pillows</Link>
+              <Link href="/category/decor" className={styles.megaMenuLink}>Cushions & Pillows</Link>
               <div className={styles.megaMenuDropdown}>
                 <div className={`container ${styles.megaMenuDropdownInner}`}>
                   <div className={styles.megaMenuCol}>
@@ -136,7 +133,7 @@ export default function Header() {
             </div>
 
             <div className={styles.megaMenuItem}>
-              <Link href="/category/curtains" className={styles.megaMenuLink}>Window</Link>
+              <Link href="/category/curtains" className={styles.megaMenuLink}>Curtains</Link>
               <div className={styles.megaMenuDropdown}>
                 <div className={`container ${styles.megaMenuDropdownInner}`}>
                   <div className={styles.megaMenuCol}>
@@ -152,35 +149,10 @@ export default function Header() {
             </div>
             
             <div className={styles.megaMenuItem}>
-              <Link href="/shop" className={styles.megaMenuLink} style={{color: '#ff4b4b'}}>SALE</Link>
+              <Link href="/shop" className={styles.megaMenuLink} style={{color: '#ff4b4b'}}>ALL PRODUCTS</Link>
             </div>
           </div>
         </nav>
-
-        {/* Full Screen Mobile Menu Overlay */}
-        <div className={`${styles.mobileMenu} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
-          <div className={styles.mobileMenuHeader}>
-            <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
-              <img src="/logo.png" alt="KH Decotis Logo" style={{ height: '40px', objectFit: 'contain' }} />
-            </Link>
-            <button className={styles.mobileMenuClose} onClick={() => setIsMobileMenuOpen(false)}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
-          </div>
-          <div style={{ flex: 1, padding: '20px 0' }}>
-            <Link href="/" className={styles.mobileMenuLink} onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
-            <Link href="/shop" className={styles.mobileMenuLink} onClick={() => setIsMobileMenuOpen(false)}>Categories</Link>
-            <div style={{ paddingLeft: '20px', marginBottom: '20px' }}>
-              <Link href="/category/bedding" className={styles.mobileMenuLink} style={{ fontSize: '1.1rem', textTransform: 'none', borderBottom: 'none', padding: '4px 0', color: '#555' }} onClick={() => setIsMobileMenuOpen(false)}>Bedding</Link>
-              <Link href="/category/decor" className={styles.mobileMenuLink} style={{ fontSize: '1.1rem', textTransform: 'none', borderBottom: 'none', padding: '4px 0', color: '#555' }} onClick={() => setIsMobileMenuOpen(false)}>Decor & Pillows</Link>
-              <Link href="/category/bath" className={styles.mobileMenuLink} style={{ fontSize: '1.1rem', textTransform: 'none', borderBottom: 'none', padding: '4px 0', color: '#555' }} onClick={() => setIsMobileMenuOpen(false)}>Bath</Link>
-              <Link href="/category/curtains" className={styles.mobileMenuLink} style={{ fontSize: '1.1rem', textTransform: 'none', borderBottom: 'none', padding: '4px 0', color: '#555' }} onClick={() => setIsMobileMenuOpen(false)}>Window</Link>
-            </div>
-            <Link href="/shop" className={styles.mobileMenuLink} style={{ color: '#e11d48' }} onClick={() => setIsMobileMenuOpen(false)}>Up to 40% Off Sale</Link>
-            <Link href="/about" className={styles.mobileMenuLink} onClick={() => setIsMobileMenuOpen(false)}>About Us</Link>
-            <Link href="/contact" className={styles.mobileMenuLink} onClick={() => setIsMobileMenuOpen(false)}>Contact</Link>
-          </div>
-        </div>
 
       </header>
     </>

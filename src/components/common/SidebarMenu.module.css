@@ -3,12 +3,18 @@
   border: none;
   cursor: pointer;
   color: var(--text-main);
-  display: flex;
+  display: none;
   align-items: center;
   padding: 8px;
-  margin-right: 48px;
+  margin-right: 16px;
   margin-left: -8px;
   transition: color var(--transition-fast);
+}
+
+@media (max-width: 900px) {
+  .hamburgerBtn {
+    display: flex;
+  }
 }
 
 .hamburgerBtn:hover {

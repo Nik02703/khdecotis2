@@ -51,7 +51,7 @@
 
 .navLink {
   font-size: 0.85rem;
-  font-weight: 500;
+  font-weight: 700;
   color: var(--text-main);
   position: relative;
   padding: 0.5rem 0;
@@ -340,7 +340,7 @@
     justify-content: center;
   }
   .logoImage {
-    height: 40px;
+    height: 32px;
   }
   .inner {
     padding-left: 0;
@@ -348,7 +348,7 @@
     padding-bottom: var(--spacing-1);
   }
   .icons {
-    gap: 12px;
+    gap: 8px;
   }
   .authNav {
     font-size: 0.7rem;

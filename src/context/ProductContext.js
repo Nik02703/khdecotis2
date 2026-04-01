@@ -43,7 +43,10 @@ export const ProductProvider = ({ children }) => {
       id: `prod_${Date.now()}`,
       images: productParams.images?.length > 0 ? productParams.images : ['https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&q=80'],
       price: Number(productParams.price) || 0,
-      oldPrice: Number(productParams.oldPrice) || Math.round(Number(productParams.price) * 1.5)
+      oldPrice: Number(productParams.oldPrice) || Math.round(Number(productParams.price) * 1.5),
+      colors: productParams.colors || [],
+      sizes: productParams.sizes || [],
+      productDetails: productParams.productDetails || ''
     };
     
     setProducts(prev => {

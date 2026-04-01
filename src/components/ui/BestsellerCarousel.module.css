@@ -38,7 +38,11 @@
 
 @media (max-width: 480px) {
   .carouselItem {
-    flex: 0 0 calc(100% - var(--spacing-2));
+    flex: 0 0 85vw;
+    scroll-snap-align: center;
+  }
+  .carouselTrack {
+    padding: 0 calc(50vw - 42.5vw);
   }
 }
 

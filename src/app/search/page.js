@@ -35,8 +35,8 @@ function SearchResultsContent() {
 
       {results.length > 0 ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '32px' }}>
-          {results.map(product => (
-            <ProductCard key={product._id} product={product} />
+          {results.map((product, index) => (
+            <ProductCard key={product._id || product.id || index} product={product} />
           ))}
         </div>
       ) : (

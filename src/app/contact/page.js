@@ -47,14 +47,14 @@ export default function ContactPage() {
               <div className={styles.infoItem}>
                 <strong>📍 Location:</strong> 
                 <br/>
-                Khandelwal Home Decoratives, GF 13 floor, Subhanpura, Vadodara, Gujarat 390023
+                KH Decotis, GF, 3rd floor, Subhanpura, Vadodara, Gujarat 390023
               </div>
             </div>
             
             <div className={styles.mapContainer}>
               {/* Embedded Google Maps dynamically zooming into exact requested location */}
               <iframe 
-                src="https://maps.google.com/maps?q=Khandelwal%20Home%20Decoratives,%20GF%2013%20floor,Subhanpura,%20Vadodara,%20Gujarat%20390023&t=&z=15&ie=UTF8&iwloc=&output=embed"
+                src="https://maps.google.com/maps?q=KH%20Decotis,%20GF%203rd%20floor,Subhanpura,%20Vadodara,%20Gujarat%20390023&t=&z=15&ie=UTF8&iwloc=&output=embed"
                 width="100%" 
                 height="100%" 
                 style={{ border: 0 }} 

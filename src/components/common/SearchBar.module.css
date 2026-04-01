@@ -51,13 +51,13 @@
 
 @media (max-width: 600px) {
   .searchInput {
-    width: 100px;
+    width: 60px;
     font-size: 0.8rem;
   }
   .searchInput:focus {
-    width: 120px;
+    width: 100px;
   }
   .searchBar {
-    padding: 6px 10px;
+    padding: 6px 8px;
   }
 }

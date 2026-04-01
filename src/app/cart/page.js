@@ -6,12 +6,27 @@ import styles from './page.module.css';
 import { useCart } from '@/context/CartContext';
 
 export default function CartPage() {
-  const { cartItems, removeFromCart, updateQuantity, getCartTotal, getCartCount } = useCart();
+  const { cartItems, removeFromCart, updateQuantity, getCartTotal, getCartCount, getCartSubtotal, getDiscountAmount, coupon, applyCoupon, removeCoupon, clearBuyNow } = useCart();
   const [openAccordion, setOpenAccordion] = useState(null);
+  const [couponInput, setCouponInput] = useState('');
+  const [couponMessage, setCouponMessage] = useState({ text: '', type: '' });
 
-  const subtotal = getCartTotal();
-  const shippingCharges = subtotal > 400 ? 0 : 79;
-  const totalAmount = subtotal + shippingCharges;
+  const handleApplyCoupon = () => {
+    if (!couponInput) {
+      setCouponMessage({ text: 'Please enter a coupon code.', type: 'error' });
+      return;
+    }
+    const res = applyCoupon(couponInput);
+    setCouponMessage({ text: res.message, type: res.success ? 'success' : 'error' });
+    if (res.success) setCouponInput('');
+  };
+
+  const subtotal = getCartSubtotal ? getCartSubtotal() : getCartTotal();
+  const discountAmt = getDiscountAmount ? getDiscountAmount() : 0;
+  const discountedSubtotal = subtotal - discountAmt;
+  
+  const shippingCharges = discountedSubtotal > 400 ? 0 : 79;
+  const totalAmount = discountedSubtotal + shippingCharges;
 
   return (
     <div className={styles.pageContainer}>
@@ -27,7 +42,7 @@ export default function CartPage() {
             {cartItems.map((item, index) => (
               <div key={`${item._id || item.id || 'cart-item'}-${index}`} className={styles.cartItem}>
                 <div className={styles.imageBox}>
-                  <img src={item.images?.[0] || 'https://via.placeholder.com/150'} alt={item.title} />
+                  <img src={item.images?.[0] || item.image || 'https://via.placeholder.com/150'} alt={item.title} />
                 </div>
                 <div className={styles.itemInfo}>
                   <h3 className={styles.itemTitle}>{item.title}</h3>
@@ -70,10 +85,25 @@ export default function CartPage() {
               </div>
               {openAccordion === 'coupons' && (
                 <div className={styles.accordionBody}>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <input type="text" placeholder="Enter Code" style={{ flex: 1, padding: '10px', border: '1px solid #ccc', borderRadius: '4px', outline: 'none' }} />
-                    <button style={{ background: '#111', color: '#fff', padding: '0 16px', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>APPLY</button>
-                  </div>
+                  {coupon ? (
+                    <div style={{ padding: '12px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        <span style={{ fontWeight: 'bold', color: '#16a34a' }}>{coupon.code} Applied!</span>
+                      </div>
+                      <button onClick={() => { removeCoupon(); setCouponMessage({ text: '', type: '' }); }} style={{ background: 'transparent', border: 'none', color: '#ef4444', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.85rem' }}>REMOVE</button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <input type="text" value={couponInput} onChange={(e) => setCouponInput(e.target.value)} placeholder="Enter Code (e.g. SAVE10)" style={{ flex: 1, padding: '10px', border: '1px solid #ccc', borderRadius: '4px', outline: 'none', textTransform: 'uppercase' }} />
+                        <button onClick={handleApplyCoupon} style={{ background: '#111', color: '#fff', padding: '0 16px', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>APPLY</button>
+                      </div>
+                      {couponMessage.text && (
+                        <p style={{ marginTop: '8px', fontSize: '0.85rem', color: couponMessage.type === 'success' ? '#16a34a' : '#ef4444' }}>{couponMessage.text}</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -100,6 +130,13 @@ export default function CartPage() {
               <span>₹{subtotal.toFixed(0)}</span>
             </div>
             
+            {discountAmt > 0 && (
+              <div className={styles.summaryRow} style={{ color: '#16a34a', fontWeight: '600' }}>
+                <span>Coupon Discount ({coupon?.code})</span>
+                <span>-₹{discountAmt.toFixed(0)}</span>
+              </div>
+            )}
+            
             <div className={styles.summaryRow} style={{ marginBottom: '4px' }}>
               <span>Shipping Charges</span>
               <span>₹{shippingCharges}</span>
@@ -119,9 +156,9 @@ export default function CartPage() {
               <span className={styles.totalAmount}>₹{totalAmount.toFixed(0)}</span>
             </div>
 
-            <Link href="/checkout" style={{ textDecoration: 'none' }}>
-              <button className={styles.checkoutBtn}>CHECKOUT</button>
-            </Link>
+            <button className={styles.checkoutBtn} onClick={() => { clearBuyNow(); window.location.href = '/checkout'; }}>
+              CHECKOUT
+            </button>
 
           </div>
         </div>

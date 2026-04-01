@@ -34,8 +34,38 @@ export default function AdminPage() {
   const { messages, markAsRead, deleteMessage } = useMessages();
   const unreadCount = messages ? messages.filter(m => m.status === 'unread').length : 0;
 
-  const [newProd, setNewProd] = useState({ title: '', price: '', oldPrice: '', category: 'Bedding', stock: '', image: '', description: '', isDealOfDay: false, isNewArrival: false });
+  const [newProd, setNewProd] = useState({ title: '', price: '', oldPrice: '', category: 'Bedding', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, colors: [], sizes: [], productDetails: '' });
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [newCoupon, setNewCoupon] = useState({ code: '', discount: '', maxUses: '' });
+  const [tmpColorName, setTmpColorName] = useState('');
+  const [tmpColorHex, setTmpColorHex] = useState('#000000');
+  const [tmpSizeName, setTmpSizeName] = useState('');
+  const [tmpSizeDim, setTmpSizeDim] = useState('');
+
+  const handleCreateCoupon = (e) => {
+    e.preventDefault();
+    if (!newCoupon.code || !newCoupon.discount) return alert('Coupon code and discount % are required.');
+    
+    let existing = [];
+    try {
+      const stored = localStorage.getItem('khd_coupons');
+      if (stored) existing = JSON.parse(stored);
+    } catch (err) {}
+    
+    const couponObj = {
+      code: newCoupon.code.toUpperCase().trim(),
+      type: 'percent',
+      value: parseInt(newCoupon.discount, 10),
+      active: true
+    };
+    
+    existing.push(couponObj);
+    localStorage.setItem('khd_coupons', JSON.stringify(existing));
+    
+    alert(`Coupon ${couponObj.code} generated and pushed to global storefront!`);
+    setNewCoupon({ code: '', discount: '', maxUses: '' });
+    setActiveTab('dashboard');
+  };
 
   const handlePublish = (e) => {
     e.preventDefault();
@@ -46,10 +76,13 @@ export default function AdminPage() {
       price: newProd.price,
       oldPrice: newProd.oldPrice,
       category: newProd.category,
-      images: newProd.image ? [newProd.image] : ['https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&q=80'],
+      images: newProd.images && newProd.images.length > 0 ? newProd.images : ['https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&q=80'],
       description: newProd.description,
       isDealOfDay: newProd.isDealOfDay,
-      isNewArrival: newProd.isNewArrival
+      isNewArrival: newProd.isNewArrival,
+      colors: newProd.colors || [],
+      sizes: newProd.sizes || [],
+      productDetails: newProd.productDetails || ''
     };
 
     if (newProd._id || newProd.id) {
@@ -60,32 +93,37 @@ export default function AdminPage() {
       alert('Product successfully published across global storefront databases!');
     }
     
-    setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedding', stock: '', image: '', description: '', isDealOfDay: false, isNewArrival: false });
+    setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedding', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, colors: [], sizes: [], productDetails: '' });
     setActiveTab('manageProducts');
   };
 
-  const processImageFile = (file) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        // Compress large uploads to prevent QuotaExceededError in localStorage arrays
-        const MAX_WIDTH = 800;
-        const scaleSize = img.width > MAX_WIDTH ? MAX_WIDTH / img.width : 1;
-        canvas.width = img.width * scaleSize;
-        canvas.height = img.height * scaleSize;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        setNewProd({ ...newProd, image: canvas.toDataURL('image/jpeg', 0.6) });
-      };
-      img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
-  };
+  const handleMediaUpload = (e) => {
+    const files = Array.from(e.target.files || e.dataTransfer?.files || []);
+    files.forEach(file => {
+      const isVideo = file.type.startsWith('video/');
+      const reader = new FileReader();
 
-  const handleImageUpload = (e) => processImageFile(e.target.files[0]);
+      reader.onload = (event) => {
+        if (isVideo) {
+          setNewProd(prev => ({ ...prev, images: [...(prev.images || []), event.target.result] }));
+        } else {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 800;
+            const scaleSize = img.width > MAX_WIDTH ? MAX_WIDTH / img.width : 1;
+            canvas.width = img.width * scaleSize;
+            canvas.height = img.height * scaleSize;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            setNewProd(prev => ({ ...prev, images: [...(prev.images || []), canvas.toDataURL('image/jpeg', 0.6)] }));
+          };
+          img.src = event.target.result;
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
 
 
   const handleLogin = (e) => {
@@ -144,7 +182,7 @@ export default function AdminPage() {
           <button onClick={() => setActiveTab('orders')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'orders' ? '#eff6ff' : 'transparent', color: activeTab === 'orders' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'orders' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
             <ShoppingBag size={20} /> Orders & Fulfillment
           </button>
-          <button onClick={() => { setActiveTab('addProduct'); setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedding', stock: '', image: '', description: '', isDealOfDay: false, isNewArrival: false }); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'addProduct' ? '#eff6ff' : 'transparent', color: activeTab === 'addProduct' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'addProduct' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
+          <button onClick={() => { setActiveTab('addProduct'); setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedding', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, colors: [], sizes: [], productDetails: '' }); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'addProduct' ? '#eff6ff' : 'transparent', color: activeTab === 'addProduct' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'addProduct' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
             <PackageOpen size={20} /> Add New Product
           </button>
           <button onClick={() => setActiveTab('manageProducts')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'manageProducts' ? '#eff6ff' : 'transparent', color: activeTab === 'manageProducts' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'manageProducts' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
@@ -388,18 +426,18 @@ export default function AdminPage() {
               <div style={{ display: 'flex', gap: '20px' }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Selling Price (₹)</label>
-                  <input type="number" value={newProd.price} onChange={e => setNewProd({...newProd, price: e.target.value})} placeholder="1499" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem' }} />
+                  <input type="number" value={newProd.price || ''} onChange={e => setNewProd({...newProd, price: e.target.value})} placeholder="1499" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem' }} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>MRP / Original Price (₹)</label>
-                  <input type="number" value={newProd.oldPrice} onChange={e => setNewProd({...newProd, oldPrice: e.target.value})} placeholder="2999" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem' }} />
+                  <input type="number" value={newProd.oldPrice || ''} onChange={e => setNewProd({...newProd, oldPrice: e.target.value})} placeholder="2999" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem' }} />
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
                 <div style={{ flex: 1, minWidth: '200px' }}>
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Primary Category Placement</label>
                   <select value={newProd.category} onChange={e => setNewProd({...newProd, category: e.target.value})} style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem', background: '#fff' }}>
-                    <option value="Bedding">Bedding</option><option value="Decor">Decor</option><option value="Lighting">Lighting</option><option value="Bedsheets">Bedsheets</option><option value="Comforter">Comforter</option><option value="Mattress">Mattress</option><option value="Cushions">Cushions</option><option value="Curtains">Curtains</option>
+                    <option value="Bedding">Bedding</option><option value="Bedsheets">Bedsheets</option><option value="Comforter">Comforter</option><option value="Mattress">Mattress</option><option value="Cushions">Cushions</option><option value="Curtains">Curtains</option><option value="Door Mats">Door Mats</option><option value="Hand Towels">Hand Towels</option>
                   </select>
                 </div>
                 <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginTop: '14px' }}>
@@ -414,27 +452,83 @@ export default function AdminPage() {
                 </div>
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Product Image</label>
-                <div style={{ width: '100%', border: '2px dashed #cbd5e1', borderRadius: '8px', padding: '32px', textAlign: 'center', background: '#f8fafc', position: 'relative', cursor: 'pointer', transition: 'all 0.2s' }} onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.background = '#eff6ff'; }} onDragLeave={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.background = '#f8fafc'; }} onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.background = '#f8fafc'; if(e.dataTransfer.files[0]){ processImageFile(e.dataTransfer.files[0]); } }}>
-                  {newProd.image && newProd.image.startsWith('data:image') ? (
-                    <img src={newProd.image} alt="Preview" style={{ maxHeight: '150px', margin: '0 auto', borderRadius: '8px' }} />
-                  ) : newProd.image ? (
-                    <img src={newProd.image} alt="Preview" style={{ maxHeight: '150px', margin: '0 auto', borderRadius: '8px' }} />
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-                      <UploadCloud size={40} color="#94a3b8" />
-                      <div>
-                        <span style={{ fontWeight: 600, color: '#3b82f6' }}>Click to upload</span> or drag and drop<br/>
-                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>SVG, PNG, JPG or GIF (max. 5MB)</span>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Product Media (Images & Videos)</label>
+                {newProd.images && newProd.images.length > 0 && (
+                  <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '16px', paddingBottom: '10px' }}>
+                    {newProd.images.map((imgSrc, idx) => (
+                      <div key={idx} style={{ position: 'relative', width: '100px', height: '100px', flexShrink: 0, border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+                        {(imgSrc.startsWith('data:video') || imgSrc.endsWith('.mp4')) ? (
+                          <video src={imgSrc} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
+                        ) : (
+                          <img src={imgSrc} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        )}
+                        <button 
+                          type="button" 
+                          onClick={() => setNewProd({...newProd, images: newProd.images.filter((_, i) => i !== idx)})} 
+                          style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(239, 68, 68, 0.9)', color: '#fff', border: 'none', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', zIndex: 10 }}
+                        >
+                          <X size={14} />
+                        </button>
                       </div>
+                    ))}
+                  </div>
+                )}
+                <div style={{ width: '100%', border: '2px dashed #cbd5e1', borderRadius: '8px', padding: '32px', textAlign: 'center', background: '#f8fafc', position: 'relative', cursor: 'pointer', transition: 'all 0.2s' }} onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.background = '#eff6ff'; }} onDragLeave={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.background = '#f8fafc'; }} onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.background = '#f8fafc'; handleMediaUpload(e); }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                    <UploadCloud size={40} color="#94a3b8" />
+                    <div>
+                      <span style={{ fontWeight: 600, color: '#3b82f6' }}>Click to upload</span> or drag and drop<br/>
+                      <span style={{ fontSize: '0.8rem', color: '#64748b' }}>SVG, PNG, JPG or MP4 (max. 10MB)</span>
                     </div>
-                  )}
-                  <input type="file" accept="image/*" onChange={handleImageUpload} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }} />
+                  </div>
+                  <input type="file" accept="image/*,video/*" multiple onChange={handleMediaUpload} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }} />
                 </div>
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Product Description</label>
-                <textarea rows={4} value={newProd.description} onChange={e => setNewProd({...newProd, description: e.target.value})} placeholder="Describe the product details and specifications..." style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem', resize: 'vertical' }}></textarea>
+                <textarea rows={4} value={newProd.description} onChange={e => setNewProd({...newProd, description: e.target.value})} placeholder="Describe the product specifics (used in meta tags/search)..." style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem', resize: 'vertical' }}></textarea>
+              </div>
+
+              <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: '300px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Colors Variant System</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '8px', marginBottom: '8px' }}>
+                    <input type="text" value={tmpColorName} onChange={e => setTmpColorName(e.target.value)} placeholder="Name (e.g. Navy Blue)" style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '4px', boxSizing: 'border-box' }} />
+                    <input type="color" value={tmpColorHex} onChange={e => setTmpColorHex(e.target.value)} style={{ padding: '0', border: 'none', width: '38px', height: '38px', borderRadius: '4px', cursor: 'pointer' }} />
+                    <button type="button" onClick={() => { if(tmpColorName) setNewProd({...newProd, colors: [...(newProd.colors||[]), {name: tmpColorName, hex: tmpColorHex}]}); setTmpColorName(''); }} style={{ background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', padding: '0 12px', cursor: 'pointer' }}>Add</button>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {newProd.colors?.map((c, i) => (
+                      <span key={i} style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '16px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: c.hex }}></div>
+                        {c.name}
+                        <button type="button" onClick={() => setNewProd({...newProd, colors: newProd.colors.filter((_, idx)=>idx!==i)})} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', marginLeft: '4px' }}>×</button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ flex: 1, minWidth: '300px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Sizes & Dimensions</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr auto', gap: '8px', marginBottom: '8px' }}>
+                    <input type="text" value={tmpSizeName} onChange={e => setTmpSizeName(e.target.value)} placeholder="Size (e.g. King)" style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '4px', boxSizing: 'border-box' }} />
+                    <input type="text" value={tmpSizeDim} onChange={e => setTmpSizeDim(e.target.value)} placeholder="Dim (e.g. 108x108 in)" style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '4px', boxSizing: 'border-box' }} />
+                    <button type="button" onClick={() => { if(tmpSizeName && tmpSizeDim) setNewProd({...newProd, sizes: [...(newProd.sizes||[]), {name: tmpSizeName, dimensions: tmpSizeDim}]}); setTmpSizeName(''); setTmpSizeDim(''); }} style={{ background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', padding: '0 12px', cursor: 'pointer' }}>Add</button>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {newProd.sizes?.map((s, i) => (
+                      <span key={i} style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <b>{s.name}:</b> {s.dimensions}
+                        <button type="button" onClick={() => setNewProd({...newProd, sizes: newProd.sizes.filter((_, idx)=>idx!==i)})} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', marginLeft: '4px' }}>×</button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Accordion Details (Product Details Panel)</label>
+                <textarea rows={3} value={newProd.productDetails || ''} onChange={e => setNewProd({...newProd, productDetails: e.target.value})} placeholder="Detailed marketing copy for the Product Details accordion dropdown..." style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem', resize: 'vertical' }}></textarea>
               </div>
               <button type="submit" style={{ background: '#2563eb', color: '#fff', padding: '14px', borderRadius: '8px', fontWeight: 600, fontSize: '1rem', border: 'none', cursor: 'pointer', marginTop: '10px' }}>
                 {newProd._id || newProd.id ? 'Save Product Changes' : 'Publish to Storefront'}
@@ -474,7 +568,7 @@ export default function AdminPage() {
                         <td style={{ padding: '16px 24px', fontSize: '0.95rem', fontWeight: 600, color: '#0f172a' }}>₹{product.price || product.currentPrice}</td>
                         <td style={{ padding: '16px 24px', textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                            <button onClick={() => { setNewProd({...product, image: product.images?.[0] || ''}); setActiveTab('addProduct'); }} style={{ background: '#eff6ff', color: '#3b82f6', border: '1px solid #bfdbfe', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>
+                            <button onClick={() => { setNewProd({...product, images: product.images || [], colors: product.colors || [], sizes: product.sizes || [], productDetails: product.productDetails || ''}); setActiveTab('addProduct'); }} style={{ background: '#eff6ff', color: '#3b82f6', border: '1px solid #bfdbfe', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>
                               <Edit size={16} /> Edit
                             </button>
                             <button onClick={() => { if(confirm('Permanently delete this product from the global database?')) removeProduct(product._id || product.id); }} style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>
@@ -559,22 +653,22 @@ export default function AdminPage() {
           <div style={{ padding: '32px', maxWidth: '800px', width: '100%' }}>
             <h2 style={{ fontSize: '1.8rem', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Promo & Coupons Configuration</h2>
             <p style={{ color: '#64748b', marginBottom: '32px' }}>Generate discount codes to drive promotional campaigns and influencer sales.</p>
-            <form style={{ background: '#fff', padding: '32px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <form onSubmit={handleCreateCoupon} style={{ background: '#fff', padding: '32px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Coupon Code</label>
-                <input type="text" placeholder="e.g. SUMMER50" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem', textTransform: 'uppercase' }} />
+                <input type="text" value={newCoupon.code} onChange={e => setNewCoupon({...newCoupon, code: e.target.value})} placeholder="e.g. SUMMER50" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem', textTransform: 'uppercase' }} />
               </div>
               <div style={{ display: 'flex', gap: '20px' }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Discount Percentage (%)</label>
-                  <input type="number" placeholder="15" max="100" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem' }} />
+                  <input type="number" value={newCoupon.discount} onChange={e => setNewCoupon({...newCoupon, discount: e.target.value})} placeholder="15" max="100" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem' }} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Maximum Uses</label>
-                  <input type="number" placeholder="1000" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem' }} />
+                  <input type="number" value={newCoupon.maxUses} onChange={e => setNewCoupon({...newCoupon, maxUses: e.target.value})} placeholder="1000" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem' }} />
                 </div>
               </div>
-              <button type="button" onClick={(e) => { e.preventDefault(); alert('Coupon generated successfully!'); setActiveTab('dashboard'); }} style={{ background: '#10b981', color: '#fff', padding: '14px', borderRadius: '8px', fontWeight: 600, fontSize: '1rem', border: 'none', cursor: 'pointer', marginTop: '10px' }}>
+              <button type="submit" style={{ background: '#10b981', color: '#fff', padding: '14px', borderRadius: '8px', fontWeight: 600, fontSize: '1rem', border: 'none', cursor: 'pointer', marginTop: '10px' }}>
                 Generate Active Coupon
               </button>
             </form>

@@ -79,10 +79,7 @@ export default function Home() {
             <img src="/hand_towels.webp" alt="Hand Towels" className={styles.categoryImg} />
             <h3 className={styles.categoryTitle}>Hand Towels</h3>
           </a>
-          <a href="/shop" className={styles.categoryCard}>
-            <img src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=600&q=80" alt="View All" className={styles.categoryImg} />
-            <h3 className={styles.categoryTitle}>View All</h3>
-          </a>
+
         </div>
       </section>
 

@@ -5,13 +5,15 @@ import { Heart } from 'lucide-react';
 import { useWishlist } from '@/context/WishlistContext';
 import { useCart } from '@/context/CartContext';
 import { useProducts } from '@/context/ProductContext';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './DealOfTheDay.module.css';
 
 export default function DealOfTheDay() {
+  const router = useRouter();
   const [timeLeft, setTimeLeft] = useState(0);
   const { toggleWishlist, isInWishlist } = useWishlist();
-  const { cartItems, addToCart } = useCart();
+  const { cartItems, addToCart, initiateBuyNow } = useCart();
   const { products, isMounted } = useProducts();
 
   useEffect(() => {
@@ -72,7 +74,7 @@ export default function DealOfTheDay() {
                 <img src={deal.images?.[0] || 'https://via.placeholder.com/300'} alt={deal.title} className={styles.cardImg} />
                 <button 
                   style={{ position: 'absolute', top: '12px', right: '12px', background: 'transparent', border: 'none', cursor: 'pointer', zIndex: 10 }}
-                  onClick={(e) => { e.preventDefault(); toggleWishlist(deal); }}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleWishlist(deal); }}
                 >
                   <Heart size={24} strokeWidth={1.5} fill={isInWishlist(deal._id || deal.id) ? '#ef4444' : 'transparent'} color={isInWishlist(deal._id || deal.id) ? '#ef4444' : '#525252'} />
                 </button>
@@ -83,7 +85,11 @@ export default function DealOfTheDay() {
                 <div className={styles.priceRow}>
                   <span className={styles.currentPrice}>₹{deal.price || deal.currentPrice}</span>
                   <span className={styles.oldPrice}>₹{deal.oldPrice}</span>
-                  <span className={styles.discountBadge}>{deal.discount}</span>
+                  <span className={styles.discountBadge}>
+                    {deal.discount || (deal.oldPrice && (deal.price || deal.currentPrice) && Number(deal.oldPrice) > Number(deal.price || deal.currentPrice) ? 
+                      `${Math.round(((Number(deal.oldPrice) - Number(deal.price || deal.currentPrice)) / Number(deal.oldPrice)) * 100)}% OFF` 
+                      : null)}
+                  </span>
                 </div>
                 <div className={styles.limitedOffer}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -92,14 +98,14 @@ export default function DealOfTheDay() {
                 <div style={{ display: 'flex', gap: '8px', marginTop: '12px', width: '100%' }}>
                   <button 
                     className={styles.addToCartBtn}
-                    onClick={(e) => { e.preventDefault(); addToCart({ ...deal, price: deal.price || deal.currentPrice }, 1); alert(`${deal.title} added to cart!`); }}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); addToCart({ ...deal, price: deal.price || deal.currentPrice }, 1); alert(`${deal.title} added to cart!`); }}
                     style={{ flex: 1, background: cartItems?.some(item => (item._id || item.id) === (deal._id || deal.id)) ? '#f1f5f9' : '#fff', color: cartItems?.some(item => (item._id || item.id) === (deal._id || deal.id)) ? '#334155' : '#111', border: '1px solid #e2e8f0', padding: '10px 4px', fontSize: '0.85rem', whiteSpace: 'nowrap', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
                   >
                     {cartItems?.some(item => (item._id || item.id) === (deal._id || deal.id)) ? 'In Cart' : 'Add To Cart'}
                   </button>
                   <button 
                     className={styles.addToCartBtn}
-                    onClick={(e) => { e.preventDefault(); addToCart({ ...deal, price: deal.price || deal.currentPrice }, 1); window.location.href = '/checkout'; }}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); initiateBuyNow({ ...deal, price: deal.price || deal.currentPrice }, 1); router.push('/checkout'); }}
                     style={{ flex: 1, background: '#111', color: '#fff', padding: '10px 4px', fontSize: '0.85rem', border: '1px solid #111', whiteSpace: 'nowrap', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
                   >
                     Buy Now

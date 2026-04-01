@@ -1,5 +1,5 @@
 .card {
-  min-width: 250px;
+  min-width: 0;
   background: #fff;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -111,7 +111,6 @@
 }
 
 .addToCartBtn {
-  margin-top: auto;
   background: transparent;
   border: 1px solid #1e293b;
   color: #1e293b;
@@ -127,4 +126,34 @@
 .addToCartBtn:hover {
   background: #1e293b;
   color: #fff;
+}
+
+.buttonsWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (max-width: 600px) {
+  .imageWrapper {
+    height: 160px;
+  }
+  .content {
+    padding: 8px;
+  }
+  .title {
+    font-size: 0.85rem;
+  }
+  .currentPrice {
+    font-size: 0.95rem;
+  }
+  .oldPrice {
+    font-size: 0.75rem;
+  }
+  .addToCartBtn {
+    font-size: 0.8rem !important;
+    padding: 8px 4px !important;
+    height: auto !important;
+  }
 }

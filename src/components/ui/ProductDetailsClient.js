@@ -10,7 +10,12 @@ import { DUMMY_PRODUCTS } from '@/app/page';
 
 export default function ProductDetailsClient({ product: serverProduct, productId }) {
   const { products } = useProducts();
-  const product = serverProduct || products.find(p => (p._id || p.id) === productId) || null;
+  const clientProduct = products.find(p => (p._id || p.id) === productId);
+  const product = clientProduct || serverProduct || null;
+
+  if (!product) {
+    return <div style={{ padding: '4rem', textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>Loading product details...</div>;
+  }
 
   const images = product?.images?.length ? product.images : [
     '/bedsheets.png',
@@ -18,18 +23,15 @@ export default function ProductDetailsClient({ product: serverProduct, productId
     'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=800&q=80'
   ];
 
-  const colors = [
-    { name: "Green Navy", hex: "#0f2b24" },
-    { name: "Ivory Green", hex: "#f3eedd" },
-    { name: "Ivory Red", hex: "#f1e5d7" },
-    { name: "Khaki Clove", hex: "#d8c5ad" }, // Active
-    { name: "Mint Green", hex: "#7a957a" }
-  ];
+  const colors = product?.colors || [];
+
+  const sizes = product?.sizes || [];
 
   const [activeImageIdx, setActiveImageIdx] = useState(0);
-  const [activeColor, setActiveColor] = useState("Khaki Clove");
+  const [activeColor, setActiveColor] = useState(colors[0]?.name || "");
+  const [activeSize, setActiveSize] = useState(sizes[0]?.name || "");
   const [accordion, setAccordion] = useState({ details: false, specs: false });
-  const { cartItems, addToCart } = useCart();
+  const { cartItems, addToCart, initiateBuyNow } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const inCart = cartItems.some(item => (item._id || item.id) === (product._id || product.id));
 
@@ -67,11 +69,15 @@ export default function ProductDetailsClient({ product: serverProduct, productId
           </div>
 
           <div style={{ width: '100%', height: '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-            <button onClick={prevImg} style={{ position: 'absolute', left: '16px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#a3a3a3' }}>
+            <button onClick={prevImg} style={{ position: 'absolute', left: '16px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#a3a3a3', zIndex: 10 }}>
               <ChevronLeft size={48} strokeWidth={1} />
             </button>
-            <img src={images[activeImageIdx]} alt="Product view" style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
-            <button onClick={nextImg} style={{ position: 'absolute', right: '16px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#a3a3a3' }}>
+            {(images[activeImageIdx]?.startsWith('data:video') || images[activeImageIdx]?.endsWith('.mp4')) ? (
+              <video src={images[activeImageIdx]} controls autoPlay muted loop style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
+            ) : (
+              <img src={images[activeImageIdx]} alt="Product view" style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
+            )}
+            <button onClick={nextImg} style={{ position: 'absolute', right: '16px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#a3a3a3', zIndex: 10 }}>
               <ChevronRight size={48} strokeWidth={1} />
             </button>
           </div>
@@ -101,17 +107,32 @@ export default function ProductDetailsClient({ product: serverProduct, productId
             <span style={{ fontSize: '0.9rem', color: '#737373' }}>(29 reviews)</span>
           </div>
 
-          <div style={{ marginBottom: '24px' }}>
-            <h3 style={{ fontSize: '0.9rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '16px', color: '#000' }}>COLOR</h3>
-            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-              {colors.map(c => (
-                <div key={c.name} onClick={() => setActiveColor(c.name)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: c.hex, border: activeColor === c.name ? '2px solid #000' : '1px solid #e5e5e5', padding: '2px', outlineOffset: '2px', boxShadow: activeColor === c.name ? 'inset 0 0 0 2px #fff' : 'none' }}></div>
-                  <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#1a1a1a', textAlign: 'center', lineHeight: 1.1 }}>{c.name.split(' ').map((w,i)=><div key={i}>{w}</div>)}</span>
-                </div>
-              ))}
+          {colors.length > 0 && (
+            <div style={{ marginBottom: '24px' }}>
+              <h3 style={{ fontSize: '0.9rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '16px', color: '#000' }}>COLOR</h3>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                {colors.map(c => (
+                  <div key={c.name} onClick={() => setActiveColor(c.name)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: 'pointer', maxWidth: '60px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: c.hex, border: activeColor === c.name ? '2px solid #000' : '1px solid #e5e5e5', padding: '2px', outlineOffset: '2px', boxShadow: activeColor === c.name ? 'inset 0 0 0 2px #fff' : 'none' }}></div>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#1a1a1a', textAlign: 'center', lineHeight: 1.1 }}>{c.name.split(' ').map((w,i)=><div key={i}>{w}</div>)}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {sizes.length > 0 && (
+            <div style={{ marginBottom: '24px' }}>
+              <h3 style={{ fontSize: '0.9rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '16px', color: '#000' }}>SIZE</h3>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                {sizes.map(s => (
+                  <button key={s.name} onClick={() => setActiveSize(s.name)} style={{ background: activeSize === s.name ? '#111' : '#fff', color: activeSize === s.name ? '#fff' : '#111', border: '1px solid #e5e5e5', padding: '10px 18px', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
+                    {s.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="cta-container" style={{ display: 'flex', gap: '16px', marginBottom: '1.5rem' }}>
             {inCart ? (
@@ -131,7 +152,7 @@ export default function ProductDetailsClient({ product: serverProduct, productId
               </button>
             )}
             <button 
-              onClick={() => { addToCart(product, 1); window.location.href = '/checkout'; }} 
+              onClick={() => { initiateBuyNow(product, 1); window.location.href = '/checkout'; }} 
               style={{ flex: 1, background: '#111', color: '#fff', fontSize: '1.1rem', fontWeight: 800, padding: '16px', border: 'none', borderRadius: '4px', cursor: 'pointer', letterSpacing: '1px', textTransform: 'uppercase', transition: 'background 0.2s' }}
             >
               BUY NOW
@@ -205,7 +226,13 @@ export default function ProductDetailsClient({ product: serverProduct, productId
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {['Product Details', 'Specifications', 'Compatibility', 'Delivery Time & Returns'].map((item, i) => (
+            {[
+              'Product Details', 
+              'Responsible Design', 
+              'Care', 
+              'Delivery Time & Returns',
+              ...(sizes.length > 0 ? ['Dimensions'] : [])
+            ].map((item, i) => (
               <div key={item} style={{ borderBottom: '1px solid #e5e5e5' }}>
                 <button 
                   onClick={() => setAccordion(p => ({...p, [item]: !p[item]}))}
@@ -214,8 +241,10 @@ export default function ProductDetailsClient({ product: serverProduct, productId
                   {accordion[item] ? <ChevronUp size={20} color="#737373" /> : <ChevronDown size={20} color="#737373" />}
                 </button>
                 {accordion[item] && (
-                  <div style={{ paddingBottom: '24px', fontSize: '0.9rem', color: '#525252', lineHeight: 1.5 }}>
-                    Detailed information mapping to the specific {item.toLowerCase()} constraint goes here filling out the layout.
+                  <div style={{ paddingBottom: '24px', fontSize: '0.9rem', color: '#525252', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+                    {item === 'Product Details' && product?.productDetails ? product.productDetails : 
+                     item === 'Dimensions' ? sizes.find(s => s.name === activeSize)?.dimensions || 'Select a size to view dimensions.' : 
+                     `Detailed information mapping to the specific ${item.toLowerCase()} constraint goes here filling out the layout.`}
                   </div>
                 )}
               </div>

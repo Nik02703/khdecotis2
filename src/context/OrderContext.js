@@ -13,6 +13,28 @@ export function OrderProvider({ children }) {
   const [orders, setOrders] = useState([]);
   const [isMounted, setIsMounted] = useState(false);
 
+  const saveOrdersSafely = (ordersList) => {
+    try {
+      const safeOrders = ordersList.map(order => {
+        if (!order.payload || !Array.isArray(order.payload)) return order;
+        
+        const slimPayload = order.payload.map(item => {
+          const { description, reviews, images, ...rest } = item;
+          let thumb = rest.image || (images?.length > 0 ? images[0] : null);
+          if (thumb && thumb.length > 100000) {
+            thumb = null; // Strip huge base64
+          }
+          return { ...rest, image: thumb };
+        });
+        
+        return { ...order, payload: slimPayload };
+      });
+      localStorage.setItem('khd_orders', JSON.stringify(safeOrders));
+    } catch (error) {
+      console.warn('Orders localStorage mapping failed:', error);
+    }
+  };
+
   useEffect(() => {
     setIsMounted(true);
     const storedOrders = localStorage.getItem('khd_orders');
@@ -25,7 +47,7 @@ export function OrderProvider({ children }) {
       }
     } else {
       setOrders(DUMMY_ORDERS);
-      localStorage.setItem('khd_orders', JSON.stringify(DUMMY_ORDERS));
+      saveOrdersSafely(DUMMY_ORDERS);
     }
   }, []);
 
@@ -65,7 +87,15 @@ export function OrderProvider({ children }) {
       
       const safestOrder = { ...newOrder, id: `#KHD-${safeNextId}` };
       const updated = [safestOrder, ...prev];
-      localStorage.setItem('khd_orders', JSON.stringify(updated));
+      saveOrdersSafely(updated);
+
+      // Async push to actual MongoDB
+      fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(safestOrder)
+      }).catch(err => console.error("MongoDB Sync Error:", err));
+
       return updated;
     });
     
@@ -76,7 +106,7 @@ export function OrderProvider({ children }) {
   const updateOrderStatus = (id, newStatus, color, text) => {
     setOrders(prev => {
       const updated = prev.map(o => o.id === id ? { ...o, status: newStatus, color, text } : o);
-      localStorage.setItem('khd_orders', JSON.stringify(updated));
+      saveOrdersSafely(updated);
       return updated;
     });
   };

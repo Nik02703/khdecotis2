@@ -7,16 +7,16 @@ import { useWishlist } from '@/context/WishlistContext';
 import styles from './ProductCard.module.css';
 
 export default function ProductCard({ product }) {
-  const { cartItems, addToCart } = useCart();
+  const { cartItems, addToCart, initiateBuyNow } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const [isHovered, setIsHovered] = useState(false);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
 
-  const images = product?.images?.length 
+  const images = product?.images?.length > 1
     ? product.images 
     : [
-        product.images?.[0] || 'https://via.placeholder.com/400x400?text=Product+Image',
-        product.images?.[1]
+        product?.images?.[0] || product?.image || 'https://via.placeholder.com/400x400?text=Product+Image',
+        product?.images?.[1] || product?.images?.[0] || product?.image || 'https://via.placeholder.com/400x400?text=Hover+Image'
       ].filter(Boolean);
 
   const currentImg = images[activeImageIdx % images.length];
@@ -25,7 +25,7 @@ export default function ProductCard({ product }) {
   const prevImg = (e) => { e.preventDefault(); e.stopPropagation(); setActiveImageIdx(i => (i - 1 + images.length) % images.length); };
   
   const oldPrice = product.oldPrice || Math.round(product.price * 1.4);
-  const discountStr = product.discount || '40% OFF';
+  const discountStr = product.discount || (oldPrice && product.price && Number(oldPrice) > Number(product.price) ? `${Math.round(((Number(oldPrice) - Number(product.price)) / Number(oldPrice)) * 100)}% OFF` : null);
 
   return (
     <div className={styles.card}>
@@ -60,7 +60,11 @@ export default function ProductCard({ product }) {
         )}
 
         <Link href={`/product/${product._id || product.id}`} style={{ display: 'block', height: '100%' }}>
-          <img src={currentImg} alt={product.title} className={styles.image} loading="lazy" style={{ transition: 'opacity 0.3s ease-in-out' }} />
+          {currentImg && (currentImg.startsWith('data:video') || currentImg.endsWith('.mp4')) ? (
+            <video src={currentImg} className={styles.image} style={{ transition: 'opacity 0.3s ease-in-out', objectFit: 'cover', width: '100%', height: '100%' }} muted loop autoPlay playsInline />
+          ) : (
+            <img src={currentImg} alt={product.title} className={styles.image} loading="lazy" style={{ transition: 'opacity 0.3s ease-in-out' }} />
+          )}
         </Link>
       </div>
       <div className={styles.content}>
@@ -74,10 +78,10 @@ export default function ProductCard({ product }) {
           <span className={styles.discountBadge}>{discountStr}</span>
         </div>
         
-        <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+        <div className={styles.buttonsWrapper}>
           {cartItems?.some(item => (item._id || item.id) === (product._id || product.id)) ? (
-            <Link href="/cart" style={{ textDecoration: 'none', flex: 1 }}>
-              <button className={styles.addToCartBtn} style={{ background: '#111', color: '#fff', width: '100%', padding: '10px 4px', fontSize: '0.85rem', whiteSpace: 'nowrap', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
+            <Link href="/cart" style={{ textDecoration: 'none', width: '100%' }}>
+              <button className={styles.addToCartBtn} style={{ background: '#111', color: '#fff', width: '100%', padding: '10px 4px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
                 Go To Cart
               </button>
             </Link>
@@ -85,15 +89,15 @@ export default function ProductCard({ product }) {
             <button 
               className={styles.addToCartBtn} 
               onClick={(e) => { e.preventDefault(); addToCart(product); alert(`${product.title} added to cart!`); }}
-              style={{ flex: 1, padding: '10px 4px', fontSize: '0.85rem', whiteSpace: 'nowrap', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '10px 4px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
             >
               Add To Cart
             </button>
           )}
           <button 
             className={styles.addToCartBtn} 
-            onClick={(e) => { e.preventDefault(); addToCart(product); window.location.href = '/checkout'; }}
-            style={{ flex: 1, background: '#111', color: '#fff', padding: '10px 4px', fontSize: '0.85rem', border: '1px solid #111', whiteSpace: 'nowrap', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
+            onClick={(e) => { e.preventDefault(); initiateBuyNow(product); window.location.href = '/checkout'; }}
+            style={{ width: '100%', background: '#111', color: '#fff', padding: '10px 4px', fontSize: '0.85rem', border: '1px solid #111', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
           >
             Buy Now
           </button>

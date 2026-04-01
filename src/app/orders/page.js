@@ -34,7 +34,8 @@ export default function OrdersPage() {
   };
 
   return (
-    <div className="container animate-fade-in" style={{ padding: '4rem 2rem', minHeight: '80vh', maxWidth: '1000px', margin: '0 auto', fontFamily: 'Outfit, sans-serif' }}>
+    <>
+      <div className="container animate-fade-in" style={{ padding: '4rem 2rem', minHeight: '80vh', maxWidth: '1000px', margin: '0 auto', fontFamily: 'Outfit, sans-serif' }}>
       <div style={{ marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0' }}>Order History</h1>
         <p style={{ color: '#64748b', fontSize: '1.05rem', margin: 0 }}>Track, manage, and review your recent purchases natively.</p>
@@ -125,7 +126,7 @@ export default function OrdersPage() {
                     <div style={{ display: 'flex', gap: '8px' }}>
                       {order.payload.slice(0, 3).map((item, idx) => (
                         <div key={idx} style={{ width: '72px', height: '72px', borderRadius: '10px', border: '1px solid #e2e8f0', overflow: 'hidden', background: '#f8fafc' }}>
-                          <img src={item.images?.[0] || 'https://via.placeholder.com/150'} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img src={item.images?.[0] || item.image || 'https://via.placeholder.com/150'} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
                       ))}
                       {order.payload.length > 3 && (
@@ -198,10 +199,16 @@ export default function OrdersPage() {
         )}
       </div>
 
+      </div>
+
       {/* Invoice Modal */}
       {selectedOrder && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
-          <div style={{ background: '#fff', borderRadius: '16px', maxWidth: '600px', width: '95%', maxHeight: '90vh', overflowY: 'auto', padding: '32px', position: 'relative', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+        <>
+          <div 
+            onClick={() => setSelectedOrder(null)}
+            style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9998, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)' }}
+          />
+          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 9999, background: '#fff', borderRadius: '16px', maxWidth: '600px', width: '95%', maxHeight: '90vh', overflowY: 'auto', padding: '32px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
             <button onClick={() => setSelectedOrder(null)} style={{ position: 'absolute', top: '24px', right: '24px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}><X size={24} /></button>
             
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
@@ -234,7 +241,7 @@ export default function OrdersPage() {
                   <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
                     <td style={{ padding: '16px 12px', fontSize: '0.95rem', color: '#334155' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <img src={item.images?.[0] || 'https://via.placeholder.com/50'} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '6px' }} />
+                        <img src={item.images?.[0] || item.image || 'https://via.placeholder.com/50'} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '6px' }} />
                         <span>{item.title}</span>
                       </div>
                     </td>
@@ -270,9 +277,9 @@ export default function OrdersPage() {
               <button onClick={() => window.print()} style={{ flex: 1, padding: '12px', background: '#f1f5f9', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: '8px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}><Printer size={18} /> Print Invoice</button>
             </div>
           </div>
-        </div>
+        </>
       )}
 
-    </div>
+    </>
   );
 }

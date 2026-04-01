@@ -38,15 +38,7 @@ export default function BestsellerCarousel({ products }) {
 
   return (
     <div className={styles.carouselWrapper}>
-      {canScrollLeft && (
-        <button 
-          className={`${styles.scrollBtn} ${styles.scrollBtnLeft}`} 
-          onClick={() => scroll('left')}
-          aria-label="Scroll left"
-        >
-          ←
-        </button>
-      )}
+
       
       <div 
         className={styles.carouselTrack} 
@@ -60,15 +52,7 @@ export default function BestsellerCarousel({ products }) {
         ))}
       </div>
 
-      {canScrollRight && (
-        <button 
-          className={`${styles.scrollBtn} ${styles.scrollBtnRight}`} 
-          onClick={() => scroll('right')}
-          aria-label="Scroll right"
-        >
-          →
-        </button>
-      )}
+
     </div>
   );
 }

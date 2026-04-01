@@ -32,3 +32,34 @@ export async function GET() {
     return NextResponse.json([{ _id: 'ERR-500', user: { name: 'System Local' }, totalAmount: 0, status: 'Processing', createdAt: new Date() }], { status: 200 });
   }
 }
+
+export async function POST(req) {
+  try {
+    const db = await connectToDatabase();
+    if (!db) {
+       return NextResponse.json({ error: 'Database disconnected. Order not synced to DB.' }, { status: 503 });
+    }
+    
+    const body = await req.json();
+    
+    // Create new robust Order document
+    const newOrder = await Order.create({
+      orderId: body.id,
+      name: body.name,
+      email: body.email,
+      items: body.items,
+      payload: body.payload || [],
+      totalAmount: typeof body.total === 'string' ? parseFloat(body.total.replace(/[^0-9.]/g, '')) : (body.total || 0),
+      totalString: body.total,
+      status: body.status || 'Pending',
+      color: body.color,
+      text: body.text,
+      dateString: body.date
+    });
+    
+    return NextResponse.json({ success: true, order: newOrder }, { status: 201 });
+  } catch (error) {
+    console.error("Order DB Creation Error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
