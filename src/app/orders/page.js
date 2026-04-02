@@ -1,7 +1,7 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Package, ChevronRight, Clock, CheckCircle2, XCircle, Printer, X } from 'lucide-react';
+import { Package, ChevronRight, Clock, CheckCircle2, XCircle, Printer, X, Truck, MapPin, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useOrders } from '@/context/OrderContext';
 import { useRouter } from 'next/navigation';
@@ -9,6 +9,9 @@ import { useRouter } from 'next/navigation';
 export default function OrdersPage() {
   const [filter, setFilter] = useState('All');
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [trackingData, setTrackingData] = useState(null);
+  const [trackingLoading, setTrackingLoading] = useState(false);
+  const [trackingOrderId, setTrackingOrderId] = useState(null);
   const { user, isMounted } = useAuth();
   const { orders } = useOrders();
   const router = useRouter();
@@ -18,6 +21,22 @@ export default function OrdersPage() {
        router.push('/account?redirect=/orders');
     }
   }, [user, isMounted, router]);
+
+  const fetchTracking = useCallback(async (orderId) => {
+    setTrackingLoading(true);
+    setTrackingData(null);
+    setTrackingOrderId(orderId);
+    try {
+      const res = await fetch(`/api/orders/${encodeURIComponent(orderId)}/track`);
+      const data = await res.json();
+      setTrackingData(data);
+    } catch (err) {
+      console.error('Tracking fetch error:', err);
+      setTrackingData({ success: false, error: 'Unable to reach tracking service.' });
+    } finally {
+      setTrackingLoading(false);
+    }
+  }, []);
 
   if (!isMounted || !user) return null;
 
@@ -31,6 +50,11 @@ export default function OrdersPage() {
       case 'Cancelled': return <XCircle size={16} />;
       default: return <Clock size={16} />;
     }
+  };
+
+  const closeTracking = () => {
+    setTrackingData(null);
+    setTrackingOrderId(null);
   };
 
   return (
@@ -146,21 +170,27 @@ export default function OrdersPage() {
                 )}
               </div>
 
-              <div style={{ display: 'flex', gap: '12px' }}>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                 {['Pending', 'Shipped'].includes(order.status) && (
-                  <button style={{ 
-                    padding: '12px 24px', 
-                    background: '#0f172a', 
-                    color: '#fff', 
-                    border: 'none', 
-                    borderRadius: '8px', 
-                    cursor: 'pointer', 
-                    fontWeight: 600, 
-                    fontSize: '0.95rem',
-                    transition: 'background 0.2s',
-                    fontFamily: 'inherit'
-                  }}>
-                    Track Route
+                  <button 
+                    onClick={() => fetchTracking(order.id)}
+                    style={{ 
+                      padding: '12px 24px', 
+                      background: '#0f172a', 
+                      color: '#fff', 
+                      border: 'none', 
+                      borderRadius: '8px', 
+                      cursor: 'pointer', 
+                      fontWeight: 600, 
+                      fontSize: '0.95rem',
+                      transition: 'background 0.2s',
+                      fontFamily: 'inherit',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <Truck size={18} /> Track Order
                   </button>
                 )}
                 <button onClick={() => setSelectedOrder(order)} style={{ 
@@ -182,6 +212,148 @@ export default function OrdersPage() {
                 </button>
               </div>
             </div>
+
+            {/* Tracking Panel — shown inline when tracking is requested for this order */}
+            {trackingOrderId === order.id && (
+              <div style={{ 
+                padding: '0 24px 24px', 
+                borderTop: '1px solid #e2e8f0',
+                animation: 'fadeIn 0.3s ease'
+              }}>
+                <div style={{ 
+                  background: 'linear-gradient(135deg, #f0f9ff 0%, #f8fafc 100%)', 
+                  borderRadius: '12px', 
+                  padding: '24px',
+                  marginTop: '16px',
+                  border: '1px solid #e0f2fe'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <MapPin size={18} color="#0ea5e9" /> Shipment Tracking
+                    </h4>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button 
+                        onClick={() => fetchTracking(order.id)}
+                        disabled={trackingLoading}
+                        style={{ 
+                          background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', 
+                          padding: '6px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', 
+                          gap: '4px', fontSize: '0.8rem', fontWeight: 600, color: '#475569',
+                          opacity: trackingLoading ? 0.5 : 1
+                        }}
+                      >
+                        <RefreshCw size={14} style={{ animation: trackingLoading ? 'spin 1s linear infinite' : 'none' }} /> Refresh
+                      </button>
+                      <button 
+                        onClick={closeTracking}
+                        style={{ 
+                          background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', 
+                          padding: '6px 8px', cursor: 'pointer', color: '#64748b'
+                        }}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {trackingLoading ? (
+                    <div style={{ textAlign: 'center', padding: '24px', color: '#64748b' }}>
+                      <div style={{ 
+                        width: '32px', height: '32px', border: '3px solid #e2e8f0', 
+                        borderTopColor: '#0ea5e9', borderRadius: '50%', margin: '0 auto 12px',
+                        animation: 'spin 0.8s linear infinite'
+                      }} />
+                      Fetching tracking details...
+                    </div>
+                  ) : trackingData ? (
+                    <div>
+                      {/* Tracking Info Grid */}
+                      <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
+                        gap: '16px',
+                        marginBottom: trackingData.activities?.length > 0 ? '20px' : 0
+                      }}>
+                        <div style={{ background: '#fff', borderRadius: '10px', padding: '16px', border: '1px solid #e2e8f0' }}>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', fontWeight: 600 }}>AWB Number</div>
+                          <div style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', wordBreak: 'break-all' }}>
+                            {trackingData.awbCode || '—'}
+                          </div>
+                        </div>
+                        <div style={{ background: '#fff', borderRadius: '10px', padding: '16px', border: '1px solid #e2e8f0' }}>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', fontWeight: 600 }}>Courier</div>
+                          <div style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>
+                            {trackingData.courierName || '—'}
+                          </div>
+                        </div>
+                        <div style={{ background: '#fff', borderRadius: '10px', padding: '16px', border: '1px solid #e2e8f0' }}>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', fontWeight: 600 }}>Status</div>
+                          <div style={{ 
+                            fontSize: '0.9rem', fontWeight: 700,
+                            color: trackingData.trackingStatus === 'Delivered' ? '#16a34a' 
+                                 : trackingData.trackingStatus === 'pending_sync' ? '#d97706'
+                                 : '#0ea5e9'
+                          }}>
+                            {formatTrackingStatus(trackingData.trackingStatus)}
+                          </div>
+                        </div>
+                        <div style={{ background: '#fff', borderRadius: '10px', padding: '16px', border: '1px solid #e2e8f0' }}>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', fontWeight: 600 }}>Expected Delivery</div>
+                          <div style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>
+                            {trackingData.expectedDelivery || 'Calculating...'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* No AWB message */}
+                      {!trackingData.awbCode && trackingData.message && (
+                        <div style={{ 
+                          display: 'flex', alignItems: 'center', gap: '12px', 
+                          background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', 
+                          padding: '16px', marginTop: '12px'
+                        }}>
+                          <Clock size={20} color="#d97706" />
+                          <div>
+                            <div style={{ fontWeight: 600, color: '#92400e', fontSize: '0.9rem' }}>Shipment Being Arranged</div>
+                            <div style={{ color: '#a16207', fontSize: '0.85rem', marginTop: '2px' }}>{trackingData.message}</div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Activity Timeline */}
+                      {trackingData.activities && trackingData.activities.length > 0 && (
+                        <div>
+                          <h5 style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Recent Activity</h5>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                            {trackingData.activities.map((activity, idx) => (
+                              <div key={idx} style={{ display: 'flex', gap: '12px', position: 'relative' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '20px' }}>
+                                  <div style={{ 
+                                    width: '10px', height: '10px', borderRadius: '50%', 
+                                    background: idx === 0 ? '#0ea5e9' : '#cbd5e1', 
+                                    flexShrink: 0, marginTop: '5px'
+                                  }} />
+                                  {idx < trackingData.activities.length - 1 && (
+                                    <div style={{ width: '2px', background: '#e2e8f0', flex: 1, minHeight: '24px' }} />
+                                  )}
+                                </div>
+                                <div style={{ paddingBottom: '16px' }}>
+                                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0f172a' }}>{activity.activity || activity.status}</div>
+                                  <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>
+                                    {activity.location && <span>{activity.location} · </span>}
+                                    {activity.date}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            )}
           </div>
         )) : (
           <div style={{ textAlign: 'center', padding: '6rem 2rem', background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
@@ -280,6 +452,34 @@ export default function OrdersPage() {
         </>
       )}
 
+      {/* Inline CSS for animations */}
+      <style jsx global>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </>
   );
+}
+
+/** Format tracking status for display */
+function formatTrackingStatus(status) {
+  if (!status) return 'Unknown';
+  const statusMap = {
+    'pending_sync': 'Awaiting Shipment',
+    'pending': 'Awaiting Shipment',
+    'processing': 'Processing',
+    'assigned': 'Courier Assigned',
+    'picked_up': 'Picked Up',
+    'in_transit': 'In Transit',
+    'out_for_delivery': 'Out for Delivery',
+    'delivered': 'Delivered',
+    'rto': 'Return to Origin',
+  };
+  return statusMap[status.toLowerCase()] || status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }

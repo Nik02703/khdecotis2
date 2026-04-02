@@ -69,32 +69,55 @@ export function OrderProvider({ children }) {
             color: dbOrder.color || (dbOrder.status === 'Delivered' ? '#dcfce7' : '#fef3c7'),
             text: dbOrder.text || (dbOrder.status === 'Delivered' ? '#16a34a' : '#d97706'),
             items: dbOrder.items || (dbOrder.payload ? dbOrder.payload.length : 1),
-            payload: dbOrder.payload || []
+            payload: dbOrder.payload || [],
+            // Shiprocket tracking fields
+            shipmentId: dbOrder.shipmentId || null,
+            awbCode: dbOrder.awbCode || null,
+            courierName: dbOrder.courierName || null,
+            trackingStatus: dbOrder.trackingStatus || null,
+            shiprocketOrderId: dbOrder.shiprocketOrderId || null,
           }));
           
-          setOrders(mappedDbOrders);
-          saveOrdersSafely(mappedDbOrders);
+          // Deduplicate by order ID — keep the first occurrence (DB version wins)
+          const seen = new Set();
+          const uniqueOrders = mappedDbOrders.filter(o => {
+            if (seen.has(o.id)) return false;
+            seen.add(o.id);
+            return true;
+          });
+          
+          setOrders(uniqueOrders);
+          saveOrdersSafely(uniqueOrders);
         }
       })
       .catch(err => console.warn('Global DB Order sync neglected:', err));
   }, []);
 
-  const addOrder = (orderData) => {
-    let nextIdNum = 61;
-    if (orders.length > 0) {
-      const ids = orders.map(o => {
-        const match = String(o.id).match(/\d+/);
-        return match ? parseInt(match[0], 10) : 0;
-      });
-      const maxId = Math.max(...ids);
-      if (maxId >= 61) {
-        nextIdNum = maxId + 1;
-      }
+  /**
+   * Add a new order. Saves to localStorage + MongoDB synchronously,
+   * then triggers Shiprocket order creation in the background.
+   * Customer sees confirmation immediately — Shiprocket runs async.
+   * 
+   * @param {object} orderData - Order data from checkout
+   * @param {object} shippingDetails - Shipping form data (firstName, lastName, address, city, postcode, state, phone)
+   */
+  const addOrder = (orderData, shippingDetails = null) => {
+    // Generate a unique ID using timestamp to prevent duplicates
+    const timestamp = Date.now();
+    const uniqueSuffix = timestamp.toString().slice(-4);
+    let nextIdNum = parseInt(uniqueSuffix, 10);
+    
+    // Also check existing orders to guarantee uniqueness
+    const existingIds = new Set(orders.map(o => o.id));
+    let candidateId = `#KHD-${nextIdNum}`;
+    while (existingIds.has(candidateId)) {
+      nextIdNum++;
+      candidateId = `#KHD-${nextIdNum}`;
     }
 
     const newOrder = {
       ...orderData,
-      id: `#KHD-${nextIdNum}`,
+      id: candidateId,
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       status: 'Pending',
       color: '#fef3c7',
@@ -102,27 +125,62 @@ export function OrderProvider({ children }) {
     };
     
     setOrders(prev => {
-      // Recalculate inside to be perfectly safe from stale closures
-      let safeNextId = 61;
-      if (prev.length > 0) {
-        const prevIds = prev.map(o => {
-          const match = String(o.id).match(/\d+/);
-          return match ? parseInt(match[0], 10) : 0;
-        });
-        const safeMax = Math.max(...prevIds);
-        if (safeMax >= 61) safeNextId = safeMax + 1;
+      // Check for duplicate inside the setter to be safe from stale closures
+      const prevIds = new Set(prev.map(o => o.id));
+      let safeOrder = newOrder;
+      if (prevIds.has(newOrder.id)) {
+        // Extremely unlikely but handle it — append random suffix
+        const fallbackId = `#KHD-${Date.now().toString().slice(-5)}`;
+        safeOrder = { ...newOrder, id: fallbackId };
       }
       
-      const safestOrder = { ...newOrder, id: `#KHD-${safeNextId}` };
-      const updated = [safestOrder, ...prev];
+      const updated = [safeOrder, ...prev];
       saveOrdersSafely(updated);
 
-      // Async push to actual MongoDB
+      // Step 1: Push order to MongoDB with shippingDetails
+      const mongoPayload = { ...safeOrder };
+      if (shippingDetails) {
+        mongoPayload.shippingDetails = shippingDetails;
+      }
+
       fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(safestOrder)
-      }).catch(err => console.error("MongoDB Sync Error:", err));
+        body: JSON.stringify(mongoPayload)
+      })
+        .then(res => res.json())
+        .then(dbResult => {
+          if (!dbResult.success) {
+            console.warn('[OrderContext] MongoDB save returned:', dbResult);
+            return;
+          }
+          console.log('[OrderContext] Order saved to MongoDB:', safeOrder.id);
+
+          // Step 2: Trigger Shiprocket in background (fire-and-forget)
+          const shiprocketPayload = {
+            ...safeOrder,
+            orderId: safeOrder.id,
+            shippingDetails: shippingDetails || {},
+          };
+
+          fetch('/api/shiprocket/createOrder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(shiprocketPayload),
+          })
+            .then(res => res.json())
+            .then(srResult => {
+              if (srResult.success) {
+                console.log('[OrderContext] Shiprocket order created successfully');
+              } else {
+                console.warn('[OrderContext] Shiprocket deferred:', srResult.error);
+              }
+            })
+            .catch(err => {
+              console.error('[OrderContext] Shiprocket background sync failed:', err.message);
+            });
+        })
+        .catch(err => console.error('[OrderContext] MongoDB Sync Error:', err));
 
       return updated;
     });

@@ -15,7 +15,7 @@ export async function GET() {
       ]);
     }
     
-    const orders = await Order.find({}).sort({ createdAt: -1 });
+    const orders = await Order.find({}).sort({ createdAt: -1 }).limit(200).allowDiskUse(true);
     
     if (orders.length === 0) {
       // Fallback if connected but empty
@@ -54,7 +54,8 @@ export async function POST(req) {
       status: body.status || 'Pending',
       color: body.color,
       text: body.text,
-      dateString: body.date
+      dateString: body.date,
+      shippingDetails: body.shippingDetails || {}
     });
     
     return NextResponse.json({ success: true, order: newOrder }, { status: 201 });

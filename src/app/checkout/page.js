@@ -19,10 +19,14 @@ export default function CheckoutPage() {
     lastName: '',
     address: '',
     city: '',
+    state: '',
     postcode: '',
+    phone: '',
   });
 
   const [orderSuccessDetails, setOrderSuccessDetails] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('online'); // 'online' or 'cod'
 
   const activeItems = buyNowItem ? [buyNowItem] : cartItems;
 
@@ -44,41 +48,59 @@ export default function CheckoutPage() {
         const savedAddress = localStorage.getItem(`khd_address_${user.email}`);
         if (savedAddress) {
           try {
-            setFormData(JSON.parse(savedAddress));
+            const parsed = JSON.parse(savedAddress);
+            setFormData(prev => ({ ...prev, ...parsed }));
           } catch(e) {}
         }
       }
     }
   }, [user, isMounted, router]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!user) return; // Prevent raw bypasses
-
+  /**
+   * Validate the shipping form before any payment action
+   */
+  const validateForm = () => {
+    if (!user) return false;
     if (!formData.firstName || !formData.lastName || !formData.address) {
       alert("Please fill out your complete shipping details.");
-      return;
+      return false;
     }
-
+    if (!formData.city || !formData.state || !formData.postcode || !formData.phone) {
+      alert("Please fill all address fields including city, state, postcode, and phone.");
+      return false;
+    }
     if (activeItems.length === 0) {
       alert("Your cart is empty! There's nothing to checkout.");
       router.push('/shop');
-      return;
+      return false;
     }
+    return true;
+  };
 
-    // Save address locally to the persistent profile cache
+  /**
+   * Build the order record common to both COD and online payment
+   */
+  const buildOrderRecord = () => ({
+    name: `${formData.firstName} ${formData.lastName}`,
+    email: user.email,
+    total: `₹${formattedTotal}`,
+    items: activeItems.length,
+    payload: [...activeItems],
+    date: new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })
+  });
+
+  /**
+   * Handle Cash on Delivery — same as the original flow
+   */
+  const handleCODSubmit = (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    // Save address locally
     localStorage.setItem(`khd_address_${user.email}`, JSON.stringify(formData));
 
-    // Capture the submission into global persistent sync state
-    const orderRecord = {
-      name: `${formData.firstName} ${formData.lastName}`,
-      email: user.email,
-      total: `₹${formattedTotal}`,
-      items: activeItems.length,
-      payload: [...activeItems],
-      date: new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })
-    };
-    addOrder(orderRecord);
+    const orderRecord = buildOrderRecord();
+    addOrder(orderRecord, formData);
 
     if (buyNowItem) {
       clearBuyNow();
@@ -89,11 +111,113 @@ export default function CheckoutPage() {
     setOrderSuccessDetails(orderRecord);
   };
 
+  /**
+   * Handle Pay Now (PhonePe Online Payment)
+   * 1. Save order to MongoDB via OrderContext (paymentStatus: pending)
+   * 2. Call /api/payment/initiate to get PhonePe payment URL
+   * 3. Redirect user to PhonePe for payment
+   */
+  const handleOnlinePayment = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    if (isProcessing) return;
+
+    setIsProcessing(true);
+    console.log('[Checkout DEBUG] ══════════════════════════════════════');
+    console.log('[Checkout DEBUG] PAY ONLINE clicked');
+    console.log('[Checkout DEBUG] ══════════════════════════════════════');
+
+    try {
+      // Save address locally
+      localStorage.setItem(`khd_address_${user.email}`, JSON.stringify(formData));
+
+      // Step 1: Create order
+      const orderRecord = buildOrderRecord();
+      console.log('[Checkout DEBUG] Step 1: Order record built:', JSON.stringify(orderRecord));
+      
+      const orderId = addOrder(orderRecord, formData);
+      console.log('[Checkout DEBUG] Step 2: addOrder returned orderId:', orderId);
+      console.log('[Checkout DEBUG] Step 2: orderId type:', typeof orderId);
+
+      // Small delay to let MongoDB save complete before initiating payment
+      console.log('[Checkout DEBUG] Step 3: Waiting 800ms for MongoDB save...');
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // Step 4: Call payment initiation API
+      const requestBody = {
+        orderId: orderId,
+        amount: computedTotal,
+        userPhone: formData.phone,
+        userEmail: user.email,
+        userName: `${formData.firstName} ${formData.lastName}`,
+      };
+      console.log('[Checkout DEBUG] Step 4: Calling /api/payment/initiate');
+      console.log('[Checkout DEBUG] Request body:', JSON.stringify(requestBody));
+      console.log('[Checkout DEBUG] computedTotal:', computedTotal, '| type:', typeof computedTotal);
+
+      const response = await fetch('/api/payment/initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log('[Checkout DEBUG] Step 5: API response status:', response.status, response.statusText);
+      
+      const data = await response.json();
+      console.log('[Checkout DEBUG] Step 5: API response data:', JSON.stringify(data));
+
+      if (data.success && data.paymentUrl) {
+        console.log('[Checkout DEBUG] ✅ Step 6: Got payment URL:', data.paymentUrl);
+        
+        // Clear cart before redirecting to PhonePe
+        if (buyNowItem) {
+          clearBuyNow();
+        } else {
+          clearCart();
+        }
+
+        // Save pending order info in session for recovery
+        sessionStorage.setItem('khd_pending_payment', JSON.stringify({
+          orderId,
+          merchantTransactionId: data.merchantTransactionId,
+          amount: computedTotal,
+        }));
+
+        // Redirect user to PhonePe payment page
+        console.log('[Checkout DEBUG] Step 7: Redirecting to PhonePe...');
+        window.location.href = data.paymentUrl;
+      } else {
+        console.error('[Checkout DEBUG] ❌ Step 6: FAILED — no payment URL');
+        console.error('[Checkout DEBUG] Error:', data.error);
+        alert(data.error || 'Failed to initiate payment. Please try again or use Cash on Delivery.');
+        setIsProcessing(false);
+      }
+    } catch (error) {
+      console.error('[Checkout DEBUG] ❌ EXCEPTION:', error.message);
+      console.error('[Checkout DEBUG] Stack:', error.stack);
+      alert('Something went wrong. Please try again or choose Cash on Delivery.');
+      setIsProcessing(false);
+    }
+  };
+
+  /**
+   * Common form submission handler — routes to COD or online based on selection
+   */
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (paymentMethod === 'cod') {
+      handleCODSubmit(e);
+    } else {
+      handleOnlinePayment(e);
+    }
+  };
+
   if (!isMounted || !user) {
     // Flash mitigation structure while redirect validates
     return <div style={{ height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Authenticating securely...</div>;
   }
 
+  // ──── COD Order Success View (inline) ────
   if (orderSuccessDetails) {
     return (
       <div className={`container animate-fade-in ${styles.page}`} style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 1rem' }}>
@@ -112,10 +236,14 @@ export default function CheckoutPage() {
               <div style={{ fontWeight: 600, color: '#1e293b' }}>{orderSuccessDetails.date}</div>
             </div>
             <div>
+              <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Payment Method</div>
+              <div style={{ fontWeight: 600, color: '#1e293b' }}>Cash on Delivery</div>
+            </div>
+            <div>
               <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email</div>
               <div style={{ fontWeight: 600, color: '#1e293b', wordBreak: 'break-all' }}>{orderSuccessDetails.email}</div>
             </div>
-            <div style={{ gridColumn: 'span 2' }}>
+            <div>
               <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Amount</div>
               <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '1.25rem' }}>{orderSuccessDetails.total}</div>
             </div>
@@ -154,6 +282,7 @@ export default function CheckoutPage() {
     );
   }
 
+  // ──── Main Checkout Form ────
   return (
     <div className={`container animate-fade-in ${styles.page}`}>
       <h1 className={styles.title}>Secure Checkout</h1>
@@ -190,13 +319,138 @@ export default function CheckoutPage() {
             <input type="text" className={styles.input} required maxLength="6" pattern="\d{6}" title="Please enter a valid 6-digit postcode" value={formData.postcode} onChange={e=>{ const val = e.target.value.replace(/\D/g, ''); setFormData({...formData, postcode: val}); }} />
           </div>
         </div>
-
-        <div style={{ marginTop: '2rem' }}>
-          <Button fullWidth variant="primary" type="submit">
-            Complete Order (₹{formattedTotal})
-          </Button>
+        <div className={styles.row}>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>State</label>
+            <input type="text" className={styles.input} required placeholder="e.g. Gujarat" value={formData.state} onChange={e=>setFormData({...formData, state: e.target.value})} />
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Phone Number</label>
+            <input type="tel" className={styles.input} required maxLength="10" pattern="\d{10}" title="Please enter a valid 10-digit phone number" placeholder="10-digit mobile number" value={formData.phone} onChange={e=>{ const val = e.target.value.replace(/\D/g, ''); setFormData({...formData, phone: val}); }} />
+          </div>
         </div>
+
+        {/* ──── Payment Method Selection ──── */}
+        <h2 className={styles.sectionTitle}>Payment Method</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '2rem' }}>
+          {/* Pay Online (PhonePe) */}
+          <label
+            onClick={() => setPaymentMethod('online')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '16px',
+              padding: '18px 20px', borderRadius: '12px', cursor: 'pointer',
+              border: paymentMethod === 'online' ? '2px solid #6C4FE1' : '2px solid #e2e8f0',
+              background: paymentMethod === 'online' ? '#f5f3ff' : '#fff',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <div style={{
+              width: '22px', height: '22px', borderRadius: '50%',
+              border: paymentMethod === 'online' ? '6px solid #6C4FE1' : '2px solid #cbd5e1',
+              transition: 'all 0.2s',
+              flexShrink: 0,
+            }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '1rem', marginBottom: '2px' }}>Pay Online</div>
+              <div style={{ fontSize: '0.85rem', color: '#64748b' }}>UPI, Debit/Credit Card, Net Banking via PhonePe</div>
+            </div>
+            <div style={{
+              background: 'linear-gradient(135deg, #6C4FE1 0%, #8B5CF6 100%)',
+              color: '#fff', padding: '4px 14px', borderRadius: '20px',
+              fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.02em',
+            }}>
+              RECOMMENDED
+            </div>
+          </label>
+
+          {/* Cash on Delivery */}
+          <label
+            onClick={() => setPaymentMethod('cod')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '16px',
+              padding: '18px 20px', borderRadius: '12px', cursor: 'pointer',
+              border: paymentMethod === 'cod' ? '2px solid #6C4FE1' : '2px solid #e2e8f0',
+              background: paymentMethod === 'cod' ? '#f5f3ff' : '#fff',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <div style={{
+              width: '22px', height: '22px', borderRadius: '50%',
+              border: paymentMethod === 'cod' ? '6px solid #6C4FE1' : '2px solid #cbd5e1',
+              transition: 'all 0.2s',
+              flexShrink: 0,
+            }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '1rem', marginBottom: '2px' }}>Cash on Delivery</div>
+              <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Pay when your order arrives at your doorstep</div>
+            </div>
+          </label>
+        </div>
+
+        {/* ──── Submit Buttons ──── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {paymentMethod === 'online' ? (
+            <button
+              type="submit"
+              disabled={isProcessing}
+              style={{
+                width: '100%', padding: '16px', border: 'none', borderRadius: '12px',
+                background: isProcessing
+                  ? '#a5b4fc'
+                  : 'linear-gradient(135deg, #6C4FE1 0%, #8B5CF6 50%, #A78BFA 100%)',
+                color: '#fff', fontSize: '1.05rem', fontWeight: 700,
+                cursor: isProcessing ? 'not-allowed' : 'pointer',
+                fontFamily: 'Outfit, sans-serif', letterSpacing: '0.02em',
+                transition: 'all 0.3s ease',
+                boxShadow: isProcessing ? 'none' : '0 4px 15px rgba(108, 79, 225, 0.35)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+              }}
+            >
+              {isProcessing ? (
+                <>
+                  <svg style={{ animation: 'spin 1s linear infinite', width: '20px', height: '20px' }} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="42" strokeDashoffset="12" strokeLinecap="round" />
+                  </svg>
+                  Processing Payment...
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                  Pay ₹{formattedTotal} Securely
+                </>
+              )}
+            </button>
+          ) : (
+            <button
+              type="submit"
+              style={{
+                width: '100%', padding: '16px', border: 'none', borderRadius: '12px',
+                background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                color: '#fff', fontSize: '1.05rem', fontWeight: 700,
+                cursor: 'pointer', fontFamily: 'Outfit, sans-serif',
+                letterSpacing: '0.02em', transition: 'all 0.3s ease',
+                boxShadow: '0 4px 15px rgba(15, 23, 42, 0.25)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+              Place COD Order — ₹{formattedTotal}
+            </button>
+          )}
+        </div>
+
+        <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#94a3b8', marginTop: '16px', lineHeight: 1.6 }}>
+          🔒 Your payment is processed securely via PhonePe. We never store your card details.
+        </p>
       </form>
+
+      {/* Spinner animation keyframe */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}} />
     </div>
   );
 }
