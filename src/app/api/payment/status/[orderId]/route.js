@@ -16,7 +16,8 @@ export async function GET(req, { params }) {
       return NextResponse.json({ success: false, error: "DB Connection Failed" }, { status: 500 });
     }
 
-    const orderDoc = await Order.findOne({ orderId });
+    const decodedOrderId = decodeURIComponent(orderId);
+    const orderDoc = await Order.findOne({ orderId: decodedOrderId });
 
     if (!orderDoc) {
       return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 });

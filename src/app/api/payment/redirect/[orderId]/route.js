@@ -21,10 +21,11 @@ export async function POST(req, { params }) {
     if (!db) throw new Error("Database connection failed");
 
     // 1. Look up the order to get the locked-in merchantTransactionId
-    const orderDoc = await Order.findOne({ orderId });
+    const decodedOrderId = decodeURIComponent(orderId);
+    const orderDoc = await Order.findOne({ orderId: decodedOrderId });
 
     if (!orderDoc || !orderDoc.merchantTransactionId) {
-      console.error(`[PhonePe Redirect] Missing order or merchantTransactionId for:`, orderId);
+      console.error(`[PhonePe Redirect] Missing order or merchantTransactionId for:`, decodedOrderId);
       return NextResponse.redirect(`${baseUrl}/payment-failed?error=missing_transaction`, 303);
     }
 
