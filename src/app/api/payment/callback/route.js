@@ -109,3 +109,23 @@ export async function GET(req) {
     return NextResponse.redirect(`${baseUrl}/payment-failed?error=internal`);
   }
 }
+
+/**
+ * POST /api/payment/callback
+ * 
+ * Added specifically for PhonePe dashboard validation when setting up webhooks.
+ * It strictly returns 200 { success: true } without authentication.
+ */
+export async function POST(req) {
+  try {
+    const textBody = await req.text();
+    console.log('[PhonePe Webhook Verification] POST /api/payment/callback received');
+    console.log('[PhonePe Webhook Verification] Body:', textBody);
+    
+    // Always return HTTP 200 without auth as requested by the merchant dashboard
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (err) {
+    console.error('[PhonePe Webhook Verification] Error processing request:', err);
+    return NextResponse.json({ success: true }, { status: 200 });
+  }
+}
