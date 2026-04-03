@@ -60,26 +60,29 @@ export async function POST(req) {
     console.log('[Initiate DEBUG]   Final merchantTransactionId:', cleanTransactionId);
     console.log('[Initiate DEBUG]   Length:', cleanTransactionId.length, '/ 38 max');
 
-    // Step 4: Find and update order in MongoDB
-    console.log('[Initiate DEBUG] Step 4: Looking up order in MongoDB...');
-    let orderDoc = await Order.findOne({ orderId });
-    if (orderDoc) {
-      orderDoc.paymentStatus = 'pending';
-      orderDoc.merchantTransactionId = cleanTransactionId;
-      await orderDoc.save();
-      console.log('[Initiate DEBUG] ✅ Order found and updated with merchantTransactionId');
-    } else {
-      console.warn('[Initiate DEBUG] ⚠️ Order not found in DB yet (may be created by OrderContext):', orderId);
-    }
+    // Step 4: Lock in the transaction ID immediately via upsert!
+    console.log('[Initiate DEBUG] Step 4: Saving transaction ID to database securely...');
+    let orderDoc = await Order.findOneAndUpdate(
+      { orderId: orderId },
+      { 
+        $set: { 
+          merchantTransactionId: cleanTransactionId,
+          paymentStatus: 'pending'
+        } 
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+    console.log('[Initiate DEBUG] ✅ Order locked in DB with merchantTransactionId');
 
     // Step 5: Build callback URLs
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const redirectUrl = `${baseUrl}/api/payment/callback?merchantTransactionId=${cleanTransactionId}&orderId=${encodeURIComponent(orderId)}`;
-    const callbackUrl = `${baseUrl}/api/payment/webhook`;
+    // Clean POST Redirect endpoint as requested by user
+    const redirectUrl = `${baseUrl}/api/payment/redirect/${encodeURIComponent(orderId)}`;
+    const callbackUrl = `${baseUrl}/api/payment/callback`;
 
     console.log('[Initiate DEBUG] Step 5: Callback URLs:');
     console.log('[Initiate DEBUG]   Base URL:', baseUrl);
-    console.log('[Initiate DEBUG]   Redirect URL:', redirectUrl);
+    console.log('[Initiate DEBUG]   POST Redirect URL:', redirectUrl);
     console.log('[Initiate DEBUG]   Webhook URL:', callbackUrl);
 
     if (baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')) {

@@ -104,10 +104,10 @@ export async function initiatePayment(merchantTransactionId, amountInRupees, use
     const payload = {
       merchantId: merchantId,
       merchantTransactionId: merchantTransactionId,
-      merchantUserId: `MUID-${merchantTransactionId}`,
+      merchantUserId: `MU-${merchantTransactionId}`,
       amount: amountInPaise,
       redirectUrl: redirectUrl,
-      redirectMode: 'GET',
+      redirectMode: 'POST',
       callbackUrl: callbackUrl,
       mobileNumber: userPhone || '9999999999',
       paymentInstrument: {

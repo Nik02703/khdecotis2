@@ -42,22 +42,27 @@ export async function POST(req) {
     
     const body = await req.json();
     
-    // Create new robust Order document
-    const newOrder = await Order.create({
-      orderId: body.id,
-      name: body.name,
-      email: body.email,
-      items: body.items,
-      payload: body.payload || [],
-      totalAmount: typeof body.total === 'string' ? parseFloat(body.total.replace(/[^0-9.]/g, '')) : (body.total || 0),
-      totalString: body.total,
-      status: body.status || 'Pending',
-      color: body.color,
-      text: body.text,
-      dateString: body.date,
-      shippingDetails: body.shippingDetails || {},
-      paymentMethod: body.paymentMethod || 'COD',
-    });
+    // Upsert robust Order document to prevent duplicate entries/race conditions
+    const newOrder = await Order.findOneAndUpdate(
+      { orderId: body.id },
+      {
+        $set: {
+          name: body.name,
+          email: body.email,
+          items: body.items,
+          payload: body.payload || [],
+          totalAmount: typeof body.total === 'string' ? parseFloat(body.total.replace(/[^0-9.]/g, '')) : (body.total || 0),
+          totalString: body.total,
+          status: body.status || 'Pending',
+          color: body.color,
+          text: body.text,
+          dateString: body.date,
+          shippingDetails: body.shippingDetails || {},
+          paymentMethod: body.paymentMethod || 'COD',
+        }
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
     
     return NextResponse.json({ success: true, order: newOrder }, { status: 201 });
   } catch (error) {
