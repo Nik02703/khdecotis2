@@ -1,8 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Package, ChevronRight, Clock, CheckCircle2, XCircle, Printer, X, Truck, MapPin, RefreshCw } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
+import { Package, ChevronRight, Clock, CheckCircle2, XCircle, Printer, X, Truck, MapPin, RefreshCw, Search } from 'lucide-react';
 import { useOrders } from '@/context/OrderContext';
 import { useRouter } from 'next/navigation';
 
@@ -12,15 +11,9 @@ export default function OrdersPage() {
   const [trackingData, setTrackingData] = useState(null);
   const [trackingLoading, setTrackingLoading] = useState(false);
   const [trackingOrderId, setTrackingOrderId] = useState(null);
-  const { user, isMounted } = useAuth();
+  const [searchQuery, setSearchQuery] = useState('');
   const { orders } = useOrders();
   const router = useRouter();
-
-  useEffect(() => {
-    if (isMounted && !user) {
-       router.push('/account?redirect=/orders');
-    }
-  }, [user, isMounted, router]);
 
   const fetchTracking = useCallback(async (orderId) => {
     setTrackingLoading(true);
@@ -38,10 +31,20 @@ export default function OrdersPage() {
     }
   }, []);
 
-  if (!isMounted || !user) return null;
+  // Filter orders by search query (email or order ID) and status
+  const matchesSearch = (order) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase().trim();
+    return (
+      (order.id && order.id.toLowerCase().includes(q)) ||
+      (order.email && order.email.toLowerCase().includes(q)) ||
+      (order.name && order.name.toLowerCase().includes(q))
+    );
+  };
 
-  const userOrders = orders.filter(o => o.email === user.email);
-  const filteredOrders = userOrders.filter(o => filter === 'All' ? true : o.status === filter);
+  const filteredOrders = orders
+    .filter(matchesSearch)
+    .filter(o => filter === 'All' ? true : o.status === filter);
 
   const getStatusIcon = (status) => {
     switch(status) {
@@ -62,7 +65,37 @@ export default function OrdersPage() {
       <div className="container animate-fade-in" style={{ padding: '4rem 2rem', minHeight: '80vh', maxWidth: '1000px', margin: '0 auto', fontFamily: 'Outfit, sans-serif' }}>
       <div style={{ marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0' }}>Order History</h1>
-        <p style={{ color: '#64748b', fontSize: '1.05rem', margin: 0 }}>Track, manage, and review your recent purchases natively.</p>
+        <p style={{ color: '#64748b', fontSize: '1.05rem', margin: 0 }}>Track, manage, and review your recent purchases.</p>
+      </div>
+
+      {/* Search Bar */}
+      <div style={{ marginBottom: '24px' }}>
+        <div style={{ 
+          display: 'flex', alignItems: 'center', gap: '12px', 
+          background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', 
+          padding: '12px 16px', transition: 'border-color 0.2s',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+        }}>
+          <Search size={20} color="#94a3b8" />
+          <input 
+            type="text"
+            placeholder="Search by order ID, email, or name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ 
+              flex: 1, border: 'none', outline: 'none', fontSize: '1rem', 
+              color: '#0f172a', background: 'transparent', fontFamily: 'inherit'
+            }}
+          />
+          {searchQuery && (
+            <button 
+              onClick={() => setSearchQuery('')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '2px' }}
+            >
+              <X size={18} />
+            </button>
+          )}
+        </div>
       </div>
       
       {/* Modern Tabs */}
@@ -120,7 +153,7 @@ export default function OrdersPage() {
                 </div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>Order {order.id}</h3>
-                  <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '0.9rem', fontWeight: 500 }}>Placed on {order.date}</p>
+                  <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '0.9rem', fontWeight: 500 }}>Placed on {order.date} {order.name ? `· ${order.name}` : ''}</p>
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
@@ -361,7 +394,9 @@ export default function OrdersPage() {
               <Package size={36} color="#94a3b8" />
             </div>
             <h3 style={{ fontSize: '1.35rem', color: '#0f172a', margin: '0 0 8px 0', fontWeight: 800 }}>No Orders Found</h3>
-            <p style={{ color: '#64748b', fontSize: '1rem', margin: '0 0 24px 0' }}>It looks like you haven't placed any {filter !== 'All' ? filter.toLowerCase() : ''} orders yet.</p>
+            <p style={{ color: '#64748b', fontSize: '1rem', margin: '0 0 24px 0' }}>
+              {searchQuery ? `No orders match "${searchQuery}".` : `It looks like there are no ${filter !== 'All' ? filter.toLowerCase() : ''} orders yet.`}
+            </p>
             <Link href="/shop">
               <button style={{ padding: '14px 32px', background: '#0f172a', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '1rem', cursor: 'pointer', fontFamily: 'inherit' }}>
                 Start Shopping Now
@@ -391,7 +426,7 @@ export default function OrdersPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px', fontSize: '0.9rem' }}>
               <div>
                 <strong style={{ display: 'block', color: '#0f172a', marginBottom: '4px' }}>Billed To:</strong>
-                <p style={{ margin: 0, color: '#475569' }}>{user.name || selectedOrder.name}<br/>{user.email || selectedOrder.email}<br/>Vadodara, Gujarat</p>
+                <p style={{ margin: 0, color: '#475569' }}>{selectedOrder.name}<br/>{selectedOrder.email}</p>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <strong style={{ display: 'block', color: '#0f172a', marginBottom: '4px' }}>Order Date:</strong>

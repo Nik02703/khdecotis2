@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongoose';
 import Order from '@/models/Order';
-import { shiprocketFetch } from '@/lib/shiprocket';
+import { assignCourier } from '@/lib/shiprocket';
 
 /**
  * POST /api/shiprocket/generateAWB
@@ -27,41 +27,24 @@ export async function POST(req) {
 
     console.log('[Shiprocket AWB] Generating for shipment:', shipmentId, '| Order:', orderId);
 
-    const { response, data } = await shiprocketFetch(
-      'https://apiv2.shiprocket.in/v1/external/courier/assign/awb',
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          shipment_id: shipmentId,
-          courier_id: '', // Empty = Shiprocket auto-assigns best courier
-        }),
-      }
-    );
+    // Use the high-level assignCourier function (handles auth, timeout, retry)
+    const awbResult = await assignCourier(shipmentId);
 
-    if (!response.ok) {
-      console.error('[Shiprocket AWB] API error:', JSON.stringify(data));
-      throw new Error(data.message || `AWB API returned status ${response.status}`);
+    // Update MongoDB order with AWB details
+    const orderDoc = await Order.findOne({ orderId });
+    if (orderDoc) {
+      orderDoc.awbCode = awbResult.awb_code || '';
+      orderDoc.courierName = awbResult.courier_name || '';
+      orderDoc.trackingStatus = 'assigned';
+      await orderDoc.save();
+      console.log('[Shiprocket AWB] Saved — AWB:', awbResult.awb_code, '| Courier:', awbResult.courier_name);
     }
 
-    // Parse AWB response
-    if (data.response && data.response.data) {
-      const awbCode = data.response.data.awb_code;
-      const courierName = data.response.data.courier_name;
-
-      // Update MongoDB order with AWB details
-      const orderDoc = await Order.findOne({ orderId });
-      if (orderDoc) {
-        orderDoc.awbCode = awbCode || '';
-        orderDoc.courierName = courierName || '';
-        orderDoc.trackingStatus = 'assigned';
-        await orderDoc.save();
-        console.log('[Shiprocket AWB] Saved — AWB:', awbCode, '| Courier:', courierName);
-      }
-
-      return NextResponse.json({ success: true, awbCode, courierName });
-    } else {
-      throw new Error('Shiprocket returned unexpected AWB response structure.');
-    }
+    return NextResponse.json({
+      success: true,
+      awbCode: awbResult.awb_code,
+      courierName: awbResult.courier_name,
+    });
 
   } catch (error) {
     console.error('[Shiprocket AWB] Error:', error.message);

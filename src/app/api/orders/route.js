@@ -55,12 +55,53 @@ export async function POST(req) {
       color: body.color,
       text: body.text,
       dateString: body.date,
-      shippingDetails: body.shippingDetails || {}
+      shippingDetails: body.shippingDetails || {},
+      paymentMethod: body.paymentMethod || 'COD',
     });
     
     return NextResponse.json({ success: true, order: newOrder }, { status: 201 });
   } catch (error) {
     console.error("Order DB Creation Error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+/**
+ * PATCH — Update an existing order's status in MongoDB
+ * Uses updateMany to handle duplicate orderId entries
+ * Body: { orderId: '#KHD-1234', status: 'Shipped', color: '#dbeafe', text: '#2563eb' }
+ */
+export async function PATCH(req) {
+  try {
+    const db = await connectToDatabase();
+    if (!db) {
+      return NextResponse.json({ error: 'Database disconnected.' }, { status: 503 });
+    }
+
+    const body = await req.json();
+    const { orderId, status, color, text } = body;
+
+    if (!orderId || !status) {
+      return NextResponse.json({ error: 'orderId and status are required.' }, { status: 400 });
+    }
+
+    console.log('[Orders PATCH] Updating ALL docs for orderId:', orderId, '->', status);
+
+    // Update ALL matching documents (handles duplicates)
+    const result = await Order.updateMany(
+      { orderId },
+      { status, color, text }
+    );
+
+    if (result.matchedCount === 0) {
+      console.error('[Orders PATCH] Order NOT FOUND for orderId:', orderId);
+      return NextResponse.json({ error: `Order ${orderId} not found in database.` }, { status: 404 });
+    }
+
+    console.log('[Orders PATCH] ✅ Updated', result.modifiedCount, 'of', result.matchedCount, 'docs for:', orderId);
+    return NextResponse.json({ success: true, matched: result.matchedCount, modified: result.modifiedCount });
+  } catch (error) {
+    console.error('Order PATCH Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

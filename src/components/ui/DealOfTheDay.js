@@ -84,12 +84,18 @@ export default function DealOfTheDay() {
                 <p className={styles.productCategory}>{deal.category}</p>
                 <div className={styles.priceRow}>
                   <span className={styles.currentPrice}>₹{deal.price || deal.currentPrice}</span>
-                  <span className={styles.oldPrice}>₹{deal.oldPrice}</span>
-                  <span className={styles.discountBadge}>
-                    {deal.discount || (deal.oldPrice && (deal.price || deal.currentPrice) && Number(deal.oldPrice) > Number(deal.price || deal.currentPrice) ? 
-                      `${Math.round(((Number(deal.oldPrice) - Number(deal.price || deal.currentPrice)) / Number(deal.oldPrice)) * 100)}% OFF` 
-                      : null)}
-                  </span>
+                  {(() => {
+                    const rawOldPrice = deal.oldPrice ? Number(deal.oldPrice) : 0;
+                    const price = Number(deal.price || deal.currentPrice);
+                    const effectiveOldPrice = rawOldPrice > price ? rawOldPrice : Math.round(price * 1.4);
+                    const discountText = deal.discount || (effectiveOldPrice > price ? `${Math.round(((effectiveOldPrice - price) / effectiveOldPrice) * 100)}% OFF` : null);
+                    return (
+                      <>
+                        {effectiveOldPrice > price && <span className={styles.oldPrice}>₹{effectiveOldPrice}</span>}
+                        {discountText && <span className={styles.discountBadge}>{discountText}</span>}
+                      </>
+                    );
+                  })()}
                 </div>
                 <div className={styles.limitedOffer}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>

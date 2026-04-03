@@ -14,7 +14,8 @@ import { verifyPayment } from '@/lib/phonepe';
  * 1. Extract merchantTransactionId from query
  * 2. Call PhonePe status API to verify payment server-side
  * 3. Update order in MongoDB based on result
- * 4. Redirect user to success or failure page
+ * 4. On success: trigger Shiprocket order creation in background
+ * 5. Redirect user to success or failure page
  * 
  * IMPORTANT: Never trust the frontend — always verify with PhonePe server-side.
  */
@@ -44,7 +45,7 @@ export async function GET(req) {
 
       if (orderDoc) {
         if (verification.success && verification.status === 'SUCCESS') {
-          // ✅ Payment successful
+          // ✅ Payment successful — update order
           orderDoc.paymentStatus = 'paid';
           orderDoc.paymentMethod = 'PhonePe';
           orderDoc.paymentTransactionId = verification.transactionId || '';
@@ -55,6 +56,28 @@ export async function GET(req) {
           orderDoc.text = '#16a34a';
           await orderDoc.save();
           console.log('[Payment Callback] Order', orderId, 'marked as PAID');
+
+          // ── Trigger Shiprocket in background (fire-and-forget) ──
+          // For prepaid orders, we ship via Shiprocket after verified payment
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+          try {
+            fetch(`${baseUrl}/api/orders/${encodeURIComponent(orderDoc.orderId)}/ship`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+            }).then(res => res.json()).then(srResult => {
+              if (srResult.success) {
+                console.log('[Payment Callback] Shiprocket shipment triggered successfully for:', orderId);
+              } else {
+                console.warn('[Payment Callback] Shiprocket deferred:', srResult.error);
+              }
+            }).catch(err => {
+              console.error('[Payment Callback] Shiprocket background trigger failed:', err.message);
+            });
+          } catch (srErr) {
+            // Non-fatal — order is saved, Shiprocket can be retried
+            console.error('[Payment Callback] Shiprocket trigger error (non-fatal):', srErr.message);
+          }
+
         } else {
           // ❌ Payment failed or pending
           orderDoc.paymentStatus = verification.status === 'PENDING' ? 'pending' : 'failed';

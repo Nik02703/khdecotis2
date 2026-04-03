@@ -47,14 +47,14 @@ export default function ContactPage() {
               <div className={styles.infoItem}>
                 <strong>📍 Location:</strong> 
                 <br/>
-                KH Decotis, GF, 3rd floor, Subhanpura, Vadodara, Gujarat 390023
+                KH Decotis, 3rd Floor, Vishwamohini Complex, Nr Panchratna Appartment, Subhanpura, Vadodara
               </div>
             </div>
             
             <div className={styles.mapContainer}>
               {/* Embedded Google Maps dynamically zooming into exact requested location */}
               <iframe 
-                src="https://maps.google.com/maps?q=KH%20Decotis,%20GF%203rd%20floor,Subhanpura,%20Vadodara,%20Gujarat%20390023&t=&z=15&ie=UTF8&iwloc=&output=embed"
+                src="https://maps.google.com/maps?q=Gf+13,+Vishwa+Mohini+Apartments,+nr.+Panchratna+Appt,+opp.+Ganga+Jamna+Hospital,+Subhanpura,+Vadodara,+Gujarat+390023,+India&t=&z=17&ie=UTF8&iwloc=&output=embed"
                 width="100%" 
                 height="100%" 
                 style={{ border: 0 }} 

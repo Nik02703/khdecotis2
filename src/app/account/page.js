@@ -1,111 +1,57 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import styles from './page.module.css';
-import Button from '@/components/ui/Button';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
+/**
+ * Account page — login is no longer required.
+ * This page now redirects to the shop or shows a simple info page.
+ */
 export default function AccountPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/';
-  const { user, login, register, isMounted } = useAuth();
-  
-  const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
-  const [error, setError] = useState('');
-
-  // Auto-redirect if already logged in natively
-  useEffect(() => {
-    if (isMounted && user) {
-      router.push(redirectTo);
-    }
-  }, [user, isMounted, router, redirectTo]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setError('');
-
-    if (isLogin) {
-      const success = login(formData.email, formData.password);
-      if (success) {
-        router.push(redirectTo);
-      } else {
-        setError('Invalid email or password. Please try again or create an account.');
-      }
-    } else {
-      if (!formData.name || !formData.email || !formData.password) {
-        setError('Please fill in all layout blocks securely.');
-        return;
-      }
-      const success = register(formData.name, formData.email, formData.password);
-      if (success) {
-        router.push(redirectTo);
-      } else {
-        setError('An account with this mapped email already natively exists!');
-      }
-    }
-  };
-
-  if (!isMounted) return null; // Prevent hydration flash
 
   return (
-    <div className={`container animate-fade-in ${styles.pageWrapper}`}>
-      <div className={styles.formCard}>
-        <h1 className={styles.title}>{isLogin ? 'Log in to your account' : 'Create an Account'}</h1>
-        <p className={styles.subtitle}>
-          {isLogin ? 'Enter your details below to securely access your profile.' : 'Sign up to track native orders and secure checkout operations.'}
-        </p>
+    <div className="container animate-fade-in" style={{ minHeight: '70vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 2rem', fontFamily: 'Outfit, sans-serif' }}>
+      <div style={{ 
+        width: '80px', height: '80px', borderRadius: '50%', 
+        background: '#f0fdf4', border: '2px solid #bbf7d0',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        marginBottom: '24px'
+      }}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      </div>
+      
+      <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', marginBottom: '12px', textAlign: 'center' }}>
+        No Login Required!
+      </h1>
+      <p style={{ color: '#64748b', fontSize: '1.1rem', maxWidth: '480px', textAlign: 'center', lineHeight: 1.7, marginBottom: '36px' }}>
+        You can shop, checkout, and track your orders without creating an account. Just fill in your details during checkout.
+      </p>
 
-        {error && <div className={styles.errorBanner}>{error}</div>}
-
-        <form onSubmit={handleSubmit} className={styles.formContainer}>
-          {!isLogin && (
-            <div className={styles.inputGroup}>
-              <label>Full Name</label>
-              <input 
-                type="text" 
-                placeholder="Aditi Sharma" 
-                value={formData.name} 
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
-                required={!isLogin} 
-              />
-            </div>
-          )}
-          
-          <div className={styles.inputGroup}>
-            <label>Email Address</label>
-            <input 
-              type="email" 
-              placeholder="user@example.com" 
-              value={formData.email} 
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })} 
-              required 
-            />
-          </div>
-          
-          <div className={styles.inputGroup}>
-            <label>Password</label>
-            <input 
-              type="password" 
-              placeholder="••••••••" 
-              value={formData.password} 
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })} 
-              required 
-            />
-          </div>
-
-          <Button type="submit" variant="primary" fullWidth style={{ marginTop: '1rem' }}>
-            {isLogin ? 'Sign In' : 'Create Account'}
-          </Button>
-
-          <p className={styles.switchText}>
-            {isLogin ? "Don't have an account?" : "Already mapped to the system?"}
-            <button type="button" onClick={() => { setIsLogin(!isLogin); setError(''); }} className={styles.switchBtn}>
-              {isLogin ? 'Sign up' : 'Log in'}
-            </button>
-          </p>
-        </form>
+      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
+        <Link href="/shop">
+          <button style={{ 
+            padding: '14px 32px', background: '#0f172a', color: '#fff', 
+            border: 'none', borderRadius: '10px', fontWeight: 700, 
+            fontSize: '1rem', cursor: 'pointer', fontFamily: 'inherit',
+            transition: 'transform 0.2s',
+          }}>
+            Browse Shop
+          </button>
+        </Link>
+        <Link href="/orders">
+          <button style={{ 
+            padding: '14px 32px', background: '#fff', color: '#0f172a', 
+            border: '2px solid #e2e8f0', borderRadius: '10px', fontWeight: 700, 
+            fontSize: '1rem', cursor: 'pointer', fontFamily: 'inherit',
+            transition: 'transform 0.2s',
+          }}>
+            Track Orders
+          </button>
+        </Link>
       </div>
     </div>
   );

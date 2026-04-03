@@ -1,13 +1,20 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongoose';
 import Order from '@/models/Order';
-import { shiprocketFetch } from '@/lib/shiprocket';
+import { trackShipment } from '@/lib/shiprocket';
 
 /**
  * GET /api/orders/[orderId]/track
  * 
  * Fetches real-time tracking info for an order.
- * Uses the stored awbCode to query Shiprocket's tracking API.
+ * Uses the stored awbCode to query Shiprocket's tracking API
+ * via the high-level trackShipment() function.
+ * 
+ * Returns structured tracking data:
+ *  - awbCode, courierName, trackingStatus
+ *  - expectedDelivery date
+ *  - activities[] — array of { date, activity, location }
+ * 
  * Updates the local DB with the latest status for caching.
  */
 export async function GET(req, { params }) {
@@ -18,9 +25,10 @@ export async function GET(req, { params }) {
     }
 
     const { orderId } = await params;
+    const decodedId = decodeURIComponent(orderId);
 
     // Find order in MongoDB
-    const orderDoc = await Order.findOne({ orderId });
+    const orderDoc = await Order.findOne({ orderId: decodedId });
     if (!orderDoc) {
       return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
     }
@@ -33,56 +41,17 @@ export async function GET(req, { params }) {
         awbCode: null,
         trackingStatus: orderDoc.trackingStatus || 'pending_sync',
         expectedDelivery: null,
+        activities: [],
         message: 'Shipment is being arranged. AWB not yet assigned.',
       });
     }
 
-    // Query Shiprocket tracking API with 401 auto-retry
-    const { response, data } = await shiprocketFetch(
-      `https://apiv2.shiprocket.in/v1/external/courier/track/awb/${orderDoc.awbCode}`,
-      { method: 'GET' }
-    );
-
-    if (!response.ok) {
-      console.warn(`[Tracking] API error for AWB ${orderDoc.awbCode}:`, JSON.stringify(data));
-      // Return cached data on API failure
-      return NextResponse.json({
-        success: true,
-        courierName: orderDoc.courierName || 'Carrier Assigned',
-        awbCode: orderDoc.awbCode,
-        trackingStatus: orderDoc.trackingStatus || 'processing',
-        expectedDelivery: null,
-        message: 'Live tracking temporarily unavailable. Showing cached status.',
-      });
-    }
-
-    // Parse Shiprocket tracking response
-    const trackingData = data.tracking_data || {};
-
-    // Handle Shiprocket-level errors (common if shipment was just created)
-    if (trackingData.error) {
-      return NextResponse.json({
-        success: true,
-        courierName: orderDoc.courierName || 'Carrier Assigned',
-        awbCode: orderDoc.awbCode,
-        trackingStatus: orderDoc.trackingStatus || 'Manifesting',
-        expectedDelivery: null,
-        message: 'Shipment is being processed by the courier.',
-      });
-    }
-
-    // Extract live tracking details
-    const shipmentTrack = Array.isArray(trackingData.shipment_track)
-      ? trackingData.shipment_track[0]
-      : trackingData.shipment_track;
-
-    const liveStatus = shipmentTrack?.current_status || orderDoc.trackingStatus;
-    const expectedDelivery = shipmentTrack?.expected_date || null;
-    const shipmentActivities = trackingData.shipment_track_activities || [];
+    // Use the high-level trackShipment function (handles auth, timeout, retry)
+    const tracking = await trackShipment(orderDoc.awbCode);
 
     // Sync latest status back to MongoDB (fire-and-forget)
-    if (liveStatus && liveStatus !== orderDoc.trackingStatus) {
-      orderDoc.trackingStatus = liveStatus;
+    if (tracking.current_status && tracking.current_status !== orderDoc.trackingStatus) {
+      orderDoc.trackingStatus = tracking.current_status;
       orderDoc.save().catch(err =>
         console.warn('[Tracking] Failed to sync status to DB:', err.message)
       );
@@ -92,9 +61,10 @@ export async function GET(req, { params }) {
       success: true,
       courierName: orderDoc.courierName || 'Carrier Assigned',
       awbCode: orderDoc.awbCode,
-      trackingStatus: liveStatus,
-      expectedDelivery,
-      activities: shipmentActivities.slice(0, 10), // Last 10 tracking events
+      trackingStatus: tracking.current_status,
+      expectedDelivery: tracking.expected_delivery_date,
+      activities: tracking.events || [],
+      message: tracking.message || null,
     });
 
   } catch (error) {

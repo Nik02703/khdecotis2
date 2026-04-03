@@ -3,15 +3,11 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
 import styles from './SidebarMenu.module.css';
-import AuthModal from './AuthModal';
 
 export default function SidebarMenu({ isProfileIcon = false }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { user, isMounted, logout } = useAuth();
 
   useEffect(() => {
     setMounted(true);
@@ -25,27 +21,11 @@ export default function SidebarMenu({ isProfileIcon = false }) {
           {isProfileIcon ? (
             <div className={styles.accountInfo}>
               <div className={styles.avatarIcon}>
-                {(user && isMounted) ? (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1.2rem', color: '#111', background: '#e2e8f0', borderRadius: '50%' }}>
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
-                ) : (
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                )}
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
               </div>
               <div className={styles.accountText}>
-                <span className={styles.accountTitle}>{(user && isMounted) ? user.name : 'My Account'}</span>
-                {(user && isMounted) ? (
-                  <button 
-                    onClick={(e) => { e.preventDefault(); logout(); setIsOpen(false); }} 
-                    className={styles.accountLogin} 
-                    style={{ background: 'transparent', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}
-                  >
-                    Log out
-                  </button>
-                ) : (
-                  <button className={styles.accountLogin} style={{ background: 'transparent', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', color: 'inherit', textDecoration: 'underline' }} onClick={() => { setIsOpen(false); setAuthModalOpen(true); }}>Log in</button>
-                )}
+                <span className={styles.accountTitle}>My Account</span>
+                <span className={styles.accountLogin} style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Guest Checkout</span>
               </div>
             </div>
           ) : (
@@ -145,13 +125,7 @@ export default function SidebarMenu({ isProfileIcon = false }) {
         aria-label={isProfileIcon ? "Account Menu" : "Open Menu"}
       >
         {isProfileIcon ? (
-          (user && isMounted) ? (
-            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#e2e8f0', color: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.1rem', margin: '0 4px', transition: 'border 0.2s', border: '2px solid transparent' }} onMouseOver={e=>e.currentTarget.style.borderColor='#0f172a'} onMouseOut={e=>e.currentTarget.style.borderColor='transparent'}>
-              {user.name.charAt(0).toUpperCase()}
-            </div>
-          ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-          )
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
         ) : (
           <svg fill="none" width="28" height="28" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round">
             <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -162,8 +136,6 @@ export default function SidebarMenu({ isProfileIcon = false }) {
       </button>
 
       {mounted && isOpen && createPortal(menuContent, document.body)}
-      
-      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
     </>
   );
 }

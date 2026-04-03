@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useOrders } from '@/context/OrderContext';
 import Button from '@/components/ui/Button';
@@ -10,13 +9,13 @@ import styles from './page.module.css';
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { user, isMounted } = useAuth();
-  const { cartItems, getCartTotal, clearCart, buyNowItem, clearBuyNow } = useCart();
+  const { cartItems, getCartTotal, getCartSubtotal, getDiscountAmount, coupon, clearCart, buyNowItem, clearBuyNow } = useCart();
   const { addOrder } = useOrders();
   
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
+    email: '',
     address: '',
     city: '',
     state: '',
@@ -30,43 +29,49 @@ export default function CheckoutPage() {
 
   const activeItems = buyNowItem ? [buyNowItem] : cartItems;
 
-  let computedTotal = 0;
+  // Calculate pricing with coupon discount & shipping
+  let subtotal = 0;
+  let discountAmt = 0;
   if (buyNowItem) {
     const p = typeof buyNowItem.price === 'string' ? parseFloat(buyNowItem.price.replace(/,/g, '')) : (buyNowItem.price || buyNowItem.currentPrice || 0);
-    computedTotal = p * (buyNowItem.quantity || 1);
+    subtotal = p * (buyNowItem.quantity || 1);
+    // No coupon for buy-now items
+    discountAmt = 0;
   } else {
-    computedTotal = getCartTotal();
+    subtotal = getCartSubtotal();
+    discountAmt = getDiscountAmount();
   }
+  const discountedSubtotal = subtotal - discountAmt;
+  const shippingCharges = discountedSubtotal > 400 ? 0 : 79;
+  const computedTotal = discountedSubtotal + shippingCharges;
   const formattedTotal = computedTotal.toLocaleString('en-IN');
 
   useEffect(() => {
-    // Wait for hydration and verification before redirect checks
-    if (isMounted) {
-      if (!user) {
-        router.push('/account?redirect=/checkout');
-      } else {
-        const savedAddress = localStorage.getItem(`khd_address_${user.email}`);
-        if (savedAddress) {
-          try {
-            const parsed = JSON.parse(savedAddress);
-            setFormData(prev => ({ ...prev, ...parsed }));
-          } catch(e) {}
-        }
-      }
+    // Restore saved address from localStorage (keyed by email if available)
+    const savedAddress = localStorage.getItem('khd_guest_address');
+    if (savedAddress) {
+      try {
+        const parsed = JSON.parse(savedAddress);
+        setFormData(prev => ({ ...prev, ...parsed }));
+      } catch(e) {}
     }
-  }, [user, isMounted, router]);
+  }, []);
 
   /**
    * Validate the shipping form before any payment action
    */
   const validateForm = () => {
-    if (!user) return false;
-    if (!formData.firstName || !formData.lastName || !formData.address) {
-      alert("Please fill out your complete shipping details.");
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.address) {
+      alert("Please fill out your complete details including email and shipping address.");
       return false;
     }
     if (!formData.city || !formData.state || !formData.postcode || !formData.phone) {
       alert("Please fill all address fields including city, state, postcode, and phone.");
+      return false;
+    }
+    // Basic email validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      alert("Please enter a valid email address.");
       return false;
     }
     if (activeItems.length === 0) {
@@ -82,7 +87,7 @@ export default function CheckoutPage() {
    */
   const buildOrderRecord = () => ({
     name: `${formData.firstName} ${formData.lastName}`,
-    email: user.email,
+    email: formData.email,
     total: `₹${formattedTotal}`,
     items: activeItems.length,
     payload: [...activeItems],
@@ -96,11 +101,11 @@ export default function CheckoutPage() {
     e.preventDefault();
     if (!validateForm()) return;
 
-    // Save address locally
-    localStorage.setItem(`khd_address_${user.email}`, JSON.stringify(formData));
+    // Save address locally for future convenience
+    localStorage.setItem('khd_guest_address', JSON.stringify(formData));
 
     const orderRecord = buildOrderRecord();
-    addOrder(orderRecord, formData);
+    addOrder(orderRecord, formData, 'COD');
 
     if (buyNowItem) {
       clearBuyNow();
@@ -129,13 +134,13 @@ export default function CheckoutPage() {
 
     try {
       // Save address locally
-      localStorage.setItem(`khd_address_${user.email}`, JSON.stringify(formData));
+      localStorage.setItem('khd_guest_address', JSON.stringify(formData));
 
       // Step 1: Create order
       const orderRecord = buildOrderRecord();
       console.log('[Checkout DEBUG] Step 1: Order record built:', JSON.stringify(orderRecord));
       
-      const orderId = addOrder(orderRecord, formData);
+      const orderId = addOrder(orderRecord, formData, 'PhonePe');
       console.log('[Checkout DEBUG] Step 2: addOrder returned orderId:', orderId);
       console.log('[Checkout DEBUG] Step 2: orderId type:', typeof orderId);
 
@@ -148,7 +153,7 @@ export default function CheckoutPage() {
         orderId: orderId,
         amount: computedTotal,
         userPhone: formData.phone,
-        userEmail: user.email,
+        userEmail: formData.email,
         userName: `${formData.firstName} ${formData.lastName}`,
       };
       console.log('[Checkout DEBUG] Step 4: Calling /api/payment/initiate');
@@ -211,11 +216,6 @@ export default function CheckoutPage() {
       handleOnlinePayment(e);
     }
   };
-
-  if (!isMounted || !user) {
-    // Flash mitigation structure while redirect validates
-    return <div style={{ height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Authenticating securely...</div>;
-  }
 
   // ──── COD Order Success View (inline) ────
   if (orderSuccessDetails) {
@@ -286,12 +286,63 @@ export default function CheckoutPage() {
   return (
     <div className={`container animate-fade-in ${styles.page}`}>
       <h1 className={styles.title}>Secure Checkout</h1>
+
+      {/* ──── Order Summary Panel ──── */}
+      <div style={{
+        background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px',
+        padding: '24px', marginBottom: '2rem',
+      }}>
+        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0f172a', marginBottom: '20px', fontFamily: 'Outfit, sans-serif' }}>Order Summary</h2>
+        
+        {/* Items preview */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0' }}>
+          {activeItems.map((item, idx) => (
+            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <img src={item.images?.[0] || item.image || '/placeholder.png'} alt={item.title} style={{ width: '44px', height: '44px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #e2e8f0' }} />
+                <div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0f172a' }}>{item.title}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Qty: {item.quantity || 1}</div>
+                </div>
+              </div>
+              <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.95rem' }}>₹{(Number(item.price || 0) * (item.quantity || 1)).toLocaleString('en-IN')}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Price breakdown */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem', color: '#475569' }}>
+            <span>Subtotal ({activeItems.reduce((s, i) => s + (i.quantity || 1), 0)} items)</span>
+            <span>₹{subtotal.toLocaleString('en-IN')}</span>
+          </div>
+
+          {discountAmt > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem', color: '#16a34a', fontWeight: 600 }}>
+              <span>Coupon Discount ({coupon?.code})</span>
+              <span>−₹{discountAmt.toLocaleString('en-IN')}</span>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem', color: '#475569' }}>
+            <span>Shipping</span>
+            <span style={{ color: shippingCharges === 0 ? '#16a34a' : '#475569', fontWeight: shippingCharges === 0 ? 600 : 400 }}>
+              {shippingCharges === 0 ? 'FREE' : `₹${shippingCharges}`}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', paddingTop: '14px', borderTop: '2px solid #e2e8f0', marginTop: '6px' }}>
+            <span>Total</span>
+            <span>₹{formattedTotal}</span>
+          </div>
+        </div>
+      </div>
       
       <form className={styles.form} onSubmit={handleSubmit}>
         <h2 className={styles.sectionTitle}>Contact Information</h2>
         <div className={styles.formGroup}>
-          <label className={styles.label}>Email Address (Linked Account)</label>
-          <input type="email" value={user.email} disabled className={styles.input} style={{ background: '#f1f5f9', color: '#64748b' }} />
+          <label className={styles.label}>Email Address</label>
+          <input type="email" className={styles.input} required placeholder="your@email.com" value={formData.email} onChange={e=>setFormData({...formData, email: e.target.value})} />
         </div>
         
         <h2 className={styles.sectionTitle}>Shipping Address</h2>

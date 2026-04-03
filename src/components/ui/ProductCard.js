@@ -24,7 +24,8 @@ export default function ProductCard({ product }) {
   const nextImg = (e) => { e.preventDefault(); e.stopPropagation(); setActiveImageIdx(i => i + 1); };
   const prevImg = (e) => { e.preventDefault(); e.stopPropagation(); setActiveImageIdx(i => (i - 1 + images.length) % images.length); };
   
-  const oldPrice = product.oldPrice || Math.round(product.price * 1.4);
+  const rawOldPrice = product.oldPrice ? Number(product.oldPrice) : 0;
+  const oldPrice = rawOldPrice > Number(product.price) ? rawOldPrice : Math.round(Number(product.price) * 1.4);
   const discountStr = product.discount || (oldPrice && product.price && Number(oldPrice) > Number(product.price) ? `${Math.round(((Number(oldPrice) - Number(product.price)) / Number(oldPrice)) * 100)}% OFF` : null);
 
   return (
@@ -74,8 +75,8 @@ export default function ProductCard({ product }) {
         <p className={styles.category}>{product.category}</p>
         <div className={styles.priceRow}>
           <span className={styles.currentPrice}>₹{product.price}</span>
-          <span className={styles.oldPrice}>₹{oldPrice}</span>
-          <span className={styles.discountBadge}>{discountStr}</span>
+          {oldPrice > Number(product.price) && <span className={styles.oldPrice}>₹{oldPrice}</span>}
+          {discountStr && <span className={styles.discountBadge}>{discountStr}</span>}
         </div>
         
         <div className={styles.buttonsWrapper}>

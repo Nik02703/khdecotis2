@@ -9,6 +9,20 @@ const DUMMY_ORDERS = [
   { id: '#KHD-3107', name: 'Aryan Singh', date: 'Oct 23, 2026', total: '₹899', status: 'Shipped', color: '#dbeafe', text: '#2563eb', email: 'aryan@example.com', items: 1 },
 ];
 
+/**
+ * Derive badge colors from status string
+ */
+const getStatusColors = (status) => {
+  switch (status) {
+    case 'Shipped':    return { bg: '#dbeafe', fg: '#2563eb' };
+    case 'Delivered':  return { bg: '#dcfce7', fg: '#16a34a' };
+    case 'Cancelled':  return { bg: '#fee2e2', fg: '#ef4444' };
+    case 'Processing': return { bg: '#e0e7ff', fg: '#4f46e5' };
+    case 'Pending':
+    default:           return { bg: '#fef3c7', fg: '#d97706' };
+  }
+};
+
 export function OrderProvider({ children }) {
   const [orders, setOrders] = useState([]);
   const [isMounted, setIsMounted] = useState(false);
@@ -59,32 +73,46 @@ export function OrderProvider({ children }) {
       })
       .then(data => {
         if (data && Array.isArray(data) && data.length > 0 && !data[0].error) {
-          const mappedDbOrders = data.map(dbOrder => ({
-            id: dbOrder.orderId || `#KHD-${String(dbOrder._id).substring(String(dbOrder._id).length - 4).toUpperCase()}`,
-            name: dbOrder.name || (dbOrder.user && dbOrder.user.name) || 'Unknown Customer',
-            email: dbOrder.email || 'customer@example.com',
-            date: dbOrder.dateString || new Date(dbOrder.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-            total: dbOrder.totalString || `₹${dbOrder.totalAmount || 0}`,
-            status: dbOrder.status || 'Pending',
-            color: dbOrder.color || (dbOrder.status === 'Delivered' ? '#dcfce7' : '#fef3c7'),
-            text: dbOrder.text || (dbOrder.status === 'Delivered' ? '#16a34a' : '#d97706'),
-            items: dbOrder.items || (dbOrder.payload ? dbOrder.payload.length : 1),
-            payload: dbOrder.payload || [],
-            // Shiprocket tracking fields
-            shipmentId: dbOrder.shipmentId || null,
-            awbCode: dbOrder.awbCode || null,
-            courierName: dbOrder.courierName || null,
-            trackingStatus: dbOrder.trackingStatus || null,
-            shiprocketOrderId: dbOrder.shiprocketOrderId || null,
-          }));
-          
-          // Deduplicate by order ID — keep the first occurrence (DB version wins)
-          const seen = new Set();
-          const uniqueOrders = mappedDbOrders.filter(o => {
-            if (seen.has(o.id)) return false;
-            seen.add(o.id);
-            return true;
+          const mappedDbOrders = data.map(dbOrder => {
+            const st = dbOrder.status || 'Pending';
+            const { bg, fg } = getStatusColors(st);
+            return {
+              id: dbOrder.orderId || `#KHD-${String(dbOrder._id).substring(String(dbOrder._id).length - 4).toUpperCase()}`,
+              name: dbOrder.name || (dbOrder.user && dbOrder.user.name) || 'Unknown Customer',
+              email: dbOrder.email || 'customer@example.com',
+              date: dbOrder.dateString || new Date(dbOrder.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+              total: dbOrder.totalString || `₹${dbOrder.totalAmount || 0}`,
+              status: st,
+              color: dbOrder.color || bg,
+              text: dbOrder.text || fg,
+              items: dbOrder.items || (dbOrder.payload ? dbOrder.payload.length : 1),
+              payload: dbOrder.payload || [],
+              // Shiprocket tracking fields
+              shipmentId: dbOrder.shipmentId || null,
+              awbCode: dbOrder.awbCode || null,
+              courierName: dbOrder.courierName || null,
+              trackingStatus: dbOrder.trackingStatus || null,
+              shiprocketOrderId: dbOrder.shiprocketOrderId || null,
+            };
           });
+          
+          // Deduplicate by order ID — use Map so the LAST occurrence wins
+          // Since DB returns newest first but duplicates may exist, prefer
+          // the one with a non-Pending status (i.e., the one that was updated)
+          const orderMap = new Map();
+          for (const o of mappedDbOrders) {
+            const existing = orderMap.get(o.id);
+            if (!existing) {
+              orderMap.set(o.id, o);
+            } else {
+              // Prefer whichever has a non-Pending status (i.e., was acted upon)
+              if (existing.status === 'Pending' && o.status !== 'Pending') {
+                orderMap.set(o.id, o);
+              }
+              // If both are non-Pending or both Pending, keep the first (newest by createdAt)
+            }
+          }
+          const uniqueOrders = Array.from(orderMap.values());
           
           setOrders(uniqueOrders);
           saveOrdersSafely(uniqueOrders);
@@ -100,8 +128,9 @@ export function OrderProvider({ children }) {
    * 
    * @param {object} orderData - Order data from checkout
    * @param {object} shippingDetails - Shipping form data (firstName, lastName, address, city, postcode, state, phone)
+   * @param {string} paymentMethod - 'COD' or 'PhonePe' (default: 'COD')
    */
-  const addOrder = (orderData, shippingDetails = null) => {
+  const addOrder = (orderData, shippingDetails = null, paymentMethod = 'COD') => {
     // Generate a unique ID using timestamp to prevent duplicates
     const timestamp = Date.now();
     const uniqueSuffix = timestamp.toString().slice(-4);
@@ -137,8 +166,8 @@ export function OrderProvider({ children }) {
       const updated = [safeOrder, ...prev];
       saveOrdersSafely(updated);
 
-      // Step 1: Push order to MongoDB with shippingDetails
-      const mongoPayload = { ...safeOrder };
+      // Step 1: Push order to MongoDB with shippingDetails and paymentMethod
+      const mongoPayload = { ...safeOrder, paymentMethod };
       if (shippingDetails) {
         mongoPayload.shippingDetails = shippingDetails;
       }
@@ -154,31 +183,37 @@ export function OrderProvider({ children }) {
             console.warn('[OrderContext] MongoDB save returned:', dbResult);
             return;
           }
-          console.log('[OrderContext] Order saved to MongoDB:', safeOrder.id);
+          console.log('[OrderContext] Order saved to MongoDB:', safeOrder.id, '| Payment:', paymentMethod);
 
           // Step 2: Trigger Shiprocket in background (fire-and-forget)
-          const shiprocketPayload = {
-            ...safeOrder,
-            orderId: safeOrder.id,
-            shippingDetails: shippingDetails || {},
-          };
+          // For COD orders: ship immediately via Shiprocket
+          // For Prepaid/PhonePe: Shiprocket is triggered from the payment callback after verification
+          if (paymentMethod === 'COD') {
+            const shiprocketPayload = {
+              ...safeOrder,
+              orderId: safeOrder.id,
+              shippingDetails: shippingDetails || {},
+            };
 
-          fetch('/api/shiprocket/createOrder', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(shiprocketPayload),
-          })
-            .then(res => res.json())
-            .then(srResult => {
-              if (srResult.success) {
-                console.log('[OrderContext] Shiprocket order created successfully');
-              } else {
-                console.warn('[OrderContext] Shiprocket deferred:', srResult.error);
-              }
+            fetch('/api/shiprocket/createOrder', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(shiprocketPayload),
             })
-            .catch(err => {
-              console.error('[OrderContext] Shiprocket background sync failed:', err.message);
-            });
+              .then(res => res.json())
+              .then(srResult => {
+                if (srResult.success) {
+                  console.log('[OrderContext] Shiprocket COD order created successfully');
+                } else {
+                  console.warn('[OrderContext] Shiprocket deferred:', srResult.error);
+                }
+              })
+              .catch(err => {
+                console.error('[OrderContext] Shiprocket background sync failed:', err.message);
+              });
+          } else {
+            console.log('[OrderContext] Prepaid order — Shiprocket will be triggered after payment verification.');
+          }
         })
         .catch(err => console.error('[OrderContext] MongoDB Sync Error:', err));
 
@@ -189,12 +224,30 @@ export function OrderProvider({ children }) {
     return newOrder.id;
   };
 
-  const updateOrderStatus = (id, newStatus, color, text) => {
+  const updateOrderStatus = async (id, newStatus, color, text) => {
     setOrders(prev => {
       const updated = prev.map(o => o.id === id ? { ...o, status: newStatus, color, text } : o);
       saveOrdersSafely(updated);
       return updated;
     });
+
+    // Persist status change to MongoDB
+    try {
+      console.log('[OrderContext] Updating order status in DB:', id, '->', newStatus);
+      const res = await fetch('/api/orders', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: id, status: newStatus, color, text })
+      });
+      const data = await res.json();
+      if (data.success) {
+        console.log('[OrderContext] ✅ DB status updated:', id, '->', newStatus);
+      } else {
+        console.error('[OrderContext] ❌ DB status update failed:', data.error);
+      }
+    } catch (err) {
+      console.error('[OrderContext] ❌ DB status PATCH error:', err);
+    }
   };
 
   return (

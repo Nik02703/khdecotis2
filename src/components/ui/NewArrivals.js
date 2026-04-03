@@ -49,9 +49,10 @@ export default function NewArrivals() {
               _id: product._id || product.id,
               title: product.title,
               category: product.category,
-              price: String(product.price).replace(',',''),
-              oldPrice: String(product.oldPrice).replace(',',''),
-
+              price: String(product.price || '').replace(',',''),
+              oldPrice: product.oldPrice ? String(product.oldPrice).replace(',','') : '',
+              isDealOfDay: product.isDealOfDay,
+              isNewArrival: product.isNewArrival,
               images: product.images
             }} />
           ))}

@@ -1,28 +1,8 @@
 'use client';
-import { useAuth } from '@/context/AuthContext';
 import { Wallet, ArrowDownLeft, ArrowUpRight, Clock, Plus } from 'lucide-react';
 import Link from 'next/link';
 
 export default function WalletPage() {
-  const { user, isMounted } = useAuth();
-  
-  if (!isMounted) return null;
-  
-  if (!user) {
-    return (
-      <div className="container animate-fade-in content-centered" style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <Wallet size={48} color="#94a3b8" style={{ marginBottom: '16px' }} />
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Login to Access Wallet</h2>
-        <p style={{ color: '#64748b', marginBottom: '24px' }}>Please log in to view your store credits and transaction history.</p>
-        <Link href="/">
-          <button style={{ padding: '12px 24px', background: '#0f172a', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}>
-            Go to Homepage
-          </button>
-        </Link>
-      </div>
-    );
-  }
-
   const transactions = [
     { id: 'TXN-9824', type: 'credit', amount: 500, date: '2023-11-15', title: 'Refund for Order #1002', status: 'Completed' },
     { id: 'TXN-8812', type: 'debit', amount: 1250, date: '2023-10-22', title: 'Purchase applied to Order #994', status: 'Completed' },
