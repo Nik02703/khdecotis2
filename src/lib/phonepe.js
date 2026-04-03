@@ -14,9 +14,9 @@ const CLIENT_VERSION = () => process.env.PHONEPE_CLIENT_VERSION || '1';
 const IS_PROD = () => process.env.PHONEPE_ENV === 'PROD';
 
 function getIdentityUrl() {
-  return IS_PROD() 
-    ? 'https://api.phonepe.com/apis/identity-manager/v1/oauth/token' 
-    : 'https://api-preprod.phonepe.com/apis/pg-sandbox/v1/oauth/token';
+  return IS_PROD()
+    ? 'https://api.phonepe.com/apis/identity-manager/v2/oauth/token'
+    : 'https://api-preprod.phonepe.com/apis/pg-sandbox/v2/oauth/token';
 }
 
 function getCheckoutUrl() {
@@ -50,7 +50,7 @@ export async function generateV2AccessToken() {
   const authUrl = getIdentityUrl();
 
   console.log('[PhonePe V2] Generating Access Token...');
-  
+
   if (!clientId || !clientSecret) {
     throw new Error('PhonePe V2 credentials missing in .env.local (PHONEPE_CLIENT_ID / PHONEPE_CLIENT_SECRET)');
   }
@@ -68,7 +68,7 @@ export async function generateV2AccessToken() {
   });
 
   const data = await response.json();
-  
+
   if (!response.ok || !data.access_token) {
     console.error('[PhonePe V2] Token generation failed:', data);
     throw new Error(data.error_description || data.message || 'Failed to generate PhonePe V2 Access Token');
@@ -138,8 +138,8 @@ export async function initiatePayment(merchantOrderId, amountInRupees, userPhone
     // V2 success response has redirectUrl at data.redirectUrl
     if (data.orderId && data.redirectUrl) {
       console.log('[PhonePe V2] ✅ SUCCESS — redirectUrl:', data.redirectUrl);
-      return { 
-        success: true, 
+      return {
+        success: true,
         paymentUrl: data.redirectUrl,
         orderId: data.orderId,
       };
