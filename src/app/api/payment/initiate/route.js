@@ -50,29 +50,27 @@ export async function POST(req) {
       );
     }
 
-    // Step 3: Build safe merchantTransactionId
-    // PhonePe rules: alphanumeric + hyphen + underscore, max 38 chars, must be unique
-    const cleanedId = orderId.replace(/[^a-zA-Z0-9]/g, '');
-    const cleanTransactionId = `MT${Date.now()}_${cleanedId.slice(-6)}`.slice(0, 38);
-    console.log('[Initiate DEBUG] Step 3: Transaction ID built:');
+    // Step 3: Build safe merchantOrderId for V2
+    // V2 rules: alphanumeric + hyphen + underscore, max 63 chars, must be unique
+    const cleanedId = orderId.replace(/[^a-zA-Z0-9_-]/g, '');
+    const merchantOrderId = `MO-${Date.now()}-${cleanedId.slice(-10)}`.slice(0, 63);
+    console.log('[Initiate DEBUG] Step 3: merchantOrderId built:');
     console.log('[Initiate DEBUG]   Original orderId:', orderId);
-    console.log('[Initiate DEBUG]   Cleaned:', cleanedId);
-    console.log('[Initiate DEBUG]   Final merchantTransactionId:', cleanTransactionId);
-    console.log('[Initiate DEBUG]   Length:', cleanTransactionId.length, '/ 38 max');
+    console.log('[Initiate DEBUG]   Final merchantOrderId:', merchantOrderId);
 
-    // Step 4: Lock in the transaction ID immediately via upsert!
-    console.log('[Initiate DEBUG] Step 4: Saving transaction ID to database securely...');
+    // Step 4: Lock in the merchantOrderId immediately via upsert!
+    console.log('[Initiate DEBUG] Step 4: Saving merchantOrderId to database...');
     let orderDoc = await Order.findOneAndUpdate(
       { orderId: orderId },
       { 
         $set: { 
-          merchantTransactionId: cleanTransactionId,
+          merchantTransactionId: merchantOrderId,
           paymentStatus: 'pending'
         } 
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
-    console.log('[Initiate DEBUG] ✅ Order locked in DB with merchantTransactionId');
+    console.log('[Initiate DEBUG] ✅ Order locked in DB with merchantOrderId');
 
     // Step 5: Build callback URLs
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
@@ -110,10 +108,10 @@ export async function POST(req) {
       );
     }
 
-    // Step 7: Call PhonePe
-    console.log('[Initiate DEBUG] Step 7: Calling PhonePe initiatePayment()...');
+    // Step 7: Call PhonePe V2
+    console.log('[Initiate DEBUG] Step 7: Calling PhonePe V2 initiatePayment()...');
     const result = await initiatePayment(
-      cleanTransactionId,
+      merchantOrderId,
       numericAmount,
       userPhone || '9999999999',
       redirectUrl,
@@ -126,10 +124,18 @@ export async function POST(req) {
     console.log('[Initiate DEBUG]   error:', result.error || 'NONE');
 
     if (!result.success) {
-      console.error('[Initiate DEBUG] ❌ PhonePe initiation FAILED:', result.error);
+      console.error('[Initiate DEBUG] ❌ PhonePe V2 initiation FAILED:', result.error);
       return NextResponse.json(
         { error: result.error || 'Failed to initiate payment with PhonePe.' },
         { status: 502 }
+      );
+    }
+
+    // Store the PhonePe orderId returned from V2 API
+    if (result.orderId) {
+      await Order.findOneAndUpdate(
+        { orderId: orderId },
+        { $set: { phonepeOrderId: result.orderId } }
       );
     }
 
@@ -137,7 +143,7 @@ export async function POST(req) {
     return NextResponse.json({
       success: true,
       paymentUrl: result.paymentUrl,
-      merchantTransactionId: cleanTransactionId,
+      merchantTransactionId: merchantOrderId,
     });
 
   } catch (error) {

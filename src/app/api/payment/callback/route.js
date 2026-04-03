@@ -14,18 +14,20 @@ import { verifyWebhookChecksum } from '@/lib/phonepe';
 export async function POST(req) {
   try {
     const body = await req.json();
-    const base64Response = body.response;
+    let data;
 
-    if (!base64Response) {
-      console.warn('[PhonePe Webhook] Missing response payload format. Returning 200 anyway.');
-      return NextResponse.json({ success: true }, { status: 200 });
+    // V1 or Wrapper V2 format uses { response: base64 }
+    if (body.response) {
+      const decodedPayload = Buffer.from(body.response, 'base64').toString('utf-8');
+      data = JSON.parse(decodedPayload);
+    } else {
+      // Standard V2 Webhooks often send raw JSON payload directly
+      data = body;
     }
 
-    const xVerifyHeader = req.headers.get('X-VERIFY') || req.headers.get('x-verify');
+    const xVerifyHeader = req.headers.get('X-VERIFY') || req.headers.get('x-verify') || '';
 
-    // Decode early
-    const decodedPayload = Buffer.from(base64Response, 'base64').toString('utf-8');
-    const data = JSON.parse(decodedPayload);
+    // Decode already handled above
     
     console.log('[PhonePe Webhook] Received payload for Merchant TXN:', data.data?.merchantTransactionId);
 

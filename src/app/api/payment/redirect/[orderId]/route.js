@@ -86,3 +86,13 @@ export async function POST(req, { params }) {
     return NextResponse.redirect(`${baseUrl}/payment-failed?error=internal_error`, 303);
   }
 }
+
+/**
+ * GET /api/payment/redirect/[orderId]
+ * 
+ * PhonePe V2 Standard Checkout redirects the user here via GET.
+ * Reuses the same verification logic as POST.
+ */
+export async function GET(req, context) {
+  return POST(req, context);
+}
