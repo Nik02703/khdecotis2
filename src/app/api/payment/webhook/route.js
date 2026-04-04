@@ -1,65 +1,65 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongoose';
 import Order from '@/models/Order';
-import { verifyWebhookChecksum } from '@/lib/phonepe';
+import { decodeCallbackPayload } from '@/lib/phonepe';
 
 /**
  * POST /api/payment/webhook
- * 
+ *
  * PhonePe server-to-server notification (backup mechanism).
- * If the user closes their browser before the callback redirect,
- * this webhook ensures the order payment status is still updated.
- * 
- * PhonePe sends:
- *   Headers: { "X-VERIFY": "<checksum>" }
- *   Body: { "response": "<base64-encoded-response>" }
- * 
- * Flow:
- * 1. Extract the base64 response and X-VERIFY header
- * 2. Verify checksum — REJECT if invalid (mandatory security check)
- * 3. Decode the response to get transaction details
- * 4. Update order payment status in MongoDB
- * 5. Return 200 OK to PhonePe
+ * Handles both V2 and V1 webhook formats.
+ *
+ * ALWAYS return HTTP 200 to prevent PhonePe retries.
  */
 export async function POST(req) {
   try {
     const body = await req.json();
-    const base64Response = body.response;
+    console.log('[Webhook] Raw body keys:', Object.keys(body));
 
-    if (!base64Response) {
-      console.error('[Webhook] Missing response payload');
-      return NextResponse.json({ error: 'Missing response payload' }, { status: 400 });
+    let merchantTransactionId = null;
+    let state = null;
+    let paymentCode = null;
+    let phonePeTxnId = '';
+    let decoded = body;
+
+    // V1-style: { response: "<base64>" }
+    if (body.response && typeof body.response === 'string') {
+      decoded = decodeCallbackPayload(body.response);
+      if (!decoded) {
+        console.error('[Webhook] Failed to decode base64 response');
+        return NextResponse.json({ success: true }, { status: 200 });
+      }
     }
 
-    // Get the X-VERIFY header for checksum validation
-    const xVerifyHeader = req.headers.get('X-VERIFY') || req.headers.get('x-verify');
-
-    if (!xVerifyHeader) {
-      console.error('[Webhook] Missing X-VERIFY header — rejecting');
-      return NextResponse.json({ error: 'Missing X-VERIFY header' }, { status: 401 });
+    // V2-style: { event: "checkout.order.completed", payload: { ... } }
+    if (decoded?.event && decoded?.payload) {
+      const p = decoded.payload;
+      merchantTransactionId = p.merchantOrderId || p.merchantTransactionId || p.transactionId;
+      state = p.state;
+      paymentCode = decoded.event;
+      phonePeTxnId = p.providerReferenceId || p.transactionId || '';
+      if (decoded.event === 'checkout.order.completed') state = 'COMPLETED';
+      if (decoded.event === 'checkout.order.failed') state = 'FAILED';
+    }
+    // V1-style decoded
+    else if (decoded?.data?.merchantTransactionId || decoded?.code) {
+      merchantTransactionId = decoded?.data?.merchantTransactionId;
+      state = decoded?.data?.state;
+      paymentCode = decoded?.code;
+      phonePeTxnId = decoded?.data?.transactionId || '';
+    }
+    // Direct flat fields
+    else if (decoded?.merchantOrderId || decoded?.merchantTransactionId) {
+      merchantTransactionId = decoded.merchantOrderId || decoded.merchantTransactionId;
+      state = decoded.state;
+      phonePeTxnId = decoded.transactionId || decoded.providerReferenceId || '';
     }
 
-    // MANDATORY: Verify checksum to ensure this is genuinely from PhonePe
-    const isValid = verifyWebhookChecksum(base64Response, xVerifyHeader);
-    if (!isValid) {
-      console.error('[Webhook] INVALID checksum — possible spoofed request. Rejecting.');
-      return NextResponse.json({ error: 'Invalid checksum' }, { status: 401 });
-    }
-
-    // Decode the base64 response
-    const decodedResponse = JSON.parse(
-      Buffer.from(base64Response, 'base64').toString('utf-8')
-    );
-
-    console.log('[Webhook] Decoded response:', JSON.stringify(decodedResponse));
-
-    const merchantTransactionId = decodedResponse.data?.merchantTransactionId;
-    const paymentCode = decodedResponse.code;
-    const transactionId = decodedResponse.data?.transactionId || '';
+    console.log('[Webhook] Transaction:', merchantTransactionId, '| State:', state, '| Event:', paymentCode);
 
     if (!merchantTransactionId) {
-      console.error('[Webhook] No merchantTransactionId in response');
-      return NextResponse.json({ success: true }); // Return 200 anyway to prevent retries
+      console.error('[Webhook] No merchantTransactionId in payload');
+      return NextResponse.json({ success: true }, { status: 200 });
     }
 
     // Update the order in MongoDB
@@ -73,35 +73,39 @@ export async function POST(req) {
       });
 
       if (orderDoc) {
-        if (paymentCode === 'PAYMENT_SUCCESS') {
-          orderDoc.paymentStatus = 'paid';
-          orderDoc.paymentMethod = 'PhonePe';
-          orderDoc.paymentTransactionId = transactionId;
-          orderDoc.paidAt = new Date();
-          orderDoc.status = 'Pending'; // Confirmed, awaiting fulfillment
-          orderDoc.color = '#dcfce7';
-          orderDoc.text = '#16a34a';
-          console.log('[Webhook] Order', orderDoc.orderId, 'marked as PAID via webhook');
-        } else if (paymentCode === 'PAYMENT_PENDING') {
+        if (state === 'COMPLETED' || paymentCode === 'PAYMENT_SUCCESS' || paymentCode === 'checkout.order.completed') {
+          if (orderDoc.paymentStatus !== 'paid') {
+            orderDoc.paymentStatus = 'paid';
+            orderDoc.paymentMethod = 'PhonePe';
+            orderDoc.paymentTransactionId = phonePeTxnId;
+            orderDoc.paidAt = new Date();
+            orderDoc.status = 'Pending';
+            orderDoc.color = '#dcfce7';
+            orderDoc.text = '#16a34a';
+            await orderDoc.save();
+            console.log('[Webhook] Order', orderDoc.orderId, 'marked as PAID');
+          }
+        } else if (state === 'FAILED' || paymentCode === 'PAYMENT_ERROR' || paymentCode === 'checkout.order.failed') {
+          if (orderDoc.paymentStatus !== 'failed') {
+            orderDoc.paymentStatus = 'failed';
+            await orderDoc.save();
+            console.log('[Webhook] Order', orderDoc.orderId, 'marked as FAILED');
+          }
+        } else if (state === 'PENDING') {
           orderDoc.paymentStatus = 'pending';
+          await orderDoc.save();
           console.log('[Webhook] Order', orderDoc.orderId, 'still PENDING');
-        } else {
-          orderDoc.paymentStatus = 'failed';
-          console.log('[Webhook] Order', orderDoc.orderId, 'marked as FAILED');
         }
-
-        await orderDoc.save();
       } else {
         console.warn('[Webhook] Order not found for merchantTransactionId:', merchantTransactionId);
       }
     }
 
-    // Always return 200 to PhonePe to acknowledge receipt
-    return NextResponse.json({ success: true });
+    // Always return 200
+    return NextResponse.json({ success: true }, { status: 200 });
 
   } catch (error) {
     console.error('[Webhook] Error:', error.message);
-    // Still return 200 to prevent PhonePe from retrying endlessly
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { status: 200 });
   }
 }

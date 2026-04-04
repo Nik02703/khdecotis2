@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongoose';
 import Order from '@/models/Order';
-import { verifyPayment } from '@/lib/phonepe';
+import { verifyPhonePePayment } from '@/lib/phonepe';
 
 /**
  * POST /api/payment/redirect/[orderId]
- * 
+ *
  * PhonePe redirects the user here (via POST) after payment completion.
- * Note: Since PhonePe POSTs form-data, any query params usually drop.
- * So we rely solely on the orderId provided in the dynamic URL route.
+ * We look up the merchantTransactionId from MongoDB and do a server-to-server
+ * status check with PhonePe V2 Order Status API.
  */
 export async function POST(req, { params }) {
   const { orderId } = await params;
@@ -18,7 +18,7 @@ export async function POST(req, { params }) {
     console.log(`[PhonePe Redirect] POST received for order:`, orderId);
 
     const db = await connectToDatabase();
-    if (!db) throw new Error("Database connection failed");
+    if (!db) throw new Error('Database connection failed');
 
     // 1. Look up the order to get the locked-in merchantTransactionId
     const decodedOrderId = decodeURIComponent(orderId);
@@ -31,15 +31,25 @@ export async function POST(req, { params }) {
 
     const merchantTransactionId = orderDoc.merchantTransactionId;
 
-    // 2. Perform direct Server-to-Server Verification (highly secure)
-    const verification = await verifyPayment(merchantTransactionId);
+    // 2. Perform direct Server-to-Server Verification via V2 Order Status API
+    let verification;
+    try {
+      verification = await verifyPhonePePayment(merchantTransactionId);
+    } catch (err) {
+      console.error(`[PhonePe Redirect] Status check failed:`, err.message);
+      return NextResponse.redirect(`${baseUrl}/payment-failed?error=verification_failed`, 303);
+    }
+
+    // V2 response: { state: "COMPLETED" | "FAILED" | "PENDING", ... }
+    const state = verification?.state || verification?.data?.state || verification?.code;
+    console.log(`[PhonePe Redirect] Verification state:`, state);
 
     // 3. Handle specific verification responses
-    if (verification.success && verification.status === 'SUCCESS') {
+    if (state === 'COMPLETED' || verification?.responseCode === 'SUCCESS' || verification?.code === 'PAYMENT_SUCCESS') {
       // ✅ Payment successful
       orderDoc.paymentStatus = 'paid';
       orderDoc.paymentMethod = 'PhonePe';
-      orderDoc.paymentTransactionId = verification.transactionId || '';
+      orderDoc.paymentTransactionId = verification?.transactionId || verification?.data?.transactionId || '';
       orderDoc.paidAt = new Date();
       orderDoc.status = 'Pending'; // Order confirmed, awaiting fulfillment
       orderDoc.color = '#dcfce7';
@@ -57,26 +67,24 @@ export async function POST(req, { params }) {
       }
 
       return NextResponse.redirect(
-        `${baseUrl}/order-success?orderId=${encodeURIComponent(orderId)}&txnId=${merchantTransactionId}`, 
+        `${baseUrl}/order-success?orderId=${encodeURIComponent(orderId)}&txnId=${merchantTransactionId}`,
         303
       );
-      
-    } else if (verification.status === 'PENDING') {
+
+    } else if (state === 'PENDING') {
       // ⏳ Payment pending
       orderDoc.paymentStatus = 'pending';
       await orderDoc.save();
       console.log(`[PhonePe Redirect] Order ${orderId} is PENDING`);
-      // We don't have a dedicated pending page, so direct to success with pending warning, 
-      // or failure with pending message based on standard UX. We'll use failure for now.
       return NextResponse.redirect(`${baseUrl}/payment-failed?orderId=${encodeURIComponent(orderId)}&status=PENDING`, 303);
-      
+
     } else {
       // ❌ Payment failed/declined
       orderDoc.paymentStatus = 'failed';
       await orderDoc.save();
       console.log(`[PhonePe Redirect] Order ${orderId} marked as FAILED`);
       return NextResponse.redirect(
-        `${baseUrl}/payment-failed?orderId=${encodeURIComponent(orderId)}&status=${verification.status}`, 
+        `${baseUrl}/payment-failed?orderId=${encodeURIComponent(orderId)}&status=${state || 'FAILED'}`,
         303
       );
     }
@@ -89,9 +97,8 @@ export async function POST(req, { params }) {
 
 /**
  * GET /api/payment/redirect/[orderId]
- * 
- * PhonePe V2 Standard Checkout redirects the user here via GET.
- * Reuses the same verification logic as POST.
+ *
+ * Some PhonePe flows redirect via GET. Reuses the POST logic.
  */
 export async function GET(req, context) {
   return POST(req, context);

@@ -1,52 +1,60 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongoose';
 import Order from '@/models/Order';
-import { verifyWebhookChecksum } from '@/lib/phonepe';
+import { decodeCallbackPayload } from '@/lib/phonepe';
 
 /**
  * POST /api/payment/callback
- * 
- * PhonePe Server-To-Server Webhook.
- * PhonePe sends a POST request with { response: "base64string" }.
- * We verify the X-VERIFY header to authenticate the payload.
- * ALWAYS return HTTP 200 { success: true } so PhonePe doesn't endlessly retry.
+ *
+ * Legacy/alternate PhonePe S2S Webhook endpoint.
+ * Handles both V2 and V1 callback formats.
+ * ALWAYS return HTTP 200.
  */
 export async function POST(req) {
   try {
     const body = await req.json();
-    let data;
+    console.log('[Callback] Raw body keys:', Object.keys(body));
 
-    // V1 or Wrapper V2 format uses { response: base64 }
-    if (body.response) {
-      const decodedPayload = Buffer.from(body.response, 'base64').toString('utf-8');
-      data = JSON.parse(decodedPayload);
-    } else {
-      // Standard V2 Webhooks often send raw JSON payload directly
-      data = body;
-    }
+    let merchantTransactionId = null;
+    let state = null;
+    let paymentCode = null;
+    let phonePeTxnId = '';
+    let decoded = body;
 
-    const xVerifyHeader = req.headers.get('X-VERIFY') || req.headers.get('x-verify') || '';
-
-    // Decode already handled above
-    
-    console.log('[PhonePe Webhook] Received payload for Merchant TXN:', data.data?.merchantTransactionId);
-
-    // Verify Checksum (if missing, we just log a warning but still process if we trust the payload structure, 
-    // though strictly we should reject. Since user asked to warn and process, we'll log it.)
-    if (xVerifyHeader) {
-      const isValid = verifyWebhookChecksum(base64Response, xVerifyHeader);
-      if (!isValid) {
-        console.warn('[PhonePe Webhook] ⚠️ INVALID CHECKSUM. Potential spoofing detected.');
-      } else {
-        console.log('[PhonePe Webhook] ✅ Checksum verified.');
+    // V1-style: { response: "<base64>" }
+    if (body.response && typeof body.response === 'string') {
+      decoded = decodeCallbackPayload(body.response);
+      if (!decoded) {
+        console.error('[Callback] Failed to decode base64 response');
+        return NextResponse.json({ success: true }, { status: 200 });
       }
-    } else {
-      console.warn('[PhonePe Webhook] ⚠️ Missing X-VERIFY header.');
     }
 
-    const merchantTransactionId = data.data?.merchantTransactionId;
-    const paymentCode = data.code;
-    const transactionId = data.data?.transactionId || '';
+    // V2-style: { event: "checkout.order.completed", payload: { ... } }
+    if (decoded?.event && decoded?.payload) {
+      const p = decoded.payload;
+      merchantTransactionId = p.merchantOrderId || p.merchantTransactionId || p.transactionId;
+      state = p.state;
+      paymentCode = decoded.event;
+      phonePeTxnId = p.providerReferenceId || p.transactionId || '';
+      if (decoded.event === 'checkout.order.completed') state = 'COMPLETED';
+      if (decoded.event === 'checkout.order.failed') state = 'FAILED';
+    }
+    // V1-style decoded
+    else if (decoded?.data?.merchantTransactionId || decoded?.code) {
+      merchantTransactionId = decoded?.data?.merchantTransactionId;
+      state = decoded?.data?.state;
+      paymentCode = decoded?.code;
+      phonePeTxnId = decoded?.data?.transactionId || '';
+    }
+    // Direct flat fields
+    else if (decoded?.merchantOrderId || decoded?.merchantTransactionId) {
+      merchantTransactionId = decoded.merchantOrderId || decoded.merchantTransactionId;
+      state = decoded.state;
+      phonePeTxnId = decoded.transactionId || decoded.providerReferenceId || '';
+    }
+
+    console.log('[Callback] Transaction:', merchantTransactionId, '| State:', state);
 
     if (!merchantTransactionId) {
       return NextResponse.json({ success: true }, { status: 200 });
@@ -57,35 +65,34 @@ export async function POST(req) {
       const orderDoc = await Order.findOne({ merchantTransactionId });
 
       if (orderDoc) {
-        if (paymentCode === 'PAYMENT_SUCCESS') {
-          // If already paid (e.g. by redirect route), skip update logic to save DB writes
+        if (state === 'COMPLETED' || paymentCode === 'PAYMENT_SUCCESS' || paymentCode === 'checkout.order.completed') {
           if (orderDoc.paymentStatus !== 'paid') {
             orderDoc.paymentStatus = 'paid';
             orderDoc.paymentMethod = 'PhonePe';
-            orderDoc.paymentTransactionId = transactionId;
+            orderDoc.paymentTransactionId = phonePeTxnId;
             orderDoc.paidAt = new Date();
             orderDoc.status = 'Pending';
             orderDoc.color = '#dcfce7';
             orderDoc.text = '#16a34a';
+            orderDoc.phonePeResponse = decoded;
             await orderDoc.save();
-            console.log('[PhonePe Webhook] Order', orderDoc.orderId, 'marked as PAID via S2S Webhook');
+            console.log('[Callback] Order', orderDoc.orderId, 'marked as PAID');
           }
-        } else if (paymentCode === 'PAYMENT_ERROR') {
+        } else if (state === 'FAILED' || paymentCode === 'PAYMENT_ERROR' || paymentCode === 'checkout.order.failed') {
           if (orderDoc.paymentStatus !== 'failed') {
             orderDoc.paymentStatus = 'failed';
+            orderDoc.phonePeResponse = decoded;
             await orderDoc.save();
-            console.log('[PhonePe Webhook] Order', orderDoc.orderId, 'marked as FAILED via S2S Webhook');
+            console.log('[Callback] Order', orderDoc.orderId, 'marked as FAILED');
           }
         }
       }
     }
 
-    // ALWAYS RETURN 200
     return NextResponse.json({ success: true }, { status: 200 });
 
   } catch (err) {
-    console.error('[PhonePe Webhook] Fatal processing error:', err);
-    // Still return 200
+    console.error('[Callback] Fatal error:', err);
     return NextResponse.json({ success: true }, { status: 200 });
   }
 }
