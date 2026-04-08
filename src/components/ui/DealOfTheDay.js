@@ -102,20 +102,31 @@ export default function DealOfTheDay() {
                   Limited Time Offer
                 </div>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '12px', width: '100%' }}>
-                  <button 
-                    className={styles.addToCartBtn}
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); addToCart({ ...deal, price: deal.price || deal.currentPrice }, 1); alert(`${deal.title} added to cart!`); }}
-                    style={{ flex: 1, background: cartItems?.some(item => (item._id || item.id) === (deal._id || deal.id)) ? '#f1f5f9' : '#fff', color: cartItems?.some(item => (item._id || item.id) === (deal._id || deal.id)) ? '#334155' : '#111', border: '1px solid #e2e8f0', padding: '10px 4px', fontSize: '0.85rem', whiteSpace: 'nowrap', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
-                  >
-                    {cartItems?.some(item => (item._id || item.id) === (deal._id || deal.id)) ? 'In Cart' : 'Add To Cart'}
-                  </button>
-                  <button 
-                    className={styles.addToCartBtn}
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); initiateBuyNow({ ...deal, price: deal.price || deal.currentPrice }, 1); router.push('/checkout'); }}
-                    style={{ flex: 1, background: '#111', color: '#fff', padding: '10px 4px', fontSize: '0.85rem', border: '1px solid #111', whiteSpace: 'nowrap', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
-                  >
-                    Buy Now
-                  </button>
+                  {deal?.inStock === false ? (
+                    <button 
+                      disabled
+                      style={{ flex: 1, background: '#d4d4d4', color: '#737373', fontSize: '0.85rem', fontWeight: 800, padding: '10px 4px', border: 'none', borderRadius: '4px', cursor: 'not-allowed', letterSpacing: '1px', textTransform: 'uppercase', height: '42px' }}
+                    >
+                      OUT OF STOCK
+                    </button>
+                  ) : (
+                    <>
+                      <button 
+                        className={styles.addToCartBtn}
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); addToCart({ ...deal, price: deal.price || deal.currentPrice }, 1); alert(`${deal.title} added to cart!`); }}
+                        style={{ flex: 1, background: cartItems?.some(item => (item._id || item.id) === (deal._id || deal.id)) ? '#f1f5f9' : '#fff', color: cartItems?.some(item => (item._id || item.id) === (deal._id || deal.id)) ? '#334155' : '#111', border: '1px solid #e2e8f0', padding: '10px 4px', fontSize: '0.85rem', whiteSpace: 'nowrap', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
+                      >
+                        {cartItems?.some(item => (item._id || item.id) === (deal._id || deal.id)) ? 'In Cart' : 'Add To Cart'}
+                      </button>
+                      <button 
+                        className={styles.addToCartBtn}
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); initiateBuyNow({ ...deal, price: deal.price || deal.currentPrice }, 1); router.push('/checkout'); }}
+                        style={{ flex: 1, background: '#111', color: '#fff', padding: '10px 4px', fontSize: '0.85rem', border: '1px solid #111', whiteSpace: 'nowrap', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
+                      >
+                        Buy Now
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </Link>

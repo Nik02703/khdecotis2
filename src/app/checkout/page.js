@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Script from 'next/script';
 import { useCart } from '@/context/CartContext';
 import { useOrders } from '@/context/OrderContext';
 import Button from '@/components/ui/Button';
@@ -117,19 +118,25 @@ export default function CheckoutPage() {
   };
 
   /**
-   * Handle Pay Now (PhonePe Online Payment)
-   * 1. Save order to MongoDB via OrderContext (paymentStatus: pending)
-   * 2. Call /api/payment/initiate to get PhonePe payment URL
-   * 3. Redirect user to PhonePe for payment
+   * Handle Pay Now (Razorpay Online Payment)
+   * 1. Save order to MongoDB (paymentStatus: pending)
+   * 2. Call /api/payment/razorpay/create-order to get Razorpay token
+   * 3. Open Razorpay modal
+   * 4. Call /api/payment/razorpay/verify on success
    */
   const handleOnlinePayment = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
     if (isProcessing) return;
 
+    if (typeof window === 'undefined' || !window.Razorpay) {
+      alert("Payment gateway is still loading. Please wait a second and try again.");
+      return;
+    }
+
     setIsProcessing(true);
     console.log('[Checkout DEBUG] ══════════════════════════════════════');
-    console.log('[Checkout DEBUG] PAY ONLINE clicked');
+    console.log('[Checkout DEBUG] RAZORPAY ONLINE clicked');
     console.log('[Checkout DEBUG] ══════════════════════════════════════');
 
     try {
@@ -138,17 +145,12 @@ export default function CheckoutPage() {
 
       // Step 1: Create order
       const orderRecord = buildOrderRecord();
-      console.log('[Checkout DEBUG] Step 1: Order record built:', JSON.stringify(orderRecord));
-      
-      const orderId = addOrder(orderRecord, formData, 'PhonePe');
-      console.log('[Checkout DEBUG] Step 2: addOrder returned orderId:', orderId);
-      console.log('[Checkout DEBUG] Step 2: orderId type:', typeof orderId);
+      const orderId = addOrder(orderRecord, formData, 'Razorpay');
 
       // Small delay to let MongoDB save complete before initiating payment
-      console.log('[Checkout DEBUG] Step 3: Waiting 800ms for MongoDB save...');
       await new Promise(resolve => setTimeout(resolve, 800));
 
-      // Step 4: Call payment initiation API
+      // Step 2: Call payment initiation API
       const requestBody = {
         orderId: orderId,
         amount: computedTotal,
@@ -156,50 +158,78 @@ export default function CheckoutPage() {
         userEmail: formData.email,
         userName: `${formData.firstName} ${formData.lastName}`,
       };
-      console.log('[Checkout DEBUG] Step 4: Calling /api/payment/initiate');
-      console.log('[Checkout DEBUG] Request body:', JSON.stringify(requestBody));
-      console.log('[Checkout DEBUG] computedTotal:', computedTotal, '| type:', typeof computedTotal);
-
-      const response = await fetch('/api/payment/initiate', {
+      
+      const response = await fetch('/api/payment/razorpay/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),
       });
 
-      console.log('[Checkout DEBUG] Step 5: API response status:', response.status, response.statusText);
-      
       const data = await response.json();
-      console.log('[Checkout DEBUG] Step 5: API response data:', JSON.stringify(data));
 
-      if (data.success && data.paymentUrl) {
-        console.log('[Checkout DEBUG] ✅ Step 6: Got payment URL:', data.paymentUrl);
+      if (data.success && data.razorpayOrderId) {
+        console.log('[Checkout DEBUG] ✅ Received Razorpay Order ID:', data.razorpayOrderId);
         
-        // Clear cart before redirecting to PhonePe
-        if (buyNowItem) {
-          clearBuyNow();
-        } else {
-          clearCart();
-        }
+        // Step 3: Configure Razorpay Options
+        const options = {
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_Sai5kTFBnTQsnu', 
+          amount: data.amount, // completely driven by strict backend computation
+          currency: data.currency,
+          name: "KH Decotis",
+          description: "Premium Home Decor Purchase",
+          order_id: data.razorpayOrderId,
+          handler: async function (response) {
+             console.log('[Razorpay] ✅ Payment Captured on Frontend, verifying signature...');
+             // Do NOT clear cart yet
+             
+             // Step 4: Verify Signature with Backend
+             const verifyRes = await fetch('/api/payment/razorpay/verify', {
+               method: 'POST',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({
+                 razorpay_order_id: response.razorpay_order_id,
+                 razorpay_payment_id: response.razorpay_payment_id,
+                 razorpay_signature: response.razorpay_signature
+               })
+             });
+             
+             const verifyData = await verifyRes.json();
+             
+             if (verifyData.success) {
+               console.log('[Razorpay] ✅ Signature Verified! Redirecting to success screen.');
+               router.push(`/order-success?orderId=${encodeURIComponent(orderId)}`);
+             } else {
+               alert("Payment verification failed. Please contact support.");
+               setIsProcessing(false);
+             }
+          },
+          prefill: {
+            name: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            contact: formData.phone
+          },
+          theme: {
+            color: "#111111" // Sleek dark aesthetic
+          }
+        };
 
-        // Save pending order info in session for recovery
-        sessionStorage.setItem('khd_pending_payment', JSON.stringify({
-          orderId,
-          merchantTransactionId: data.merchantTransactionId,
-          amount: computedTotal,
-        }));
+        const rzp = new window.Razorpay(options);
+        
+        rzp.on('payment.failed', function (response){
+           console.error('[Razorpay] ❌ Payment Failed:', response.error);
+           alert(`Payment Failed: ${response.error.description}`);
+           setIsProcessing(false);
+        });
 
-        // Redirect user to PhonePe payment page
-        console.log('[Checkout DEBUG] Step 7: Redirecting to PhonePe...');
-        window.location.href = data.paymentUrl;
+        rzp.open();
+
       } else {
-        console.error('[Checkout DEBUG] ❌ Step 6: FAILED — no payment URL');
-        console.error('[Checkout DEBUG] Error:', data.error);
-        alert(data.error || 'Failed to initiate payment. Please try again or use Cash on Delivery.');
+        console.error('[Checkout DEBUG] ❌ FAILED — no Razorpay order token:', data.error);
+        alert(data.error || 'Failed to initiate Razorpay payment. Please try again or use Cash on Delivery.');
         setIsProcessing(false);
       }
     } catch (error) {
       console.error('[Checkout DEBUG] ❌ EXCEPTION:', error.message);
-      console.error('[Checkout DEBUG] Stack:', error.stack);
       alert('Something went wrong. Please try again or choose Cash on Delivery.');
       setIsProcessing(false);
     }
@@ -284,6 +314,8 @@ export default function CheckoutPage() {
 
   // ──── Main Checkout Form ────
   return (
+    <>
+    <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
     <div className={`container animate-fade-in ${styles.page}`}>
       <h1 className={styles.title}>Secure Checkout</h1>
 
@@ -403,7 +435,7 @@ export default function CheckoutPage() {
             }} />
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '1rem', marginBottom: '2px' }}>Pay Online</div>
-              <div style={{ fontSize: '0.85rem', color: '#64748b' }}>UPI, Debit/Credit Card, Net Banking via PhonePe</div>
+              <div style={{ fontSize: '0.85rem', color: '#64748b' }}>UPI, Debit/Credit Card, Net Banking via Razorpay</div>
             </div>
             <div style={{
               background: 'linear-gradient(135deg, #6C4FE1 0%, #8B5CF6 100%)',
@@ -491,7 +523,7 @@ export default function CheckoutPage() {
         </div>
 
         <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#94a3b8', marginTop: '16px', lineHeight: 1.6 }}>
-          🔒 Your payment is processed securely via PhonePe. We never store your card details.
+          🔒 Your payment is processed securely via Razorpay. We never store your card details.
         </p>
       </form>
 
@@ -503,5 +535,6 @@ export default function CheckoutPage() {
         }
       `}} />
     </div>
+    </>
   );
 }

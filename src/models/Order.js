@@ -14,11 +14,13 @@ const OrderSchema = new mongoose.Schema({
   dateString: { type: String },
   // Shipping Address (from checkout form)
   shippingDetails: { type: mongoose.Schema.Types.Mixed, default: {} },
-  // PhonePe Payment Fields
+  // Payment System Fields
   paymentStatus: { type: String, default: 'pending', enum: ['pending', 'paid', 'failed'] },
-  paymentMethod: { type: String, default: 'COD', enum: ['COD', 'PhonePe'] },
+  paymentMethod: { type: String, default: 'COD', enum: ['COD', 'PhonePe', 'Razorpay'] },
   merchantTransactionId: { type: String },
   paymentTransactionId: { type: String },
+  razorpayOrderId: { type: String },
+  razorpayPaymentId: { type: String },
   paidAt: { type: Date },
   // Shiprocket Logistics Storage
   shipmentId: { type: String },

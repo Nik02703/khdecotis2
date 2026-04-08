@@ -7,6 +7,7 @@ const WishlistContext = createContext();
 export function WishlistProvider({ children }) {
   const [wishlistItems, setWishlistItems] = useState([]);
   const [isMounted, setIsMounted] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -18,13 +19,28 @@ export function WishlistProvider({ children }) {
         console.error("Failed to parse wishlist");
       }
     }
+    
+    // Defer the saving mechanism until after the state has absorbed the loaded data
+    setTimeout(() => setHasLoaded(true), 10);
   }, []);
 
   useEffect(() => {
-    if (isMounted) {
-      localStorage.setItem('khd_wishlist', JSON.stringify(wishlistItems));
+    if (isMounted && hasLoaded) {
+      try {
+        const slimWishlist = wishlistItems.map(item => {
+          const { description, reviews, ...rest } = item;
+          let safeImages = rest.images?.map(img => img && img.length > 100000 ? null : img).filter(Boolean) || [];
+          if(safeImages.length === 0 && rest.image && rest.image.length < 100000) {
+            safeImages = [rest.image];
+          }
+          return { ...rest, images: safeImages.length > 0 ? safeImages : null };
+        });
+        localStorage.setItem('khd_wishlist', JSON.stringify(slimWishlist));
+      } catch (error) {
+        console.warn('Wishlist localStorage limit exceeded or failed:', error);
+      }
     }
-  }, [wishlistItems, isMounted]);
+  }, [wishlistItems, isMounted, hasLoaded]);
 
   const toggleWishlist = (product) => {
     setWishlistItems(prev => {

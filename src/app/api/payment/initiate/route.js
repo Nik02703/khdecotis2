@@ -84,7 +84,7 @@ export async function POST(req) {
     if (!result.success || !result.redirectUrl) {
       console.error('[Initiate] ❌ PhonePe initiation FAILED:', result.error);
       return NextResponse.json(
-        { error: result.error || 'Failed to initiate payment with PhonePe.' },
+        { error: `PhonePe API Error: ${result.error || 'No redirect URL returned'}` },
         { status: 502 }
       );
     }

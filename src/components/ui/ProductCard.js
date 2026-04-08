@@ -80,28 +80,39 @@ export default function ProductCard({ product }) {
         </div>
         
         <div className={styles.buttonsWrapper}>
-          {cartItems?.some(item => (item._id || item.id) === (product._id || product.id)) ? (
-            <Link href="/cart" style={{ textDecoration: 'none', width: '100%' }}>
-              <button className={styles.addToCartBtn} style={{ background: '#111', color: '#fff', width: '100%', padding: '10px 4px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
-                Go To Cart
-              </button>
-            </Link>
-          ) : (
+          {product?.inStock === false ? (
             <button 
-              className={styles.addToCartBtn} 
-              onClick={(e) => { e.preventDefault(); addToCart(product); alert(`${product.title} added to cart!`); }}
-              style={{ width: '100%', padding: '10px 4px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
+              disabled
+              style={{ width: '100%', background: '#d4d4d4', color: '#737373', fontSize: '0.85rem', fontWeight: 800, padding: '10px 4px', border: 'none', borderRadius: '4px', cursor: 'not-allowed', letterSpacing: '1px', textTransform: 'uppercase' }}
             >
-              Add To Cart
+              OUT OF STOCK
             </button>
+          ) : (
+            <>
+              {cartItems?.some(item => (item._id || item.id) === (product._id || product.id)) ? (
+                <Link href="/cart" style={{ textDecoration: 'none', width: '100%' }}>
+                  <button className={styles.addToCartBtn} style={{ background: '#111', color: '#fff', width: '100%', padding: '10px 4px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
+                    Go To Cart
+                  </button>
+                </Link>
+              ) : (
+                <button 
+                  className={styles.addToCartBtn} 
+                  onClick={(e) => { e.preventDefault(); addToCart(product); alert(`${product.title} added to cart!`); }}
+                  style={{ width: '100%', padding: '10px 4px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
+                >
+                  Add To Cart
+                </button>
+              )}
+              <button 
+                className={styles.addToCartBtn} 
+                onClick={(e) => { e.preventDefault(); initiateBuyNow(product); window.location.href = '/checkout'; }}
+                style={{ width: '100%', background: '#111', color: '#fff', padding: '10px 4px', fontSize: '0.85rem', border: '1px solid #111', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
+              >
+                Buy Now
+              </button>
+            </>
           )}
-          <button 
-            className={styles.addToCartBtn} 
-            onClick={(e) => { e.preventDefault(); initiateBuyNow(product); window.location.href = '/checkout'; }}
-            style={{ width: '100%', background: '#111', color: '#fff', padding: '10px 4px', fontSize: '0.85rem', border: '1px solid #111', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
-          >
-            Buy Now
-          </button>
         </div>
       </div>
     </div>

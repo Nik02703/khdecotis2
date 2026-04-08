@@ -8,6 +8,7 @@ export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([]);
   const [buyNowItem, setBuyNowItem] = useState(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [coupon, setCoupon] = useState(null);
 
   useEffect(() => {
@@ -20,16 +21,19 @@ export function CartProvider({ children }) {
         console.error("Failed to parse cart");
       }
     }
-    const storedBuyNow = sessionStorage.getItem('khd_buynow');
+    const storedBuyNow = localStorage.getItem('khd_buynow');
     if (storedBuyNow) {
       try {
         setBuyNowItem(JSON.parse(storedBuyNow));
       } catch (e) {}
     }
+    
+    // Defer the saving mechanism until after the state has absorbed the loaded data
+    setTimeout(() => setHasLoaded(true), 10);
   }, []);
 
   useEffect(() => {
-    if (isMounted) {
+    if (isMounted && hasLoaded) {
       try {
         // Strip out potentially huge text/base64 fields before persisting to localStorage
         const slimCart = cartItems.map(item => {
@@ -45,7 +49,7 @@ export function CartProvider({ children }) {
         console.warn('Cart localStorage limit exceeded or failed:', error);
       }
     }
-  }, [cartItems, isMounted]);
+  }, [cartItems, isMounted, hasLoaded]);
 
   const addToCart = (product, quantity = 1) => {
     setCartItems(prev => {
@@ -76,14 +80,14 @@ export function CartProvider({ children }) {
     const item = { ...product, quantity };
     setBuyNowItem(item);
     if (typeof window !== 'undefined') {
-      sessionStorage.setItem('khd_buynow', JSON.stringify(item));
+      localStorage.setItem('khd_buynow', JSON.stringify(item));
     }
   };
 
   const clearBuyNow = () => {
     setBuyNowItem(null);
     if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('khd_buynow');
+      localStorage.removeItem('khd_buynow');
     }
   };
 
@@ -120,8 +124,9 @@ export function CartProvider({ children }) {
 
   const getCartSubtotal = () => {
     return cartItems.reduce((total, item) => {
-      const price = typeof item.price === 'string' ? parseFloat(item.price.replace(/,/g, '')) : item.price;
-      return total + (price * item.quantity);
+      const rawPrice = item.price !== undefined ? item.price : (item.currentPrice || 0);
+      const price = typeof rawPrice === 'string' ? parseFloat(rawPrice.replace(/,/g, '')) : rawPrice;
+      return total + (price * (item.quantity || 1));
     }, 0);
   };
 

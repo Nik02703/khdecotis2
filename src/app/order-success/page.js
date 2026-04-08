@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import Button from '@/components/ui/Button';
+import { useCart } from '@/context/CartContext';
 
 /**
  * /order-success?orderId=xxx&txnId=xxx
@@ -22,8 +23,14 @@ function OrderSuccessContent() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
+  const { clearCart, clearBuyNow } = useCart();
 
   useEffect(() => {
+    // We are on success page, which means payment was successful or logic bypassed
+    // We can safely clear the cart and buy now items.
+    clearCart();
+    clearBuyNow();
+
     if (!orderId) {
       setLoading(false);
       return;
@@ -125,7 +132,12 @@ function OrderSuccessContent() {
           <div>
             <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>Payment Method</div>
             <div style={{ fontWeight: 600, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ background: 'linear-gradient(135deg, #6C4FE1, #8B5CF6)', color: '#fff', padding: '2px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700 }}>PhonePe</span>
+              <span style={{ 
+                background: order?.paymentMethod === 'Razorpay' ? 'linear-gradient(135deg, #0f172a, #334155)' : 'linear-gradient(135deg, #6C4FE1, #8B5CF6)', 
+                color: '#fff', padding: '2px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700 
+              }}>
+                {order?.paymentMethod || 'Online Processing'}
+              </span>
             </div>
           </div>
           {order && (

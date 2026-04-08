@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { LayoutDashboard, ShoppingBag, Users, Settings, LogOut, TrendingUp, DollarSign, PackageOpen, MousePointerClick, Search, Bell, Menu, Trash2, IndianRupee, X, Edit, UploadCloud } from 'lucide-react';
 import { useOrders } from '@/context/OrderContext';
@@ -26,7 +26,9 @@ const catData = [
 
 export default function AdminPage() {
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [loginEmail, setLoginEmail] = useState('');
   const [passwordCode, setPasswordCode] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('orders'); // set orders as default for testing
   const { orders, updateOrderStatus } = useOrders();
@@ -34,7 +36,7 @@ export default function AdminPage() {
   const { messages, markAsRead, deleteMessage } = useMessages();
   const unreadCount = messages ? messages.filter(m => m.status === 'unread').length : 0;
 
-  const [newProd, setNewProd] = useState({ title: '', price: '', oldPrice: '', category: 'Bedding', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, colors: [], sizes: [], productDetails: '' });
+  const [newProd, setNewProd] = useState({ title: '', price: '', oldPrice: '', category: 'Bedding', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, inStock: true, colors: [], sizes: [], productDetails: '' });
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [newCoupon, setNewCoupon] = useState({ code: '', discount: '', maxUses: '' });
   const [tmpColorName, setTmpColorName] = useState('');
@@ -85,6 +87,7 @@ export default function AdminPage() {
       description: newProd.description,
       isDealOfDay: newProd.isDealOfDay,
       isNewArrival: newProd.isNewArrival,
+      inStock: newProd.inStock !== false,
       colors: newProd.colors || [],
       sizes: newProd.sizes || [],
       productDetails: newProd.productDetails || ''
@@ -98,7 +101,7 @@ export default function AdminPage() {
       alert('Product successfully published across global storefront databases!');
     }
     
-    setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedding', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, colors: [], sizes: [], productDetails: '' });
+    setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedding', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, inStock: true, colors: [], sizes: [], productDetails: '' });
     setActiveTab('manageProducts');
   };
 
@@ -108,9 +111,28 @@ export default function AdminPage() {
       const isVideo = file.type.startsWith('video/');
       const reader = new FileReader();
 
-      reader.onload = (event) => {
+      reader.onload = async (event) => {
+        const uploadMedia = async (base64Data) => {
+          try {
+            const res = await fetch('/api/upload', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ image: base64Data })
+            });
+            const data = await res.json();
+            if (data.url) {
+              setNewProd(prev => ({ ...prev, images: [...(prev.images || []), data.url] }));
+            } else {
+              alert('Upload failed: ' + (data.error || 'Unknown error'));
+            }
+          } catch (err) {
+            console.error('Upload Error:', err);
+            alert('Failed to upload media');
+          }
+        };
+
         if (isVideo) {
-          setNewProd(prev => ({ ...prev, images: [...(prev.images || []), event.target.result] }));
+          uploadMedia(event.target.result);
         } else {
           const img = new Image();
           img.onload = () => {
@@ -121,7 +143,7 @@ export default function AdminPage() {
             canvas.height = img.height * scaleSize;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            setNewProd(prev => ({ ...prev, images: [...(prev.images || []), canvas.toDataURL('image/jpeg', 0.6)] }));
+            uploadMedia(canvas.toDataURL('image/jpeg', 0.6));
           };
           img.src = event.target.result;
         }
@@ -131,13 +153,49 @@ export default function AdminPage() {
   };
 
 
-  const handleLogin = (e) => {
+  // --- Authentication Bridge --- //
+  useEffect(() => {
+    // Automatically verify token on mount
+    const verifySession = async () => {
+      try {
+        const res = await fetch('/api/admin/verify');
+        if (res.ok) {
+          setIsAdminLoggedIn(true);
+        }
+      } catch(e) { }
+    };
+    verifySession();
+  }, []);
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (passwordCode === 'admin123') {
-      setIsAdminLoggedIn(true);
-    } else {
-      alert("Invalid Admin Credentials.");
+    if (!loginEmail || !passwordCode) return;
+    setIsLoggingIn(true);
+    try {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: loginEmail, password: passwordCode })
+      });
+      if (response.ok) {
+        setIsAdminLoggedIn(true);
+      } else {
+        const data = await response.json();
+        alert(`Access Denied: ${data.error || 'Invalid Credentials'}`);
+      }
+    } catch(err) {
+      alert("Network Error during authentication.");
+    } finally {
+      setIsLoggingIn(false);
     }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/logout', { method: 'POST' });
+      setIsAdminLoggedIn(false);
+      setPasswordCode('');
+    } catch(err) {}
   };
 
   if (!isAdminLoggedIn) {
@@ -145,18 +203,28 @@ export default function AdminPage() {
       <div className="container animate-fade-in page-wrapper content-centered" style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         <h1 className="page-title" style={{ fontFamily: 'Playfair Display, serif', marginBottom: '2rem' }}>Secure Admin Access</h1>
         <form onSubmit={handleLogin} style={{ maxWidth: '400px', width: '100%', padding: '3rem', background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)', textAlign: 'center' }}>
+           <div style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--primary)', fontFamily: 'Outfit, sans-serif' }}>Admin Email</label>
+            <input 
+              type="email" 
+              placeholder="admin@khdecotis.com" 
+              value={loginEmail}
+              onChange={(e) => setLoginEmail(e.target.value)}
+              style={{ width: '100%', padding: '1rem', border: '1px solid var(--border)', borderRadius: '8px', outline: 'none', background: 'var(--background)', fontSize: '1.1rem', textAlign: 'center' }} 
+            />
+          </div>
           <div style={{ marginBottom: '2rem', textAlign: 'left' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--primary)', fontFamily: 'Outfit, sans-serif' }}>Master Passcode</label>
             <input 
               type="password" 
-              placeholder="••••••••" 
+              placeholder="••••••••••••" 
               value={passwordCode}
               onChange={(e) => setPasswordCode(e.target.value)}
               style={{ width: '100%', padding: '1rem', border: '1px solid var(--border)', borderRadius: '8px', outline: 'none', background: 'var(--background)', fontSize: '1.1rem', letterSpacing: '4px', textAlign: 'center' }} 
             />
           </div>
-          <button type="submit" style={{ width: '100%', background: 'var(--primary)', color: '#fff', padding: '14px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', border: 'none', fontSize: '1rem', transition: 'all 0.2s', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-            Unlock Dashboard
+          <button type="submit" disabled={isLoggingIn} style={{ width: '100%', background: 'var(--primary)', color: '#fff', padding: '14px', borderRadius: '8px', cursor: isLoggingIn ? 'not-allowed' : 'pointer', fontWeight: '600', border: 'none', fontSize: '1rem', transition: 'all 0.2s', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+            {isLoggingIn ? 'Verifying...' : 'Unlock Dashboard'}
           </button>
         </form>
       </div>
@@ -187,7 +255,7 @@ export default function AdminPage() {
           <button onClick={() => setActiveTab('orders')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'orders' ? '#eff6ff' : 'transparent', color: activeTab === 'orders' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'orders' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
             <ShoppingBag size={20} /> Orders & Fulfillment
           </button>
-          <button onClick={() => { setActiveTab('addProduct'); setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedding', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, colors: [], sizes: [], productDetails: '' }); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'addProduct' ? '#eff6ff' : 'transparent', color: activeTab === 'addProduct' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'addProduct' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
+          <button onClick={() => { setActiveTab('addProduct'); setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedding', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, inStock: true, colors: [], sizes: [], productDetails: '' }); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'addProduct' ? '#eff6ff' : 'transparent', color: activeTab === 'addProduct' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'addProduct' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
             <PackageOpen size={20} /> Add New Product
           </button>
           <button onClick={() => setActiveTab('manageProducts')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'manageProducts' ? '#eff6ff' : 'transparent', color: activeTab === 'manageProducts' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'manageProducts' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
@@ -204,7 +272,7 @@ export default function AdminPage() {
             <button onClick={() => setActiveTab('settings')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'settings' ? '#eff6ff' : 'transparent', color: activeTab === 'settings' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'settings' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
               <Settings size={20} /> Site Configuration
             </button>
-            <button onClick={() => setIsAdminLoggedIn(false)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: '#fef2f2', color: '#ef4444', border: 'none', fontWeight: 500, cursor: 'pointer', textAlign: 'left' }}>
+             <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: '#fef2f2', color: '#ef4444', border: 'none', fontWeight: 500, cursor: 'pointer', textAlign: 'left' }}>
               <LogOut size={20} /> Terminate Session
             </button>
           </div>
@@ -454,6 +522,10 @@ export default function AdminPage() {
                     <input type="checkbox" checked={newProd.isNewArrival} onChange={e => setNewProd({...newProd, isNewArrival: e.target.checked})} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
                     Flag as 'New Arrival'
                   </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, color: '#334155', fontSize: '0.95rem', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={newProd.inStock !== false} onChange={e => setNewProd({...newProd, inStock: e.target.checked})} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
+                    In Stock (Available)
+                  </label>
                 </div>
               </div>
               <div>
@@ -573,7 +645,7 @@ export default function AdminPage() {
                         <td style={{ padding: '16px 24px', fontSize: '0.95rem', fontWeight: 600, color: '#0f172a' }}>₹{product.price || product.currentPrice}</td>
                         <td style={{ padding: '16px 24px', textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                            <button onClick={() => { setNewProd({...product, images: product.images || [], colors: product.colors || [], sizes: product.sizes || [], productDetails: product.productDetails || '', oldPrice: product.oldPrice || '', isDealOfDay: !!product.isDealOfDay, isNewArrival: !!product.isNewArrival, description: product.description || '', category: product.category || 'Bedding'}); setActiveTab('addProduct'); }} style={{ background: '#eff6ff', color: '#3b82f6', border: '1px solid #bfdbfe', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>
+                            <button onClick={() => { setNewProd({...product, images: product.images || [], colors: product.colors || [], sizes: product.sizes || [], productDetails: product.productDetails || '', oldPrice: product.oldPrice || '', isDealOfDay: !!product.isDealOfDay, isNewArrival: !!product.isNewArrival, inStock: product.inStock !== false, description: product.description || '', category: product.category || 'Bedding'}); setActiveTab('addProduct'); }} style={{ background: '#eff6ff', color: '#3b82f6', border: '1px solid #bfdbfe', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>
                               <Edit size={16} /> Edit
                             </button>
                             <button onClick={() => { if(confirm('Permanently delete this product from the global database?')) removeProduct(product._id || product.id); }} style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>

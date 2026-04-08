@@ -13,10 +13,6 @@ export default function ProductDetailsClient({ product: serverProduct, productId
   const clientProduct = products.find(p => (p._id || p.id) === productId);
   const product = clientProduct || serverProduct || null;
 
-  if (!product) {
-    return <div style={{ padding: '4rem', textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>Loading product details...</div>;
-  }
-
   const images = product?.images?.length ? product.images : [
     '/bedsheets.png',
     'https://images.unsplash.com/photo-1522771731478-4eb4f9446d6f?w=800&q=80',
@@ -33,6 +29,11 @@ export default function ProductDetailsClient({ product: serverProduct, productId
   const [accordion, setAccordion] = useState({ details: false, specs: false });
   const { cartItems, addToCart, initiateBuyNow } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+
+  if (!product) {
+    return <div style={{ padding: '4rem', textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>Loading product details...</div>;
+  }
+
   const inCart = cartItems.some(item => (item._id || item.id) === (product._id || product.id));
 
   const nextImg = () => setActiveImageIdx((i) => (i + 1) % images.length);
@@ -135,28 +136,39 @@ export default function ProductDetailsClient({ product: serverProduct, productId
           )}
 
           <div className="cta-container" style={{ display: 'flex', gap: '16px', marginBottom: '1.5rem' }}>
-            {inCart ? (
-              <Link href="/cart" style={{ textDecoration: 'none', flex: 1 }}>
-                <button style={{ width: '100%', background: '#111', color: '#fff', fontSize: '1.1rem', fontWeight: 800, padding: '16px', border: 'none', borderRadius: '4px', cursor: 'pointer', letterSpacing: '1px', textTransform: 'uppercase', transition: 'background 0.2s' }}>
-                  GO TO CART
-                </button>
-              </Link>
-            ) : (
+            {product?.inStock === false ? (
               <button 
-                onClick={() => { addToCart(product, 1); alert('Item added to Shopping Bag!'); }} 
-                style={{ flex: 1, background: '#22c55e', color: '#fff', fontSize: '1.1rem', fontWeight: 800, padding: '16px', border: 'none', borderRadius: '4px', cursor: 'pointer', letterSpacing: '1px', textTransform: 'uppercase', transition: 'background 0.2s' }}
-                onMouseOver={(e) => e.target.style.background = '#16a34a'}
-                onMouseOut={(e) => e.target.style.background = '#22c55e'}
+                disabled
+                style={{ width: '100%', background: '#d4d4d4', color: '#737373', fontSize: '1.1rem', fontWeight: 800, padding: '16px', border: 'none', borderRadius: '4px', cursor: 'not-allowed', letterSpacing: '1px', textTransform: 'uppercase' }}
               >
-                ADD TO CART
+                OUT OF STOCK
               </button>
+            ) : (
+              <>
+                {inCart ? (
+                  <Link href="/cart" style={{ textDecoration: 'none', flex: 1 }}>
+                    <button style={{ width: '100%', background: '#111', color: '#fff', fontSize: '1.1rem', fontWeight: 800, padding: '16px', border: 'none', borderRadius: '4px', cursor: 'pointer', letterSpacing: '1px', textTransform: 'uppercase', transition: 'background 0.2s' }}>
+                      GO TO CART
+                    </button>
+                  </Link>
+                ) : (
+                  <button 
+                    onClick={() => { addToCart(product, 1); alert('Item added to Shopping Bag!'); }} 
+                    style={{ flex: 1, background: '#22c55e', color: '#fff', fontSize: '1.1rem', fontWeight: 800, padding: '16px', border: 'none', borderRadius: '4px', cursor: 'pointer', letterSpacing: '1px', textTransform: 'uppercase', transition: 'background 0.2s' }}
+                    onMouseOver={(e) => e.target.style.background = '#16a34a'}
+                    onMouseOut={(e) => e.target.style.background = '#22c55e'}
+                  >
+                    ADD TO CART
+                  </button>
+                )}
+                <button 
+                  onClick={() => { initiateBuyNow(product, 1); window.location.href = '/checkout'; }} 
+                  style={{ flex: 1, background: '#111', color: '#fff', fontSize: '1.1rem', fontWeight: 800, padding: '16px', border: 'none', borderRadius: '4px', cursor: 'pointer', letterSpacing: '1px', textTransform: 'uppercase', transition: 'background 0.2s' }}
+                >
+                  BUY NOW
+                </button>
+              </>
             )}
-            <button 
-              onClick={() => { initiateBuyNow(product, 1); window.location.href = '/checkout'; }} 
-              style={{ flex: 1, background: '#111', color: '#fff', fontSize: '1.1rem', fontWeight: 800, padding: '16px', border: 'none', borderRadius: '4px', cursor: 'pointer', letterSpacing: '1px', textTransform: 'uppercase', transition: 'background 0.2s' }}
-            >
-              BUY NOW
-            </button>
           </div>
 
           <div style={{ display: 'flex', gap: '8px', marginBottom: '2rem' }}>
