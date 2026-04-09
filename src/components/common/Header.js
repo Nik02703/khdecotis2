@@ -83,7 +83,8 @@ export default function Header() {
                   <div className={styles.megaMenuCol}>
                     <h4>By Category</h4>
                     <Link href="/category/bedsheets">Bedsheets</Link>
-                    <Link href="/category/comforter">Comforters & Blankets</Link>
+                    <Link href="/category/comforter">Comforters</Link>
+                    <Link href="/category/blankets">Blankets</Link>
                     <Link href="/category/mattress">Mattresses</Link>
                     <Link href="/category/pillows">Pillows</Link>
                   </div>
@@ -101,16 +102,16 @@ export default function Header() {
             </div>
 
             <div className={styles.megaMenuItem}>
-              <Link href="/category/decor" className={styles.megaMenuLink}>Cushions & Pillows</Link>
+              <Link href="/category/doormats" className={styles.megaMenuLink}>Home Decor</Link>
               <div className={styles.megaMenuDropdown}>
                 <div className={`container ${styles.megaMenuDropdownInner}`}>
                   <div className={styles.megaMenuCol}>
                     <h4>Decorative Accents</h4>
-                    <Link href="/category/cushions">Cushions</Link>
                     <Link href="/category/doormats">Door Mats</Link>
+                    <Link href="/category/handtowels">Hand Towels</Link>
                   </div>
                   <div className={styles.megaMenuImageCol}>
-                    <img src="/cushions.avif" alt="Featured Decor" style={{width: '200px', height: '140px', objectFit: 'cover'}} />
+                    <img src="/door_mat.avif" alt="Featured Decor" style={{width: '200px', height: '140px', objectFit: 'cover'}} />
                   </div>
                 </div>
               </div>

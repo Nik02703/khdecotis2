@@ -71,10 +71,6 @@ export default async function Home() {
             <img src="/Blanket.avif" alt="Blankets" className={styles.categoryImg} />
             <h3 className={styles.categoryTitle}>Blankets</h3>
           </a>
-          <a href="/category/cushions" className={styles.categoryCard}>
-            <img src="/cushions.avif" alt="Cushions" className={styles.categoryImg} />
-            <h3 className={styles.categoryTitle}>Cushions</h3>
-          </a>
           <a href="/category/pillows" className={styles.categoryCard}>
             <img src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=600&q=80" alt="Pillows" className={styles.categoryImg} />
             <h3 className={styles.categoryTitle}>Pillows</h3>
