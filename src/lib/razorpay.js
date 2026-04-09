@@ -1,14 +1,14 @@
 import Razorpay from "razorpay";
 import crypto from "crypto";
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
-
 // CREATE ORDER
 export const createRazorpayOrder = async ({ amount, orderId }) => {
   try {
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+
     const options = {
       amount: Math.round(amount * 100), // rupees to paise, must be integer
       currency: "INR",
