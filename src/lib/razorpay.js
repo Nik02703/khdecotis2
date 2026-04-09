@@ -1,9 +1,9 @@
-import Razorpay from "razorpay";
 import crypto from "crypto";
 
 // CREATE ORDER
 export const createRazorpayOrder = async ({ amount, orderId }) => {
   try {
+    const Razorpay = (await import("razorpay")).default;
     const razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
       key_secret: process.env.RAZORPAY_KEY_SECRET,
