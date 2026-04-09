@@ -1,5 +1,12 @@
 import mongoose from 'mongoose';
 
+const VariantSchema = new mongoose.Schema({
+  color: { type: String, required: true },
+  size: { type: String, required: true },
+  price: { type: Number, required: true },
+  imageUrl: { type: String }
+});
+
 const ProductSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -13,6 +20,9 @@ const ProductSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'Please provide a price'],
   },
+  oldPrice: {
+    type: Number
+  },
   category: {
     type: String,
     required: [true, 'Please provide a category'],
@@ -25,6 +35,30 @@ const ProductSchema = new mongoose.Schema({
     type: Number,
     default: 10,
   },
+  inStock: {
+    type: Boolean,
+    default: true
+  },
+  isDealOfDay: {
+    type: Boolean,
+    default: false
+  },
+  isNewArrival: {
+    type: Boolean,
+    default: false
+  },
+  colors: [{
+    name: String,
+    hex: String
+  }],
+  sizes: [{
+    name: String,
+    dimensions: String
+  }],
+  productDetails: {
+    type: String
+  },
+  variants: [VariantSchema]
 }, { timestamps: true });
 
 export default mongoose.models.Product || mongoose.model('Product', ProductSchema);

@@ -24,23 +24,33 @@ export const ProductProvider = ({ children }) => {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem('khd_products_db');
-    if (stored) {
-      setProducts(JSON.parse(stored));
-    } else {
-      // Merge all seeds into a unified local database array ensuring no overrides
-      const initialDb = [...DUMMY_PRODUCTS, ...SEED_DEALS, ...SEED_NEW_ARRIVALS];
-      setProducts(initialDb);
-      localStorage.setItem('khd_products_db', JSON.stringify(initialDb));
-    }
-    setIsMounted(true);
+    const initProducts = async () => {
+      try {
+        const res = await fetch('/api/products');
+        if (res.ok) {
+          const dbProducts = await res.json();
+          setProducts(dbProducts);
+          localStorage.setItem('khd_products_db', JSON.stringify(dbProducts));
+        }
+      } catch (err) {
+        console.warn('API Fetch failed, using localStorage fallback');
+        const stored = localStorage.getItem('khd_products_db');
+        if (stored) {
+          setProducts(JSON.parse(stored));
+        } else {
+          const initialDb = [...DUMMY_PRODUCTS, ...SEED_DEALS, ...SEED_NEW_ARRIVALS];
+          setProducts(initialDb);
+        }
+      } finally {
+        setIsMounted(true);
+      }
+    };
+    initProducts();
   }, []);
 
-  const addProduct = (productParams) => {
-    const newProduct = {
+  const addProduct = async (productParams) => {
+    const rawProduct = {
       ...productParams,
-      _id: `prod_${Date.now()}`,
-      id: `prod_${Date.now()}`,
       images: productParams.images?.length > 0 ? productParams.images : ['https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&q=80'],
       price: Number(productParams.price) || 0,
       oldPrice: Number(productParams.oldPrice) || Math.round(Number(productParams.price) * 1.5),
@@ -49,15 +59,32 @@ export const ProductProvider = ({ children }) => {
       productDetails: productParams.productDetails || ''
     };
     
-    setProducts(prev => {
-      const updated = [newProduct, ...prev]; // Unshift so new items appear first
-      localStorage.setItem('khd_products_db', JSON.stringify(updated));
-      return updated;
-    });
-    return newProduct;
+    try {
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(rawProduct)
+      });
+      if (res.ok) {
+        const newProduct = await res.json();
+        setProducts(prev => {
+          const updated = [newProduct, ...prev];
+          localStorage.setItem('khd_products_db', JSON.stringify(updated));
+          return updated;
+        });
+        return newProduct;
+      }
+    } catch (e) { console.error('Add failed', e); }
+    return rawProduct;
   };
 
-  const removeProduct = (id) => {
+  const removeProduct = async (id) => {
+    try {
+      if (!id.toString().startsWith('prod_')) { // Real mongo ID vs old dummy local ID
+        await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      }
+    } catch (e) { console.error('Delete failed', e); }
+
     setProducts(prev => {
       const updated = prev.filter(p => (p._id || p.id) !== id);
       localStorage.setItem('khd_products_db', JSON.stringify(updated));
@@ -65,11 +92,27 @@ export const ProductProvider = ({ children }) => {
     });
   };
 
-  const editProduct = (id, updatedParams) => {
+  const editProduct = async (id, updatedParams) => {
+    const changes = {
+      ...updatedParams,
+      price: Number(updatedParams.price),
+      oldPrice: Number(updatedParams.oldPrice)
+    };
+
+    try {
+      if (!id.toString().startsWith('prod_')) { // Real mongo ID
+         await fetch(`/api/products/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(changes)
+         });
+      }
+    } catch (e) { console.error('Edit error', e); }
+
     setProducts(prev => {
       const updated = prev.map(p => 
         (p._id || p.id) === id 
-          ? { ...p, ...updatedParams, price: Number(updatedParams.price) || p.price, oldPrice: Number(updatedParams.oldPrice) || p.oldPrice, images: updatedParams.images?.length > 0 ? updatedParams.images : p.images }
+          ? { ...p, ...changes, images: updatedParams.images?.length > 0 ? updatedParams.images : p.images }
           : p
       );
       localStorage.setItem('khd_products_db', JSON.stringify(updated));

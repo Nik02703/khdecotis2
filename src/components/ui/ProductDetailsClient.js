@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Share2, Heart, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import MinimalProductCarousel from './MinimalProductCarousel';
@@ -30,11 +30,26 @@ export default function ProductDetailsClient({ product: serverProduct, productId
   const { cartItems, addToCart, initiateBuyNow } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
 
+  // Derive matching variant safely with optional chaining
+  const selectedVariant = product?.variants?.find(
+    v => (!activeColor || v.color === activeColor) && (!activeSize || v.size === activeSize)
+  );
+
+  const displayPrice = selectedVariant?.price || product?.price || 1599;
+
+  // Sync image with variant when selections change safely
+  useEffect(() => {
+    if (selectedVariant?.imageUrl && images) {
+      const idx = images.findIndex(img => img === selectedVariant.imageUrl);
+      if (idx !== -1) setActiveImageIdx(idx);
+    }
+  }, [selectedVariant, images]);
+
   if (!product) {
     return <div style={{ padding: '4rem', textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>Loading product details...</div>;
   }
 
-  const inCart = cartItems.some(item => (item._id || item.id) === (product._id || product.id));
+  const inCart = cartItems.some(item => (item._id || item.id) === (product._id || product.id) + '-' + activeColor + '-' + activeSize);
 
   const nextImg = () => setActiveImageIdx((i) => (i + 1) % images.length);
   const prevImg = () => setActiveImageIdx((i) => (i - 1 + images.length) % images.length);
@@ -95,8 +110,8 @@ export default function ProductDetailsClient({ product: serverProduct, productId
           <h1 style={{ fontSize: '1.8rem', fontWeight: 600, color: '#1a1a1a', margin: '0 0 12px 0' }}>{product?.title || "Khaki Beige-Clove Field Tote Bag"}</h1>
           
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', marginBottom: '8px' }}>
-            <span style={{ fontSize: '1.8rem', fontWeight: 800, color: '#000' }}>₹{product?.price || 1599}</span>
-            <span style={{ fontSize: '1.2rem', color: '#a3a3a3', textDecoration: 'line-through', fontWeight: 500 }}>₹{Math.floor((product?.price||1599) * 2.3)}</span>
+            <span style={{ fontSize: '1.8rem', fontWeight: 800, color: '#000' }}>₹{displayPrice}</span>
+            <span style={{ fontSize: '1.2rem', color: '#a3a3a3', textDecoration: 'line-through', fontWeight: 500 }}>₹{Math.floor(displayPrice * 2.3)}</span>
             <span style={{ fontSize: '0.8rem', color: '#a3a3a3', fontWeight: 500 }}>MRP Inclusive of all taxes</span>
           </div>
 
@@ -153,7 +168,10 @@ export default function ProductDetailsClient({ product: serverProduct, productId
                   </Link>
                 ) : (
                   <button 
-                    onClick={() => { addToCart(product, 1); alert('Item added to Shopping Bag!'); }} 
+                    onClick={() => { 
+                      const variantProduct = { ...product, _id: (product._id || product.id) + '-' + activeColor + '-' + activeSize, price: displayPrice, selectedColor: activeColor, selectedSize: activeSize, images: [images[activeImageIdx], ...images] };
+                      addToCart(variantProduct, 1); alert('Item added to Shopping Bag!'); 
+                    }} 
                     style={{ flex: 1, background: '#22c55e', color: '#fff', fontSize: '1.1rem', fontWeight: 800, padding: '16px', border: 'none', borderRadius: '4px', cursor: 'pointer', letterSpacing: '1px', textTransform: 'uppercase', transition: 'background 0.2s' }}
                     onMouseOver={(e) => e.target.style.background = '#16a34a'}
                     onMouseOut={(e) => e.target.style.background = '#22c55e'}
@@ -162,7 +180,10 @@ export default function ProductDetailsClient({ product: serverProduct, productId
                   </button>
                 )}
                 <button 
-                  onClick={() => { initiateBuyNow(product, 1); window.location.href = '/checkout'; }} 
+                  onClick={() => { 
+                    const variantProduct = { ...product, _id: (product._id || product.id) + '-' + activeColor + '-' + activeSize, price: displayPrice, selectedColor: activeColor, selectedSize: activeSize, images: [images[activeImageIdx], ...images] };
+                    initiateBuyNow(variantProduct, 1); window.location.href = '/checkout'; 
+                  }} 
                   style={{ flex: 1, background: '#111', color: '#fff', fontSize: '1.1rem', fontWeight: 800, padding: '16px', border: 'none', borderRadius: '4px', cursor: 'pointer', letterSpacing: '1px', textTransform: 'uppercase', transition: 'background 0.2s' }}
                 >
                   BUY NOW

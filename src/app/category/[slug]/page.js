@@ -29,11 +29,7 @@ export default function CategoryDetailsPage({ params }) {
       return cat === target;
     });
     
-    // Fallback if none match (local mock expansion)
-    if (pool.length === 0) {
-      pool = products;
-    }
-
+    // No fallback; if category is empty, it should be empty rather than showing all products
     if (filterPrice === 'under1000') pool = pool.filter(p => p.price < 1000);
     if (filterPrice === '1000to3000') pool = pool.filter(p => p.price >= 1000 && p.price <= 3000);
     if (filterPrice === 'above3000') pool = pool.filter(p => p.price > 3000);
