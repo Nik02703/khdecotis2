@@ -1,5 +1,5 @@
 import styles from './page.module.css';
-import { DUMMY_PRODUCTS } from '@/app/page';
+import { DUMMY_PRODUCTS } from '@/lib/dummyProducts';
 import ProductDetailsClient from '@/components/ui/ProductDetailsClient';
 import ProductReviews from '@/components/ui/ProductReviews';
 import MinimalProductCarousel from '@/components/ui/MinimalProductCarousel';

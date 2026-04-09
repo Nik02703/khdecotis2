@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongoose';
 import Product from '@/models/Product';
-import { DUMMY_PRODUCTS } from '@/app/page';
+import { DUMMY_PRODUCTS } from '@/lib/dummyProducts';
 
 export async function GET() {
   try {

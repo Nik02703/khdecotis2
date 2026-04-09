@@ -1,6 +1,6 @@
 'use client';
 import { createContext, useContext, useState, useEffect } from 'react';
-import { DUMMY_PRODUCTS } from '@/app/page';
+import { DUMMY_PRODUCTS } from '@/lib/dummyProducts';
 
 // Core pre-seeded arrays
 const SEED_DEALS = [

@@ -1,6 +1,6 @@
 import ProductCard from '@/components/ui/ProductCard';
 import styles from '../category/[slug]/page.module.css';
-import { DUMMY_PRODUCTS } from '@/app/page';
+import { DUMMY_PRODUCTS } from '@/lib/dummyProducts';
 
 export default function ShopPage() {
   return (

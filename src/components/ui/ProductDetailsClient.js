@@ -6,7 +6,7 @@ import MinimalProductCarousel from './MinimalProductCarousel';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useProducts } from '@/context/ProductContext';
-import { DUMMY_PRODUCTS } from '@/app/page';
+import { DUMMY_PRODUCTS } from '@/lib/dummyProducts';
 
 export default function ProductDetailsClient({ product: serverProduct, productId }) {
   const { products } = useProducts();
