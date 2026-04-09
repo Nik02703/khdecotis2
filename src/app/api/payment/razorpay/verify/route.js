@@ -4,6 +4,8 @@ import Order from '@/models/Order';
 import { verifyRazorpayPayment } from '@/lib/razorpay';
 import { createShiprocketOrder } from '@/lib/shiprocket';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request) {
   try {
     const body = await request.json();

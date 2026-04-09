@@ -3,6 +3,8 @@ import connectDB from '@/lib/mongoose';
 import Order from '@/models/Order';
 import { createRazorpayOrder } from '@/lib/razorpay';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request) {
   try {
     const { orderId, amount, userPhone, userEmail, userName } = await request.json();
