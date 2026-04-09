@@ -18,7 +18,7 @@ export default async function Home() {
     await connectToDatabase();
     const dbBestsellers = await Product.find({ isBestseller: true }).sort({ createdAt: -1 }).lean();
     if (dbBestsellers && dbBestsellers.length > 0) {
-      bestsellerProducts = dbBestsellers.map(p => ({ ...p, _id: p._id.toString() }));
+      bestsellerProducts = JSON.parse(JSON.stringify(dbBestsellers));
     }
   } catch (e) {
     console.warn('[Home] Bestsellers DB fetch failed, using fallback');
