@@ -25,6 +25,7 @@ export default function CategoryDetailsPage({ params }) {
       // Alias common synonyms seamlessly handling user drops
       if (target === 'bedsheets' && (cat === 'bedding' || cat === 'bedsheets')) return true;
       if (target === 'decor' && (cat === 'decor' || cat === 'home decor' || cat === 'accessories')) return true;
+      if (target === 'blankets' && cat === 'blankets') return true;
       
       return cat === target;
     });

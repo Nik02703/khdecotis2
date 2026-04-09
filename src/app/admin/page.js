@@ -36,13 +36,14 @@ export default function AdminPage() {
   const { messages, markAsRead, deleteMessage } = useMessages();
   const unreadCount = messages ? messages.filter(m => m.status === 'unread').length : 0;
 
-  const [newProd, setNewProd] = useState({ title: '', price: '', oldPrice: '', category: 'Bedding', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, inStock: true, colors: [], sizes: [], productDetails: '' });
+  const [newProd, setNewProd] = useState({ title: '', price: '', oldPrice: '', category: 'Bedding', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '' });
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [newCoupon, setNewCoupon] = useState({ code: '', discount: '', maxUses: '' });
   const [tmpColorName, setTmpColorName] = useState('');
   const [tmpColorHex, setTmpColorHex] = useState('#000000');
   const [tmpSizeName, setTmpSizeName] = useState('');
   const [tmpSizeDim, setTmpSizeDim] = useState('');
+  const [tmpSizePrice, setTmpSizePrice] = useState('');
 
   const handleCreateCoupon = async (e) => {
     e.preventDefault();
@@ -87,6 +88,7 @@ export default function AdminPage() {
       description: newProd.description,
       isDealOfDay: newProd.isDealOfDay,
       isNewArrival: newProd.isNewArrival,
+      isBestseller: newProd.isBestseller,
       inStock: newProd.inStock !== false,
       colors: newProd.colors || [],
       sizes: newProd.sizes || [],
@@ -101,7 +103,7 @@ export default function AdminPage() {
       alert('Product successfully published across global storefront databases!');
     }
     
-    setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedding', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, inStock: true, colors: [], sizes: [], productDetails: '' });
+    setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedding', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '' });
     setActiveTab('manageProducts');
   };
 
@@ -255,7 +257,7 @@ export default function AdminPage() {
           <button onClick={() => setActiveTab('orders')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'orders' ? '#eff6ff' : 'transparent', color: activeTab === 'orders' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'orders' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
             <ShoppingBag size={20} /> Orders & Fulfillment
           </button>
-          <button onClick={() => { setActiveTab('addProduct'); setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedding', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, inStock: true, colors: [], sizes: [], productDetails: '' }); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'addProduct' ? '#eff6ff' : 'transparent', color: activeTab === 'addProduct' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'addProduct' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
+          <button onClick={() => { setActiveTab('addProduct'); setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedding', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '' }); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'addProduct' ? '#eff6ff' : 'transparent', color: activeTab === 'addProduct' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'addProduct' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
             <PackageOpen size={20} /> Add New Product
           </button>
           <button onClick={() => setActiveTab('manageProducts')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'manageProducts' ? '#eff6ff' : 'transparent', color: activeTab === 'manageProducts' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'manageProducts' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
@@ -510,21 +512,25 @@ export default function AdminPage() {
                 <div style={{ flex: 1, minWidth: '200px' }}>
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Primary Category Placement</label>
                   <select value={newProd.category} onChange={e => setNewProd({...newProd, category: e.target.value})} style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem', background: '#fff' }}>
-                    <option value="Bedding">Bedding</option><option value="Bedsheets">Bedsheets</option><option value="Comforter">Comforter</option><option value="Mattress">Mattress</option><option value="Cushions">Cushions</option><option value="Curtains">Curtains</option><option value="Door Mats">Door Mats</option><option value="Hand Towels">Hand Towels</option>
+                    <option value="Bedding">Bedding</option><option value="Bedsheets">Bedsheets</option><option value="Comforter">Comforter</option><option value="Blankets">Blankets</option><option value="Mattress">Mattress</option><option value="Cushions">Cushions</option><option value="Curtains">Curtains</option><option value="Pillows">Pillows</option><option value="Door Mats">Door Mats</option><option value="Hand Towels">Hand Towels</option>
                   </select>
                 </div>
-                <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginTop: '14px' }}>
+                <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginTop: '14px', flexWrap: 'wrap' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, color: '#334155', fontSize: '0.95rem', cursor: 'pointer' }}>
                     <input type="checkbox" checked={newProd.isDealOfDay} onChange={e => setNewProd({...newProd, isDealOfDay: e.target.checked})} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
-                    Flag as 'Deal of the Day'
+                    Deal of the Day
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, color: '#334155', fontSize: '0.95rem', cursor: 'pointer' }}>
                     <input type="checkbox" checked={newProd.isNewArrival} onChange={e => setNewProd({...newProd, isNewArrival: e.target.checked})} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
-                    Flag as 'New Arrival'
+                    New Arrival
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, color: '#334155', fontSize: '0.95rem', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={!!newProd.isBestseller} onChange={e => setNewProd({...newProd, isBestseller: e.target.checked})} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
+                    Bestseller
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, color: '#334155', fontSize: '0.95rem', cursor: 'pointer' }}>
                     <input type="checkbox" checked={newProd.inStock !== false} onChange={e => setNewProd({...newProd, inStock: e.target.checked})} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
-                    In Stock (Available)
+                    In Stock
                   </label>
                 </div>
               </div>
@@ -572,30 +578,64 @@ export default function AdminPage() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '8px', marginBottom: '8px' }}>
                     <input type="text" value={tmpColorName} onChange={e => setTmpColorName(e.target.value)} placeholder="Name (e.g. Navy Blue)" style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '4px', boxSizing: 'border-box' }} />
                     <input type="color" value={tmpColorHex} onChange={e => setTmpColorHex(e.target.value)} style={{ padding: '0', border: 'none', width: '38px', height: '38px', borderRadius: '4px', cursor: 'pointer' }} />
-                    <button type="button" onClick={() => { if(tmpColorName) setNewProd({...newProd, colors: [...(newProd.colors||[]), {name: tmpColorName, hex: tmpColorHex}]}); setTmpColorName(''); }} style={{ background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', padding: '0 12px', cursor: 'pointer' }}>Add</button>
+                    <button type="button" onClick={() => { if(tmpColorName) setNewProd({...newProd, colors: [...(newProd.colors||[]), {name: tmpColorName, hex: tmpColorHex, imageUrl: ''}]}); setTmpColorName(''); }} style={{ background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', padding: '0 12px', cursor: 'pointer' }}>Add</button>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                     {newProd.colors?.map((c, i) => (
-                      <span key={i} style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '16px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: c.hex }}></div>
-                        {c.name}
-                        <button type="button" onClick={() => setNewProd({...newProd, colors: newProd.colors.filter((_, idx)=>idx!==i)})} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', marginLeft: '4px' }}>×</button>
-                      </span>
+                      <div key={i} style={{ background: '#f1f5f9', padding: '8px 12px', borderRadius: '12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid #e2e8f0' }}>
+                        <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: c.hex, border: '1px solid #cbd5e1', flexShrink: 0 }}></div>
+                        <span style={{ fontWeight: 600 }}>{c.name}</span>
+                        {c.imageUrl ? (
+                          <img src={c.imageUrl} alt={c.name} style={{ width: '28px', height: '28px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #cbd5e1' }} />
+                        ) : (
+                          <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>No img</span>
+                        )}
+                        <label style={{ cursor: 'pointer', background: '#dbeafe', color: '#2563eb', padding: '2px 6px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                          {c.imageUrl ? '✓' : '📷'}
+                          <input type="file" accept="image/*" style={{ display: 'none' }} onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onload = async (ev) => {
+                              const img = new Image();
+                              img.onload = async () => {
+                                const canvas = document.createElement('canvas');
+                                const MAX_W = 800;
+                                const sc = img.width > MAX_W ? MAX_W / img.width : 1;
+                                canvas.width = img.width * sc;
+                                canvas.height = img.height * sc;
+                                canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                                try {
+                                  const res = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: canvas.toDataURL('image/jpeg', 0.6) }) });
+                                  const data = await res.json();
+                                  if (data.url) {
+                                    setNewProd(prev => ({ ...prev, colors: prev.colors.map((col, idx) => idx === i ? { ...col, imageUrl: data.url } : col) }));
+                                  } else { alert('Upload failed: ' + (data.error || 'Unknown')); }
+                                } catch (err) { alert('Upload error'); }
+                              };
+                              img.src = ev.target.result;
+                            };
+                            reader.readAsDataURL(file);
+                          }} />
+                        </label>
+                        <button type="button" onClick={() => setNewProd({...newProd, colors: newProd.colors.filter((_, idx)=>idx!==i)})} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1rem', lineHeight: 1 }}>×</button>
+                      </div>
                     ))}
                   </div>
                 </div>
 
                 <div style={{ flex: 1, minWidth: '300px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Sizes & Dimensions</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr auto', gap: '8px', marginBottom: '8px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Sizes, Dimensions & Pricing</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 0.8fr auto', gap: '8px', marginBottom: '8px' }}>
                     <input type="text" value={tmpSizeName} onChange={e => setTmpSizeName(e.target.value)} placeholder="Size (e.g. King)" style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '4px', boxSizing: 'border-box' }} />
                     <input type="text" value={tmpSizeDim} onChange={e => setTmpSizeDim(e.target.value)} placeholder="Dim (e.g. 108x108 in)" style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '4px', boxSizing: 'border-box' }} />
-                    <button type="button" onClick={() => { if(tmpSizeName && tmpSizeDim) setNewProd({...newProd, sizes: [...(newProd.sizes||[]), {name: tmpSizeName, dimensions: tmpSizeDim}]}); setTmpSizeName(''); setTmpSizeDim(''); }} style={{ background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', padding: '0 12px', cursor: 'pointer' }}>Add</button>
+                    <input type="number" value={tmpSizePrice} onChange={e => setTmpSizePrice(e.target.value)} placeholder="₹ Price" style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '4px', boxSizing: 'border-box' }} />
+                    <button type="button" onClick={() => { if(tmpSizeName && tmpSizeDim) { setNewProd({...newProd, sizes: [...(newProd.sizes||[]), {name: tmpSizeName, dimensions: tmpSizeDim, price: tmpSizePrice ? Number(tmpSizePrice) : undefined}]}); setTmpSizeName(''); setTmpSizeDim(''); setTmpSizePrice(''); } }} style={{ background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', padding: '0 12px', cursor: 'pointer' }}>Add</button>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     {newProd.sizes?.map((s, i) => (
                       <span key={i} style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <b>{s.name}:</b> {s.dimensions}
+                        <b>{s.name}:</b> {s.dimensions}{s.price ? ` — ₹${s.price}` : ''}
                         <button type="button" onClick={() => setNewProd({...newProd, sizes: newProd.sizes.filter((_, idx)=>idx!==i)})} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', marginLeft: '4px' }}>×</button>
                       </span>
                     ))}
@@ -645,7 +685,7 @@ export default function AdminPage() {
                         <td style={{ padding: '16px 24px', fontSize: '0.95rem', fontWeight: 600, color: '#0f172a' }}>₹{product.price || product.currentPrice}</td>
                         <td style={{ padding: '16px 24px', textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                            <button onClick={() => { setNewProd({...product, images: product.images || [], colors: product.colors || [], sizes: product.sizes || [], productDetails: product.productDetails || '', oldPrice: product.oldPrice || '', isDealOfDay: !!product.isDealOfDay, isNewArrival: !!product.isNewArrival, inStock: product.inStock !== false, description: product.description || '', category: product.category || 'Bedding'}); setActiveTab('addProduct'); }} style={{ background: '#eff6ff', color: '#3b82f6', border: '1px solid #bfdbfe', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>
+                            <button onClick={() => { setNewProd({...product, images: product.images || [], colors: product.colors || [], sizes: product.sizes || [], productDetails: product.productDetails || '', oldPrice: product.oldPrice || '', isDealOfDay: !!product.isDealOfDay, isNewArrival: !!product.isNewArrival, isBestseller: !!product.isBestseller, inStock: product.inStock !== false, description: product.description || '', category: product.category || 'Bedding'}); setActiveTab('addProduct'); }} style={{ background: '#eff6ff', color: '#3b82f6', border: '1px solid #bfdbfe', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>
                               <Edit size={16} /> Edit
                             </button>
                             <button onClick={() => { if(confirm('Permanently delete this product from the global database?')) removeProduct(product._id || product.id); }} style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>

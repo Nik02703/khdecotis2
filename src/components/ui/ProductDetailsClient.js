@@ -13,11 +13,14 @@ export default function ProductDetailsClient({ product: serverProduct, productId
   const clientProduct = products.find(p => (p._id || p.id) === productId);
   const product = clientProduct || serverProduct || null;
 
-  const images = product?.images?.length ? product.images : [
+  // Build images array: merge product images + any per-color images that aren't already in the array
+  const baseImages = product?.images?.length ? product.images : [
     '/bedsheets.png',
     'https://images.unsplash.com/photo-1522771731478-4eb4f9446d6f?w=800&q=80',
     'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=800&q=80'
   ];
+  const colorImages = (product?.colors || []).map(c => c.imageUrl).filter(Boolean);
+  const images = [...new Set([...baseImages, ...colorImages])];
 
   const colors = product?.colors || [];
 
@@ -35,15 +38,31 @@ export default function ProductDetailsClient({ product: serverProduct, productId
     v => (!activeColor || v.color === activeColor) && (!activeSize || v.size === activeSize)
   );
 
-  const displayPrice = selectedVariant?.price || product?.price || 1599;
+  // Derive price: size-specific price > variant price > base product price
+  const selectedSize = sizes.find(s => s.name === activeSize);
+  const displayPrice = selectedSize?.price || selectedVariant?.price || product?.price || 1599;
 
-  // Sync image with variant when selections change safely
+  // Sync image with color selection or variant when selections change
   useEffect(() => {
+    // Check if selected color has a dedicated image
+    const selectedColor = colors.find(c => c.name === activeColor);
+    if (selectedColor?.imageUrl && images) {
+      const idx = images.findIndex(img => img === selectedColor.imageUrl);
+      if (idx !== -1) {
+        setActiveImageIdx(idx);
+      } else {
+        // Image not in the gallery yet — show it as the first image by prepending temporarily
+        // We just set index 0 and let the user see the color-specific image
+        setActiveImageIdx(0);
+      }
+      return;
+    }
+    // Fallback to variant image
     if (selectedVariant?.imageUrl && images) {
       const idx = images.findIndex(img => img === selectedVariant.imageUrl);
       if (idx !== -1) setActiveImageIdx(idx);
     }
-  }, [selectedVariant, images]);
+  }, [activeColor, selectedVariant]);
 
   if (!product) {
     return <div style={{ padding: '4rem', textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>Loading product details...</div>;

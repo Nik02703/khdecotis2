@@ -7,6 +7,8 @@ import PromoBento from '@/components/ui/PromoBento';
 import DealOfTheDay from '@/components/ui/DealOfTheDay';
 import LightningBanner from '@/components/ui/LightningBanner';
 import NewArrivals from '@/components/ui/NewArrivals';
+import connectToDatabase from '@/lib/mongoose';
+import Product from '@/models/Product';
 
 export const DUMMY_PRODUCTS = [
   { _id: '1', title: 'Premium Cotton Bedsheet - Floral', price: 1299, category: 'bedsheets', description: 'Experience the ultimate comfort with our premium floral cotton bedsheet. Highly breathable and exceptionally soft.', images: ['/bedsheets.png'] },
@@ -19,7 +21,19 @@ export const DUMMY_PRODUCTS = [
   { _id: '8', title: 'Ergonomic Sleep Pillows - Set of 2', price: 1499, category: 'pillows', description: 'Provide excellent neck support and align your spine for the perfect night\'s sleep.', images: ['https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1000&q=80'] },
 ];
 
-export default function Home() {
+export default async function Home() {
+  // Fetch bestseller products from DB
+  let bestsellerProducts = DUMMY_PRODUCTS; // fallback
+  try {
+    await connectToDatabase();
+    const dbBestsellers = await Product.find({ isBestseller: true }).sort({ createdAt: -1 }).lean();
+    if (dbBestsellers && dbBestsellers.length > 0) {
+      bestsellerProducts = dbBestsellers.map(p => ({ ...p, _id: p._id.toString() }));
+    }
+  } catch (e) {
+    console.warn('[Home] Bestsellers DB fetch failed, using fallback');
+  }
+
   return (
     <>
       <section className={styles.hero}>
@@ -62,6 +76,10 @@ export default function Home() {
           <a href="/category/comforter" className={styles.categoryCard}>
             <img src="/Blanket.avif" alt="Comforter" className={styles.categoryImg} />
             <h3 className={styles.categoryTitle}>Comforter</h3>
+          </a>
+          <a href="/category/blankets" className={styles.categoryCard}>
+            <img src="/Blanket.avif" alt="Blankets" className={styles.categoryImg} />
+            <h3 className={styles.categoryTitle}>Blankets</h3>
           </a>
           <a href="/category/cushions" className={styles.categoryCard}>
             <img src="/cushions.avif" alt="Cushions" className={styles.categoryImg} />
@@ -111,7 +129,7 @@ export default function Home() {
 
       <section className={`container ${styles.section} animate-fade-in`}>
         <h2 className={styles.sectionTitle}>Bestsellers</h2>
-        <BestsellerCarousel products={DUMMY_PRODUCTS} />
+        <BestsellerCarousel products={bestsellerProducts} />
       </section>
 
       {/* Global Animated Customer Feedback Ribbon */}

@@ -56,7 +56,8 @@ export const ProductProvider = ({ children }) => {
       oldPrice: Number(productParams.oldPrice) || Math.round(Number(productParams.price) * 1.5),
       colors: productParams.colors || [],
       sizes: productParams.sizes || [],
-      productDetails: productParams.productDetails || ''
+      productDetails: productParams.productDetails || '',
+      isBestseller: !!productParams.isBestseller
     };
     
     try {
