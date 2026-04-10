@@ -1,6 +1,7 @@
 'use client';
 import { useRef } from 'react';
 import { Heart, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 import { useWishlist } from '@/context/WishlistContext';
 
 export default function MinimalProductCarousel({ title, products = [] }) {
@@ -34,9 +35,10 @@ export default function MinimalProductCarousel({ title, products = [] }) {
           }}
         >
           {products.map((item, idx) => (
-            <div 
-              key={idx} 
-              style={{ minWidth: '220px', maxWidth: '220px', cursor: 'pointer', display: 'flex', flexDirection: 'column' }}
+            <Link 
+              key={item._id || idx}
+              href={`/product/${item._id}`}
+              style={{ textDecoration: 'none', color: 'inherit', minWidth: '220px', maxWidth: '220px', cursor: 'pointer', display: 'flex', flexDirection: 'column' }}
               onMouseEnter={(e) => {
                 const img = e.currentTarget.querySelector('img');
                 const nextSrc = item.images?.[1] || item.images?.[0] || 'https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800&q=80';
@@ -64,7 +66,7 @@ export default function MinimalProductCarousel({ title, products = [] }) {
                 <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#000' }}>₹{item.price}</span>
                 <span style={{ fontSize: '0.75rem', color: '#a3a3a3', textDecoration: 'line-through', fontWeight: 600 }}>₹{Math.floor(item.price * 2.3)}</span>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 

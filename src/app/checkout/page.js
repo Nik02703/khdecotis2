@@ -172,7 +172,7 @@ export default function CheckoutPage() {
         
         // Step 3: Configure Razorpay Options
         const options = {
-          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_Sai5kTFBnTQsnu', 
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
           amount: data.amount, // completely driven by strict backend computation
           currency: data.currency,
           name: "KH Decotis",

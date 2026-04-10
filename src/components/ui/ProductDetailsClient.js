@@ -6,9 +6,9 @@ import MinimalProductCarousel from './MinimalProductCarousel';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useProducts } from '@/context/ProductContext';
-import { DUMMY_PRODUCTS } from '@/lib/dummyProducts';
 
-export default function ProductDetailsClient({ product: serverProduct, productId }) {
+
+export default function ProductDetailsClient({ product: serverProduct, productId, similarProducts = [] }) {
   const { products } = useProducts();
   const clientProduct = products.find(p => (p._id || p.id) === productId);
   const product = clientProduct || serverProduct || null;
@@ -308,12 +308,14 @@ export default function ProductDetailsClient({ product: serverProduct, productId
 
 
       {/* MORE PRODUCTS CROSSLINK */}
-      <div style={{ borderTop: '1px solid #e5e5e5', paddingTop: '4rem', paddingBottom: '4rem', overflow: 'hidden' }}>
-        <h2 style={{ fontSize: '1.8rem', fontWeight: 700, textAlign: 'center', marginBottom: '2rem', fontFamily: 'Outfit, sans-serif' }}>More Products To Browse</h2>
-        <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
-          <MinimalProductCarousel products={DUMMY_PRODUCTS} />
+      {similarProducts.length > 0 && (
+        <div style={{ borderTop: '1px solid #e5e5e5', paddingTop: '4rem', paddingBottom: '4rem', overflow: 'hidden' }}>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 700, textAlign: 'center', marginBottom: '2rem', fontFamily: 'Outfit, sans-serif' }}>More Products To Browse</h2>
+          <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
+            <MinimalProductCarousel products={similarProducts} />
+          </div>
         </div>
-      </div>
+      )}
       
       <style dangerouslySetInnerHTML={{__html: `
         @media (max-width: 900px) {
