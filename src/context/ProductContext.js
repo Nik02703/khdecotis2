@@ -4,15 +4,15 @@ import { DUMMY_PRODUCTS } from '@/lib/dummyProducts';
 
 // Core pre-seeded arrays
 const SEED_DEALS = [
-  { id: 'deal_1', title: 'Essentials 100% Cotton Super Soft Fitted Bedsheet', category: 'Bedding', price: 1199, oldPrice: 1990, discount: '40% OFF', images: ['/bedsheets.png'], isDealOfDay: true },
+  { id: 'deal_1', title: 'Essentials 100% Cotton Super Soft Fitted Bedsheet', category: 'Bedsheets', price: 1199, oldPrice: 1990, discount: '40% OFF', images: ['/bedsheets.png'], isDealOfDay: true },
   { id: 'deal_2', title: 'Ultrasonic Reversible Blanket', category: 'Comforter', price: 2499, oldPrice: 4000, discount: '38% OFF', images: ['/Blanket.avif'], isDealOfDay: true },
   { id: 'deal_3', title: 'Waterproof Mattress Protector', category: 'Mattress', price: 999, oldPrice: 1500, discount: '33% OFF', images: ['/mattress%20protector.avif'], isDealOfDay: true },
   { id: 'deal_4', title: 'Premium Soft Cushions (Set of 2)', category: 'Cushions', price: 799, oldPrice: 1200, discount: '35% OFF', images: ['/cushions.avif'], isDealOfDay: true }
 ];
 
 const SEED_NEW_ARRIVALS = [
-  { id: 'new_1', title: 'Essentials 100% Cotton Super Soft Fitted Bedsheet (Green)', category: 'Bedding', price: 1199, oldPrice: 1990, images: ['/bedsheets.png', 'https://images.unsplash.com/photo-1522771731478-4eb4f9446d6f?w=800&q=80'], isNewArrival: true },
-  { id: 'new_2', title: 'Luxury Hotel Quilt - King Size', category: 'Bedding', price: 3499, oldPrice: 5999, images: ['/Blanket.avif'], isNewArrival: true },
+  { id: 'new_1', title: 'Essentials 100% Cotton Super Soft Fitted Bedsheet (Green)', category: 'Bedsheets', price: 1199, oldPrice: 1990, images: ['/bedsheets.png', 'https://images.unsplash.com/photo-1522771731478-4eb4f9446d6f?w=800&q=80'], isNewArrival: true },
+  { id: 'new_2', title: 'Luxury Hotel Quilt - King Size', category: 'Bedsheets', price: 3499, oldPrice: 5999, images: ['/Blanket.avif'], isNewArrival: true },
   { id: 'new_6', title: 'Premium Blackout Curtains', category: 'Decor', price: 1999, oldPrice: 3199, images: ['/curtains.png', 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&q=80'], isNewArrival: true },
   { id: 'new_8', title: 'Hand Tufted Wool Rug (5x7)', category: 'Decor', price: 5999, oldPrice: 8999, images: ['https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&q=80'], isNewArrival: true }
 ];

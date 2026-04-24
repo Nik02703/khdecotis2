@@ -64,6 +64,9 @@ const ProductSchema = new mongoose.Schema({
   productDetails: {
     type: String
   },
+  barcode: {
+    type: String
+  },
   variants: [VariantSchema]
 }, { timestamps: true });
 

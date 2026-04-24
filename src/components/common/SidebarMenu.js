@@ -91,10 +91,21 @@ export default function SidebarMenu({ isProfileIcon = false }) {
               <div style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>
                 <span style={{ display: 'block', fontSize: '1.25rem', fontWeight: 500, color: '#333', marginBottom: '12px' }}>Categories</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingLeft: '16px', fontFamily: 'Inter, sans-serif' }}>
-                  <Link href="/category/bedding" onClick={() => setIsOpen(false)} style={{ color: '#555', textDecoration: 'none', fontSize: '0.95rem' }}>Bedding</Link>
-                  <Link href="/category/decor" onClick={() => setIsOpen(false)} style={{ color: '#555', textDecoration: 'none', fontSize: '0.95rem' }}>Cushions & Pillows</Link>
-                  <Link href="/category/bath" onClick={() => setIsOpen(false)} style={{ color: '#555', textDecoration: 'none', fontSize: '0.95rem' }}>Bath</Link>
+                  <Link href="/category/bedsheets" onClick={() => setIsOpen(false)} style={{ color: '#555', textDecoration: 'none', fontSize: '0.95rem' }}>Bedsheets</Link>
+                  <Link href="/category/comforter" onClick={() => setIsOpen(false)} style={{ color: '#555', textDecoration: 'none', fontSize: '0.95rem' }}>Comforters</Link>
+                  <Link href="/category/blankets" onClick={() => setIsOpen(false)} style={{ color: '#555', textDecoration: 'none', fontSize: '0.95rem' }}>Blankets</Link>
+                  <Link href="/category/dohars" onClick={() => setIsOpen(false)} style={{ color: '#555', textDecoration: 'none', fontSize: '0.95rem' }}>Dohars</Link>
+                  <Link href="/category/cushion-covers" onClick={() => setIsOpen(false)} style={{ color: '#555', textDecoration: 'none', fontSize: '0.95rem' }}>Cushion Covers</Link>
+                  <Link href="/category/sofa-covers" onClick={() => setIsOpen(false)} style={{ color: '#555', textDecoration: 'none', fontSize: '0.95rem' }}>Sofa Covers</Link>
+                  <Link href="/category/carpets" onClick={() => setIsOpen(false)} style={{ color: '#555', textDecoration: 'none', fontSize: '0.95rem' }}>Carpets</Link>
+                  <Link href="/category/runners" onClick={() => setIsOpen(false)} style={{ color: '#555', textDecoration: 'none', fontSize: '0.95rem' }}>Runners</Link>
                   <Link href="/category/curtains" onClick={() => setIsOpen(false)} style={{ color: '#555', textDecoration: 'none', fontSize: '0.95rem' }}>Curtains</Link>
+                  <Link href="/category/roller-curtains" onClick={() => setIsOpen(false)} style={{ color: '#555', textDecoration: 'none', fontSize: '0.95rem' }}>Roller Curtains</Link>
+                  <Link href="/category/zebra-curtains" onClick={() => setIsOpen(false)} style={{ color: '#555', textDecoration: 'none', fontSize: '0.95rem' }}>Zebra Curtains</Link>
+                  <Link href="/category/mosquito-net" onClick={() => setIsOpen(false)} style={{ color: '#555', textDecoration: 'none', fontSize: '0.95rem' }}>Mosquito Net</Link>
+                  <Link href="/category/cushions" onClick={() => setIsOpen(false)} style={{ color: '#555', textDecoration: 'none', fontSize: '0.95rem' }}>Cushions & Pillows</Link>
+                  <Link href="/category/doormats" onClick={() => setIsOpen(false)} style={{ color: '#555', textDecoration: 'none', fontSize: '0.95rem' }}>Door Mats</Link>
+                  <Link href="/category/handtowels" onClick={() => setIsOpen(false)} style={{ color: '#555', textDecoration: 'none', fontSize: '0.95rem' }}>Hand Towels</Link>
                 </div>
               </div>
 

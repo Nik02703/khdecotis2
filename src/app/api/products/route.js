@@ -9,7 +9,9 @@ export async function GET() {
     
     // Graceful failover: If DB is not connected (e.g., missing URI), return dummy products!
     if (!db) {
-      console.log("Serving local dummy products catalog (No database connection present).");
+      if (process.env.NODE_ENV === 'production') {
+        console.error("[api/products] NO DATABASE CONNECTION in Production. Check your MONGODB_URI environment variable.");
+      }
       return NextResponse.json(DUMMY_PRODUCTS);
     }
     

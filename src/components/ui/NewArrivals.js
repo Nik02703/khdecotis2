@@ -12,10 +12,10 @@ export default function NewArrivals() {
 
   // Filter New Arrivals natively
   const newArrivalsData = products.filter(p => p.isNewArrival);
-  const BEDDING_PRODS = newArrivalsData.filter(p => !['Decor', 'Lighting'].includes(p.category));
-  const DECOR_PRODS = newArrivalsData.filter(p => ['Decor', 'Lighting'].includes(p.category));
+  const BEDROOM_PRODS = newArrivalsData.filter(p => !['Decor', 'Lighting', 'Hand Towels', 'Door Mats'].includes(p.category));
+  const OTHER_PRODS = newArrivalsData.filter(p => ['Hand Towels', 'Door Mats'].includes(p.category));
 
-  const currentProducts = activeIndex === 0 ? BEDDING_PRODS : DECOR_PRODS;
+  const currentProducts = activeIndex === 0 ? BEDROOM_PRODS : OTHER_PRODS;
 
   return (
     <section className={styles.section}>
@@ -35,10 +35,10 @@ export default function NewArrivals() {
           <div className={styles.toggleTrack}>
             <div className={styles.toggleThumb} style={{ transform: activeIndex === 0 ? 'translateX(0)' : 'translateX(100%)' }} />
             <button className={`${styles.toggleBtn} ${activeIndex === 0 ? styles.activeBtn : ''}`} onClick={() => setActiveIndex(0)}>
-              Shop Bedding & Essentials
+              Shop Bedroom & Essentials
             </button>
             <button className={`${styles.toggleBtn} ${activeIndex === 1 ? styles.activeBtn : ''}`} onClick={() => setActiveIndex(1)}>
-              Shop Hand Towels & Door Mats
+              Shop Decor & Floorings
             </button>
           </div>
         </div>

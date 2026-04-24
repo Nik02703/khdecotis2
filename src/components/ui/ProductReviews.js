@@ -2,7 +2,7 @@
 
 export default function ProductReviews() {
   const reviews = [
-    { id: 1, author: "Aditi S.", rating: 5, date: "October 18, 2026", title: "Absolutely Luxurious Quality", content: "I was skeptical about buying bedding online, but this completely exceeded my expectations. The fabric is incredibly soft and practically glows. Shipping was lightning fast too!", img: "https://images.unsplash.com/photo-1522771731478-4eb4f9446d6f?w=400&q=80" },
+    { id: 1, author: "Aditi S.", rating: 5, date: "October 18, 2026", title: "Absolutely Luxurious Quality", content: "I was skeptical about buying home decor online, but this completely exceeded my expectations. The fabric is incredibly soft and practically glows. Shipping was lightning fast too!", img: "https://images.unsplash.com/photo-1522771731478-4eb4f9446d6f?w=400&q=80" },
     { id: 2, author: "Vikram Mehta", rating: 4, date: "October 12, 2026", title: "Great value for money", content: "Very happy with the purchase. The only reason for 4 stars is that the color is slightly darker than the picture, but honestly it looks even better in my room. Will buy again." },
     { id: 3, author: "Pooja Verma", rating: 5, date: "September 29, 2026", title: "Exactly like the luxury hotels", content: "This is the exact same feeling you get when you sleep in a 5-star hotel. Extremely breathable and doesn't trap heat at all." }
   ];

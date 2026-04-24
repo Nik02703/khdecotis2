@@ -77,14 +77,15 @@ export default function Header() {
         >
           <div className={`container ${styles.megaMenuInner}`}>
             <div className={styles.megaMenuItem}>
-              <Link href="/category/bedding" className={styles.megaMenuLink}>Bedding</Link>
+              <Link href="/category/bedsheets" className={styles.megaMenuLink}>Bedroom</Link>
               <div className={styles.megaMenuDropdown}>
                 <div className={`container ${styles.megaMenuDropdownInner}`}>
                   <div className={styles.megaMenuCol}>
-                    <h4>By Category</h4>
+                    <h4>Bedroom Essentials</h4>
                     <Link href="/category/bedsheets">Bedsheets</Link>
                     <Link href="/category/comforter">Comforters</Link>
                     <Link href="/category/blankets">Blankets</Link>
+                    <Link href="/category/dohars">Dohars</Link>
                     <Link href="/category/mattress">Mattresses</Link>
                     <Link href="/category/pillows">Pillows</Link>
                   </div>
@@ -95,39 +96,27 @@ export default function Header() {
                     <Link href="/shop" style={{color: '#e11d48'}}>Sale: Up to 40% Off</Link>
                   </div>
                   <div className={styles.megaMenuImageCol}>
-                    <img src="/bedsheets.png" alt="Featured Bedding" style={{width: '200px', height: '140px', objectFit: 'cover'}} />
+                    <img src="/bedsheets.png" alt="Featured Bedroom" style={{width: '200px', height: '140px', objectFit: 'cover'}} />
                   </div>
                 </div>
               </div>
             </div>
 
             <div className={styles.megaMenuItem}>
-              <Link href="/category/doormats" className={styles.megaMenuLink}>Home Decor</Link>
+              <Link href="/category/cushion-covers" className={styles.megaMenuLink}>Living Room</Link>
               <div className={styles.megaMenuDropdown}>
                 <div className={`container ${styles.megaMenuDropdownInner}`}>
                   <div className={styles.megaMenuCol}>
-                    <h4>Decorative Accents</h4>
+                    <h4>Covers & Accents</h4>
+                    <Link href="/category/cushion-covers">Cushion Covers</Link>
+                    <Link href="/category/sofa-covers">Sofa Covers</Link>
+                    <Link href="/category/cushions">Cushions</Link>
+                  </div>
+                  <div className={styles.megaMenuCol}>
+                    <h4>Flooring</h4>
+                    <Link href="/category/carpets">Carpets</Link>
+                    <Link href="/category/runners">Runners</Link>
                     <Link href="/category/doormats">Door Mats</Link>
-                    <Link href="/category/handtowels">Hand Towels</Link>
-                  </div>
-                  <div className={styles.megaMenuImageCol}>
-                    <img src="/door_mat.avif" alt="Featured Decor" style={{width: '200px', height: '140px', objectFit: 'cover'}} />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className={styles.megaMenuItem}>
-              <Link href="/category/bath" className={styles.megaMenuLink}>Bath & Hand Towels</Link>
-              <div className={styles.megaMenuDropdown}>
-                <div className={`container ${styles.megaMenuDropdownInner}`}>
-                  <div className={styles.megaMenuCol}>
-                    <h4>Bath Essentials</h4>
-                    <Link href="/category/handtowels">Hand Towels</Link>
-                    <Link href="/category/doormats">Bath Mats</Link>
-                  </div>
-                  <div className={styles.megaMenuImageCol}>
-                    <img src="/hand_towels.webp" alt="Featured Towels" style={{width: '200px', height: '140px', objectFit: 'cover'}} />
                   </div>
                 </div>
               </div>
@@ -139,11 +128,32 @@ export default function Header() {
                 <div className={`container ${styles.megaMenuDropdownInner}`}>
                   <div className={styles.megaMenuCol}>
                     <h4>Curtains & Drapes</h4>
-                    <Link href="/category/curtains">Blackout Curtains</Link>
-                    <Link href="/category/curtains">Sheer Curtains</Link>
+                    <Link href="/category/roller-curtains">Roller Curtains</Link>
+                    <Link href="/category/zebra-curtains">Zebra Curtains</Link>
+                    <Link href="/category/curtains">All Curtains</Link>
+                  </div>
+                  <div className={styles.megaMenuCol}>
+                    <h4>Protection</h4>
+                    <Link href="/category/mosquito-net">Mosquito Net</Link>
                   </div>
                   <div className={styles.megaMenuImageCol}>
-                    <img src="/curtains.png" alt="Featured Window" style={{width: '200px', height: '140px', objectFit: 'cover'}} />
+                    <img src="/curtains.png" alt="Featured Curtains" style={{width: '200px', height: '140px', objectFit: 'cover'}} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.megaMenuItem}>
+              <Link href="/category/handtowels" className={styles.megaMenuLink}>Bath & Towels</Link>
+              <div className={styles.megaMenuDropdown}>
+                <div className={`container ${styles.megaMenuDropdownInner}`}>
+                  <div className={styles.megaMenuCol}>
+                    <h4>Bath Essentials</h4>
+                    <Link href="/category/handtowels">Hand Towels</Link>
+                    <Link href="/category/doormats">Bath Mats</Link>
+                  </div>
+                  <div className={styles.megaMenuImageCol}>
+                    <img src="/hand_towels.webp" alt="Featured Towels" style={{width: '200px', height: '140px', objectFit: 'cover'}} />
                   </div>
                 </div>
               </div>

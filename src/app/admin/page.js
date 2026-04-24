@@ -36,7 +36,7 @@ export default function AdminPage() {
   const { messages, markAsRead, deleteMessage } = useMessages();
   const unreadCount = messages ? messages.filter(m => m.status === 'unread').length : 0;
 
-  const [newProd, setNewProd] = useState({ title: '', price: '', oldPrice: '', category: 'Bedding', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '' });
+  const [newProd, setNewProd] = useState({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', barcode: '' });
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [newCoupon, setNewCoupon] = useState({ code: '', discount: '', maxUses: '' });
   const [tmpColorName, setTmpColorName] = useState('');
@@ -44,6 +44,59 @@ export default function AdminPage() {
   const [tmpSizeName, setTmpSizeName] = useState('');
   const [tmpSizeDim, setTmpSizeDim] = useState('');
   const [tmpSizePrice, setTmpSizePrice] = useState('');
+
+  const [upcInput, setUpcInput] = useState('');
+  const [lookupState, setLookupState] = useState(null); // 'loading' | 'found' | 'not_found' | 'error' | 'rate_limit'
+
+  const handleUpcChange = (e) => {
+    const val = e.target.value;
+    setUpcInput(val);
+    if ([8, 12, 13].includes(val.length)) {
+      if (window.upcTimeout) clearTimeout(window.upcTimeout);
+      window.upcTimeout = setTimeout(() => {
+        lookupUPC(val);
+      }, 800);
+    }
+  };
+
+  const lookupUPC = async (upcCode) => {
+    if (!upcCode || upcCode.trim().length < 6) return;
+    setLookupState('loading');
+    try {
+      const response = await fetch(
+        `/api/upc?upc=${upcCode.trim()}`,
+        { method: 'GET', headers: { 'Accept': 'application/json' } }
+      );
+      const data = await response.json();
+      if (response.status === 429 || data.code === "INVALID_UPC" || data.code === "EXCEED_LIMIT") {
+        setLookupState('rate_limit');
+        return;
+      }
+      if (!response.ok) throw new Error('API error');
+      if (data.total > 0 && data.items && data.items.length > 0) {
+        const item = data.items[0];
+        setNewProd(prev => ({
+          ...prev,
+          title: item.title || prev.title,
+          description: item.description || prev.description,
+          category: item.category || prev.category,
+          price: item.offers?.[0]?.price ? String(item.offers[0].price) : prev.price,
+          images: item.images?.[0] ? [item.images[0]] : prev.images,
+          barcode: upcCode.trim()
+        }));
+        setLookupState('found');
+        setTimeout(() => {
+          const el = document.getElementById('product-title-input');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      } else {
+        setLookupState('not_found');
+      }
+    } catch (error) {
+      console.error('UPC lookup error:', error);
+      setLookupState('error');
+    }
+  };
 
   const handleCreateCoupon = async (e) => {
     e.preventDefault();
@@ -92,7 +145,8 @@ export default function AdminPage() {
       inStock: newProd.inStock !== false,
       colors: newProd.colors || [],
       sizes: newProd.sizes || [],
-      productDetails: newProd.productDetails || ''
+      productDetails: newProd.productDetails || '',
+      barcode: newProd.barcode || ''
     };
 
     if (newProd._id || newProd.id) {
@@ -103,7 +157,7 @@ export default function AdminPage() {
       alert('Product successfully published across global storefront databases!');
     }
     
-    setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedding', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '' });
+    setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', barcode: '' });
     setActiveTab('manageProducts');
   };
 
@@ -257,7 +311,7 @@ export default function AdminPage() {
           <button onClick={() => setActiveTab('orders')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'orders' ? '#eff6ff' : 'transparent', color: activeTab === 'orders' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'orders' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
             <ShoppingBag size={20} /> Orders & Fulfillment
           </button>
-          <button onClick={() => { setActiveTab('addProduct'); setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedding', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '' }); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'addProduct' ? '#eff6ff' : 'transparent', color: activeTab === 'addProduct' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'addProduct' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
+          <button onClick={() => { setActiveTab('addProduct'); setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '' }); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'addProduct' ? '#eff6ff' : 'transparent', color: activeTab === 'addProduct' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'addProduct' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
             <PackageOpen size={20} /> Add New Product
           </button>
           <button onClick={() => setActiveTab('manageProducts')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'manageProducts' ? '#eff6ff' : 'transparent', color: activeTab === 'manageProducts' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'manageProducts' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
@@ -494,9 +548,46 @@ export default function AdminPage() {
             <h2 style={{ fontSize: '1.8rem', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Publish New Product</h2>
             <p style={{ color: '#64748b', marginBottom: '32px' }}>Upload new inventory items directly to the storefront catalog without developer intervention.</p>
             <form onSubmit={handlePublish} style={{ background: '#fff', padding: '32px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              
+              {/* BARCODE / UPC LOOKUP */}
+              <div style={{ background: '#f8fafc', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 600, color: '#0f172a', margin: 0 }}>Barcode / UPC Lookup</h3>
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <input 
+                    type="text" 
+                    placeholder="Enter UPC or EAN barcode number..." 
+                    value={upcInput} 
+                    onChange={handleUpcChange} 
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); lookupUPC(upcInput); } }}
+                    style={{ flex: 1, padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '1rem', background: '#fff' }} 
+                  />
+                  <button 
+                    type="button" 
+                    onClick={() => lookupUPC(upcInput)} 
+                    disabled={lookupState === 'loading'}
+                    style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '0 24px', borderRadius: '8px', fontWeight: 600, cursor: lookupState === 'loading' ? 'not-allowed' : 'pointer', transition: 'background 0.2s' }}
+                  >
+                    {lookupState === 'loading' ? 'WAIT...' : 'LOOKUP'}
+                  </button>
+                </div>
+                {lookupState === 'loading' && <div style={{ marginTop: '12px', color: '#64748b', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>Scanning... Looking up product...</div>}
+                {lookupState === 'found' && <div style={{ marginTop: '12px', color: '#16a34a', fontSize: '0.9rem', fontWeight: 500 }}>✅ Product found! Details have been filled in automatically. Review and save.</div>}
+                {lookupState === 'not_found' && <div style={{ marginTop: '12px', color: '#d97706', fontSize: '0.9rem', fontWeight: 500 }}>⚠️ Product not found in database. Please enter the details manually below.</div>}
+                {lookupState === 'rate_limit' && <div style={{ marginTop: '12px', color: '#d97706', fontSize: '0.9rem', fontWeight: 500 }}>⚠️ Daily lookup limit reached. Please enter product details manually or upgrade the API plan.</div>}
+                {lookupState === 'error' && <div style={{ marginTop: '12px', color: '#ef4444', fontSize: '0.9rem', fontWeight: 500 }}>❌ Could not connect to product database. Please enter details manually.</div>}
+              </div>
+
+              <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '8px 0' }} />
+
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Product Title</label>
-                <input type="text" value={newProd.title} onChange={e => setNewProd({...newProd, title: e.target.value})} placeholder="e.g. Premium Linen Bedsheet" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem' }} />
+                <input id="product-title-input" type="text" value={newProd.title} onChange={e => setNewProd({...newProd, title: e.target.value})} placeholder="e.g. Premium Linen Bedsheet" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Barcode / UPC</label>
+                <input type="text" value={newProd.barcode || ''} onChange={e => setNewProd({...newProd, barcode: e.target.value})} placeholder="e.g. 4011200296908" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem' }} />
               </div>
               <div style={{ display: 'flex', gap: '20px' }}>
                 <div style={{ flex: 1 }}>
@@ -512,7 +603,7 @@ export default function AdminPage() {
                 <div style={{ flex: 1, minWidth: '200px' }}>
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Primary Category Placement</label>
                   <select value={newProd.category} onChange={e => setNewProd({...newProd, category: e.target.value})} style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem', background: '#fff' }}>
-                    <option value="Bedding">Bedding</option><option value="Bedsheets">Bedsheets</option><option value="Comforter">Comforter</option><option value="Blankets">Blankets</option><option value="Mattress">Mattress</option><option value="Cushions">Cushions</option><option value="Curtains">Curtains</option><option value="Pillows">Pillows</option><option value="Door Mats">Door Mats</option><option value="Hand Towels">Hand Towels</option>
+                    <option value="Bedsheets">Bedsheets</option><option value="Comforter">Comforter</option><option value="Blankets">Blankets</option><option value="Dohars">Dohars</option><option value="Mattress">Mattress</option><option value="Cushions">Cushions</option><option value="Cushion Covers">Cushion Covers</option><option value="Sofa Covers">Sofa Covers</option><option value="Carpets">Carpets</option><option value="Runners">Runners</option><option value="Curtains">Curtains</option><option value="Roller Curtains">Roller Curtains</option><option value="Zebra Curtains">Zebra Curtains</option><option value="Mosquito Net">Mosquito Net</option><option value="Pillows">Pillows</option><option value="Door Mats">Door Mats</option><option value="Hand Towels">Hand Towels</option>
                   </select>
                 </div>
                 <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginTop: '14px', flexWrap: 'wrap' }}>
@@ -685,7 +776,7 @@ export default function AdminPage() {
                         <td style={{ padding: '16px 24px', fontSize: '0.95rem', fontWeight: 600, color: '#0f172a' }}>₹{product.price || product.currentPrice}</td>
                         <td style={{ padding: '16px 24px', textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                            <button onClick={() => { setNewProd({...product, images: product.images || [], colors: product.colors || [], sizes: product.sizes || [], productDetails: product.productDetails || '', oldPrice: product.oldPrice || '', isDealOfDay: !!product.isDealOfDay, isNewArrival: !!product.isNewArrival, isBestseller: !!product.isBestseller, inStock: product.inStock !== false, description: product.description || '', category: product.category || 'Bedding'}); setActiveTab('addProduct'); }} style={{ background: '#eff6ff', color: '#3b82f6', border: '1px solid #bfdbfe', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>
+                            <button onClick={() => { setNewProd({...product, images: product.images || [], colors: product.colors || [], sizes: product.sizes || [], productDetails: product.productDetails || '', oldPrice: product.oldPrice || '', isDealOfDay: !!product.isDealOfDay, isNewArrival: !!product.isNewArrival, isBestseller: !!product.isBestseller, inStock: product.inStock !== false, description: product.description || '', category: product.category || 'Bedsheets'}); setActiveTab('addProduct'); }} style={{ background: '#eff6ff', color: '#3b82f6', border: '1px solid #bfdbfe', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>
                               <Edit size={16} /> Edit
                             </button>
                             <button onClick={() => { if(confirm('Permanently delete this product from the global database?')) removeProduct(product._id || product.id); }} style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>

@@ -10,7 +10,7 @@ export default function Footer() {
             <img src="/logo.png" alt="KH Decotis" style={{ height: '60px', width: 'auto', objectFit: 'contain' }} />
           </div>
           <p style={{ color: '#d1d5db', fontSize: '0.9rem', lineHeight: '1.6' }}>
-            Elevate your home with our premium, brightly styled collections of everyday essentials and luxury bedding.
+            Elevate your home with our premium, brightly styled collections of everyday essentials and home decor.
           </p>
         </div>
         

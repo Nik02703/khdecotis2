@@ -16,8 +16,12 @@ async function connectToDatabase() {
   }
 
   if (!MONGODB_URI) {
-    console.warn("MONGODB_URI is not defined in the environment. Mongoose connection aborted. The application will fall back to local test data.");
-    return null; // Signals to the consuming APIs to use graceful fallbacks
+    if (process.env.NODE_ENV === 'production') {
+      console.error("CRITICAL ERROR: MONGODB_URI is MISSING in Production! Deployment will be restricted to read-only Mock Mode.");
+    } else {
+      console.warn("MONGODB_URI is not defined in the environment. Falling back to local test data.");
+    }
+    return null; 
   }
 
   if (!cached.promise) {

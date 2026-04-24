@@ -30,6 +30,8 @@ export default function ProductDetailsClient({ product: serverProduct, productId
   const [activeColor, setActiveColor] = useState(colors[0]?.name || "");
   const [activeSize, setActiveSize] = useState(sizes[0]?.name || "");
   const [accordion, setAccordion] = useState({ details: false, specs: false });
+  const [pincode, setPincode] = useState('');
+  const [pincodeResult, setPincodeResult] = useState(null);
   const { cartItems, addToCart, initiateBuyNow } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
 
@@ -211,13 +213,56 @@ export default function ProductDetailsClient({ product: serverProduct, productId
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '2rem' }}>
-            <input type="text" placeholder="Enter Pincode To Check Delivery" style={{ flex: 1, padding: '16px', border: '1px solid #e5e5e5', borderRadius: '4px', background: '#fafafa', outline: 'none', fontSize: '0.9rem' }} id="pincodeCheck" />
-            <button onClick={() => { const val = document.getElementById('pincodeCheck')?.value; if(val?.length > 4) alert('Delivery is available for ' + val + ' within 2-3 business days!'); else alert('Please enter a valid Pincode.'); }} style={{ background: '#fff', color: '#1a1a1a', border: '1px solid #1a1a1a', padding: '0 24px', borderRadius: '4px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s' }} onMouseOver={e => { e.currentTarget.style.background='#1a1a1a'; e.currentTarget.style.color='#fff'; }} onMouseOut={e => { e.currentTarget.style.background='#fff'; e.currentTarget.style.color='#1a1a1a'; }}>CHECK</button>
+          <div style={{ marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="Enter Pincode To Check Delivery"
+                maxLength={6}
+                value={pincode}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '');
+                  setPincode(val);
+                  if (val.length < 6) setPincodeResult(null);
+                }}
+                style={{ flex: 1, padding: '16px', border: '1px solid #e5e5e5', borderRadius: '4px', background: '#fafafa', outline: 'none', fontSize: '0.9rem' }}
+              />
+              <button
+                disabled={pincode.length !== 6}
+                onClick={() => { if (pincode.length === 6) setPincodeResult(pincode); }}
+                style={{
+                  background: pincode.length === 6 ? '#fff' : '#f5f5f5',
+                  color: pincode.length === 6 ? '#1a1a1a' : '#a3a3a3',
+                  border: pincode.length === 6 ? '1px solid #1a1a1a' : '1px solid #e5e5e5',
+                  padding: '0 24px', borderRadius: '4px', fontWeight: 700, fontSize: '0.85rem',
+                  cursor: pincode.length === 6 ? 'pointer' : 'not-allowed',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={e => { if (pincode.length === 6) { e.currentTarget.style.background='#1a1a1a'; e.currentTarget.style.color='#fff'; } }}
+                onMouseOut={e => { if (pincode.length === 6) { e.currentTarget.style.background='#fff'; e.currentTarget.style.color='#1a1a1a'; } }}
+              >
+                CHECK
+              </button>
+            </div>
+
+            {/* Inline delivery result — no popup */}
+            {pincodeResult && (
+              <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                  <span style={{ color: '#16a34a', fontWeight: 600, fontSize: '0.9rem' }}>Estimated Delivery within 1 week</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"></path><path d="M12 6v6l4 2"></path></svg>
+                  <span style={{ color: '#16a34a', fontWeight: 600, fontSize: '0.9rem' }}>COD Available</span>
+                </div>
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', paddingBottom: '32px', borderBottom: '1px solid #e5e5e5', textAlign: 'center' }}>
-            {product?.category === 'Bedding' || product?.category === 'Bedsheets' || product?.category === 'Comforter' ? (
+            {['Bedsheets', 'Comforter', 'Blankets', 'Dohars'].includes(product?.category) ? (
               <>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#525252" strokeWidth="1.5"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 1 10 10"></path></svg>

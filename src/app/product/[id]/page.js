@@ -15,8 +15,12 @@ export default async function ProductPage({ params }) {
   try {
     await connectToDatabase();
 
-    // Fetch the actual product from DB
-    product = await Product.findById(id).lean();
+    // Fetch the actual product from DB if the ID is a valid MongoDB ObjectId
+    if (Product && id && id.length === 24) { // Basic check first, then Mongoose check if possible
+       product = await Product.findById(id).lean();
+    } else {
+       console.log(`[ProductPage] ID "${id}" is a dummy/string ID. Skipping DB fetch.`);
+    }
     if (product) {
       product = JSON.parse(JSON.stringify(product));
 

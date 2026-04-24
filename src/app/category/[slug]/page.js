@@ -22,10 +22,20 @@ export default function CategoryDetailsPage({ params }) {
       const cat = p?.category?.toLowerCase() || '';
       const target = slug.toLowerCase();
       
-      // Alias common synonyms seamlessly handling user drops
-      if (target === 'bedsheets' && (cat === 'bedding' || cat === 'bedsheets')) return true;
+      // Alias common synonyms and hyphenated slug → DB category name
+      if (target === 'bedsheets' && (cat === 'bedding' || cat === 'bedsheets' || cat === 'bedroom')) return true;
       if (target === 'decor' && (cat === 'decor' || cat === 'home decor' || cat === 'accessories')) return true;
       if (target === 'blankets' && cat === 'blankets') return true;
+      if (target === 'cushion-covers' && cat === 'cushion covers') return true;
+      if (target === 'sofa-covers' && cat === 'sofa covers') return true;
+      if (target === 'roller-curtains' && cat === 'roller curtains') return true;
+      if (target === 'zebra-curtains' && cat === 'zebra curtains') return true;
+      if (target === 'mosquito-net' && cat === 'mosquito net') return true;
+      if (target === 'doormats' && (cat === 'door mats' || cat === 'doormats')) return true;
+      if (target === 'handtowels' && (cat === 'hand towels' || cat === 'handtowels')) return true;
+      if (target === 'dohars' && cat === 'dohars') return true;
+      if (target === 'carpets' && cat === 'carpets') return true;
+      if (target === 'runners' && cat === 'runners') return true;
       
       return cat === target;
     });
