@@ -3,11 +3,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 
 const OrderContext = createContext();
 
-const DUMMY_ORDERS = [
-  { id: '#KHD-3109', name: 'Ravi Kumar', date: 'Oct 24, 2026', total: '₹4,599', status: 'Delivered', color: '#dcfce7', text: '#16a34a', email: 'ravi@example.com', items: 2 },
-  { id: '#KHD-3108', name: 'Sneha Sharma', date: 'Oct 24, 2026', total: '₹12,400', status: 'Pending', color: '#fef3c7', text: '#d97706', email: 'sneha@example.com', items: 5 },
-  { id: '#KHD-3107', name: 'Aryan Singh', date: 'Oct 23, 2026', total: '₹899', status: 'Shipped', color: '#dbeafe', text: '#2563eb', email: 'aryan@example.com', items: 1 },
-];
+const DUMMY_ORDERS = [];
 
 /**
  * Derive badge colors from status string
@@ -72,7 +68,7 @@ export function OrderProvider({ children }) {
         return res.json();
       })
       .then(data => {
-        if (data && Array.isArray(data) && data.length > 0 && !data[0].error) {
+        if (data && Array.isArray(data) && (!data.length || !data[0].error)) {
           const mappedDbOrders = data.map(dbOrder => {
             const st = dbOrder.status || 'Pending';
             const { bg, fg } = getStatusColors(st);

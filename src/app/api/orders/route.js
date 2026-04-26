@@ -7,21 +7,13 @@ export async function GET() {
     const db = await connectToDatabase();
     
     if (!db) {
-      // Graceful local fallback logic returning premium mock transaction datasets
-      return NextResponse.json([
-        { _id: 'KHD-3109', user: { name: 'Ravi Kumar' }, totalAmount: 4599, status: 'Delivered', createdAt: new Date('2026-10-24') },
-        { _id: 'KHD-3108', user: { name: 'Sneha Sharma' }, totalAmount: 12400, status: 'Processing', createdAt: new Date('2026-10-24') },
-        { _id: 'KHD-3107', user: { name: 'Aryan Singh' }, totalAmount: 899, status: 'Shipped', createdAt: new Date('2026-10-23') }
-      ]);
+      return NextResponse.json([]);
     }
     
     const orders = await Order.find({}).sort({ createdAt: -1 }).limit(200).allowDiskUse(true);
     
     if (orders.length === 0) {
-      // Fallback if connected but empty
-      return NextResponse.json([
-        { _id: 'KHD-3109', user: { name: 'Ravi Kumar' }, totalAmount: 4599, status: 'Delivered', createdAt: new Date('2026-10-24') }
-      ]);
+      return NextResponse.json([]);
     }
 
     return NextResponse.json(orders);

@@ -292,8 +292,8 @@ export default function AdminPage() {
     return acc + (isNaN(amountData) ? 0 : amountData);
   }, 0);
   const totalOrders = orders.length;
-  const mockVisitors = (totalOrders * 40) + 47813;
-  const mockConversion = totalOrders > 0 ? ((totalOrders / mockVisitors) * 100).toFixed(2) : '0.00';
+  const mockVisitors = 0;
+  const mockConversion = mockVisitors > 0 ? ((totalOrders / mockVisitors) * 100).toFixed(2) : '0.00';
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', fontFamily: 'Outfit, sans-serif' }} className="animate-fade-in">
