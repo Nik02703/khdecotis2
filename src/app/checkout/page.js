@@ -28,6 +28,12 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('online'); // 'online' or 'cod'
 
+  const encodeImg = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http') || url.startsWith('data:')) return url;
+    return url.split('/').map(p => encodeURIComponent(p)).join('/');
+  };
+
   const activeItems = buyNowItem ? [buyNowItem] : cartItems;
 
   // Calculate pricing with coupon discount & shipping
@@ -284,7 +290,7 @@ export default function CheckoutPage() {
             {orderSuccessDetails.payload.map((item, idx) => (
               <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '16px', borderBottom: idx === orderSuccessDetails.payload.length - 1 ? 'none' : '1px solid #f1f5f9' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <img src={item.images?.[0] || item.image || '/placeholder.png'} alt={item.title} style={{ width: '56px', height: '56px', borderRadius: '8px', objectFit: 'cover', background: '#f8fafc', border: '1px solid #e2e8f0' }} />
+                  <img src={encodeImg(item.images?.[0] || item.image) || '/placeholder.png'} alt={item.title} style={{ width: '56px', height: '56px', borderRadius: '8px', objectFit: 'cover', background: '#f8fafc', border: '1px solid #e2e8f0' }} />
                   <div>
                     <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0f172a', marginBottom: '4px' }}>{item.title}</div>
                     <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Qty: {item.quantity} × <span style={{ color: '#0f172a' }}>₹{Number(item.price || 0).toLocaleString('en-IN')}</span></div>
@@ -331,7 +337,7 @@ export default function CheckoutPage() {
           {activeItems.map((item, idx) => (
             <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <img src={item.images?.[0] || item.image || '/placeholder.png'} alt={item.title} style={{ width: '44px', height: '44px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #e2e8f0' }} />
+                <img src={encodeImg(item.images?.[0] || item.image) || '/placeholder.png'} alt={item.title} style={{ width: '44px', height: '44px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #e2e8f0' }} />
                 <div>
                   <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0f172a' }}>{item.title}</div>
                   <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Qty: {item.quantity || 1}</div>

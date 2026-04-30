@@ -43,6 +43,12 @@ export default function DealOfTheDay() {
   const dynamicDeals = products.filter(p => p.isDealOfDay);
   if (dynamicDeals.length === 0) return null;
 
+  const encodeImg = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http') || url.startsWith('data:')) return url;
+    return url.split('/').map(p => encodeURIComponent(p)).join('/');
+  };
+
   return (
     <section className={`${styles.section} animate-fade-in`}>
       <div className={styles.leftSidebar}>
@@ -71,7 +77,7 @@ export default function DealOfTheDay() {
             <Link href={`/product/${deal._id || deal.id}`} key={deal._id || deal.id} className={styles.dealCard} style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className={styles.cardImageWrapper}>
                 <span className={styles.dealTag}>Deal Of The Day</span>
-                <img src={deal.images?.[0] || 'https://via.placeholder.com/300'} alt={deal.title} className={styles.cardImg} />
+                <img src={encodeImg(deal.images?.[0]) || 'https://via.placeholder.com/300'} alt={deal.title} className={styles.cardImg} />
                 <button 
                   style={{ position: 'absolute', top: '12px', right: '12px', background: 'transparent', border: 'none', cursor: 'pointer', zIndex: 10 }}
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleWishlist(deal); }}

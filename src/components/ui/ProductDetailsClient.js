@@ -20,7 +20,14 @@ export default function ProductDetailsClient({ product: serverProduct, productId
     'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=800&q=80'
   ];
   const colorImages = (product?.colors || []).map(c => c.imageUrl).filter(Boolean);
-  const images = [...new Set([...baseImages, ...colorImages])];
+  
+  const encodeImg = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http') || url.startsWith('data:')) return url;
+    return url.split('/').map(p => encodeURIComponent(p)).join('/');
+  };
+
+  const images = [...new Set([...baseImages, ...colorImages])].map(encodeImg);
 
   const colors = product?.colors || [];
 
@@ -49,7 +56,7 @@ export default function ProductDetailsClient({ product: serverProduct, productId
     // Check if selected color has a dedicated image
     const selectedColor = colors.find(c => c.name === activeColor);
     if (selectedColor?.imageUrl && images) {
-      const idx = images.findIndex(img => img === selectedColor.imageUrl);
+      const idx = images.findIndex(img => img === encodeImg(selectedColor.imageUrl));
       if (idx !== -1) {
         setActiveImageIdx(idx);
       } else {
@@ -61,7 +68,7 @@ export default function ProductDetailsClient({ product: serverProduct, productId
     }
     // Fallback to variant image
     if (selectedVariant?.imageUrl && images) {
-      const idx = images.findIndex(img => img === selectedVariant.imageUrl);
+      const idx = images.findIndex(img => img === encodeImg(selectedVariant.imageUrl));
       if (idx !== -1) setActiveImageIdx(idx);
     }
   }, [activeColor, selectedVariant]);
@@ -80,24 +87,26 @@ export default function ProductDetailsClient({ product: serverProduct, productId
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', alignItems: 'stretch', borderBottom: '1px solid #e5e5e5' }}>
       
         {/* LEFT COLUMN: Gallery */}
-        <div style={{ position: 'relative', width: '100%', background: '#f5f5f5', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '2rem 0' }}>
-          <div style={{ position: 'absolute', top: '24px', left: '24px', background: '#000', color: '#fff', fontSize: '0.8rem', fontWeight: 800, padding: '4px 12px', borderRadius: '4px', letterSpacing: '1px' }}>
+        <div style={{ position: 'relative', width: '100%', height: '100%', background: '#f5f5f5', overflow: 'hidden', display: 'flex' }}>
+          
+          {/* Top Overlays */}
+          <div style={{ position: 'absolute', top: '24px', left: '24px', background: '#000', color: '#fff', fontSize: '0.8rem', fontWeight: 800, padding: '4px 12px', borderRadius: '4px', letterSpacing: '1px', zIndex: 20 }}>
             STEAL DEAL
           </div>
           
-          <div style={{ position: 'absolute', top: '24px', right: '24px', display: 'flex', gap: '16px', color: '#333', zIndex: 10 }}>
+          <div style={{ position: 'absolute', top: '24px', right: '24px', display: 'flex', gap: '16px', color: '#333', zIndex: 20 }}>
             <button 
               onClick={() => { navigator.clipboard.writeText(window.location.href); alert('Product link copied to clipboard!'); }} 
-              style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+              style={{ background: 'rgba(255,255,255,0.7)', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
             >
-              <Share2 size={24} strokeWidth={1.5} />
+              <Share2 size={20} strokeWidth={1.5} />
             </button>
             <button 
               onClick={(e) => { e.preventDefault(); toggleWishlist(product); }} 
-              style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+              style={{ background: 'rgba(255,255,255,0.7)', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
             >
               <Heart 
-                size={24} 
+                size={20} 
                 strokeWidth={1.5} 
                 fill={isInWishlist(product._id || product.id) ? '#ef4444' : 'transparent'} 
                 color={isInWishlist(product._id || product.id) ? '#ef4444' : '#333'} 
@@ -105,24 +114,28 @@ export default function ProductDetailsClient({ product: serverProduct, productId
             </button>
           </div>
 
-          <div style={{ width: '100%', height: '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-            <button onClick={prevImg} style={{ position: 'absolute', left: '16px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#a3a3a3', zIndex: 10 }}>
-              <ChevronLeft size={48} strokeWidth={1} />
-            </button>
+          {/* Main Image/Video */}
+          <div style={{ width: '100%', flex: 1, position: 'relative', minHeight: '600px' }}>
             {(images[activeImageIdx]?.startsWith('data:video') || images[activeImageIdx]?.endsWith('.mp4')) ? (
-              <video src={images[activeImageIdx]} controls autoPlay muted loop style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
+              <video src={images[activeImageIdx]} controls autoPlay muted loop style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0 }} />
             ) : (
-              <img src={images[activeImageIdx]} alt="Product view" style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
+              <img src={images[activeImageIdx]} alt="Product view" style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0 }} />
             )}
-            <button onClick={nextImg} style={{ position: 'absolute', right: '16px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#a3a3a3', zIndex: 10 }}>
-              <ChevronRight size={48} strokeWidth={1} />
-            </button>
-          </div>
 
-          <div style={{ display: 'flex', gap: '8px', paddingBottom: '32px' }}>
-            {images.map((_, idx) => (
-              <div key={idx} style={{ width: '8px', height: '8px', borderRadius: '50%', background: idx === activeImageIdx ? '#2aaa7d' : '#d4d4d4', cursor: 'pointer' }} onClick={() => setActiveImageIdx(idx)} />
-            ))}
+            {/* Navigation Arrows */}
+            <button onClick={prevImg} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255, 255, 255, 0.7)', borderRadius: '50%', border: 'none', cursor: 'pointer', color: '#111', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+              <ChevronLeft size={32} strokeWidth={1.5} />
+            </button>
+            <button onClick={nextImg} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255, 255, 255, 0.7)', borderRadius: '50%', border: 'none', cursor: 'pointer', color: '#111', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+              <ChevronRight size={32} strokeWidth={1.5} />
+            </button>
+
+            {/* Pagination Dots */}
+            <div style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', zIndex: 20, background: 'rgba(255,255,255,0.4)', padding: '6px 12px', borderRadius: '16px' }}>
+              {images.map((_, idx) => (
+                <div key={idx} style={{ width: '8px', height: '8px', borderRadius: '50%', background: idx === activeImageIdx ? '#000' : 'rgba(0,0,0,0.3)', cursor: 'pointer', transition: 'background 0.3s' }} onClick={() => setActiveImageIdx(idx)} />
+              ))}
+            </div>
           </div>
         </div>
 

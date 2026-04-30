@@ -19,7 +19,14 @@ export default function ProductCard({ product }) {
         product?.images?.[1] || product?.images?.[0] || product?.image || 'https://via.placeholder.com/400x400?text=Hover+Image'
       ].filter(Boolean);
 
-  const currentImg = images[activeImageIdx % images.length];
+  const encodeImg = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http') || url.startsWith('data:')) return url;
+    return url.split('/').map(p => encodeURIComponent(p)).join('/');
+  };
+
+  const rawCurrentImg = images[activeImageIdx % images.length];
+  const currentImg = encodeImg(rawCurrentImg);
 
   const nextImg = (e) => { e.preventDefault(); e.stopPropagation(); setActiveImageIdx(i => i + 1); };
   const prevImg = (e) => { e.preventDefault(); e.stopPropagation(); setActiveImageIdx(i => (i - 1 + images.length) % images.length); };

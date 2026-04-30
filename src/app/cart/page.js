@@ -21,6 +21,12 @@ export default function CartPage() {
     if (res.success) setCouponInput('');
   };
 
+  const encodeImg = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http') || url.startsWith('data:')) return url;
+    return url.split('/').map(p => encodeURIComponent(p)).join('/');
+  };
+
   const subtotal = getCartSubtotal ? getCartSubtotal() : getCartTotal();
   const discountAmt = getDiscountAmount ? getDiscountAmount() : 0;
   const discountedSubtotal = subtotal - discountAmt;
@@ -42,7 +48,7 @@ export default function CartPage() {
             {cartItems.map((item, index) => (
               <div key={`${item._id || item.id || 'cart-item'}-${index}`} className={styles.cartItem}>
                 <div className={styles.imageBox}>
-                  <img src={item.images?.[0] || item.image || 'https://via.placeholder.com/150'} alt={item.title} />
+                  <img src={encodeImg(item.images?.[0] || item.image) || 'https://via.placeholder.com/150'} alt={item.title} />
                 </div>
                 <div className={styles.itemInfo}>
                   <h3 className={styles.itemTitle}>{item.title}</h3>
