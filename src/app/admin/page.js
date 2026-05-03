@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
-import { LayoutDashboard, ShoppingBag, Users, Settings, LogOut, TrendingUp, DollarSign, PackageOpen, MousePointerClick, Search, Bell, Menu, Trash2, IndianRupee, X, Edit, UploadCloud } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Users, Settings, LogOut, TrendingUp, DollarSign, PackageOpen, MousePointerClick, Search, Bell, Menu, Trash2, IndianRupee, X, Edit, UploadCloud, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useOrders } from '@/context/OrderContext';
 import { useProducts } from '@/context/ProductContext';
 import { useMessages } from '@/context/MessageContext';
@@ -643,6 +643,32 @@ export default function AdminPage() {
                         >
                           <X size={14} />
                         </button>
+                        {idx > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newImages = [...newProd.images];
+                              [newImages[idx - 1], newImages[idx]] = [newImages[idx], newImages[idx - 1]];
+                              setNewProd({...newProd, images: newImages});
+                            }}
+                            style={{ position: 'absolute', bottom: '4px', left: '4px', background: 'rgba(0, 0, 0, 0.6)', color: '#fff', border: 'none', borderRadius: '4px', width: '24px', height: '24px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', zIndex: 10 }}
+                          >
+                            <ChevronLeft size={16} />
+                          </button>
+                        )}
+                        {idx < newProd.images.length - 1 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newImages = [...newProd.images];
+                              [newImages[idx], newImages[idx + 1]] = [newImages[idx + 1], newImages[idx]];
+                              setNewProd({...newProd, images: newImages});
+                            }}
+                            style={{ position: 'absolute', bottom: '4px', right: '4px', background: 'rgba(0, 0, 0, 0.6)', color: '#fff', border: 'none', borderRadius: '4px', width: '24px', height: '24px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', zIndex: 10 }}
+                          >
+                            <ChevronRight size={16} />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>

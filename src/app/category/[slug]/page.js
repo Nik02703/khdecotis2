@@ -52,7 +52,7 @@ export default function CategoryDetailsPage({ params }) {
   }, [slug, sortOrder, filterPrice, products]);
 
   return (
-    <>
+    <div style={{ background: '#fff', minHeight: '100vh' }}>
       <div className="container animate-fade-in" style={{ padding: '4rem 1rem', minHeight: '80vh' }}>
       
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '4rem' }}>
@@ -190,6 +190,6 @@ export default function CategoryDetailsPage({ params }) {
           }
         }
       `}} />
-    </>
+    </div>
   );
 }

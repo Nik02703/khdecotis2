@@ -84,10 +84,9 @@ export default function ProductDetailsClient({ product: serverProduct, productId
 
   return (
     <div style={{ fontFamily: 'Inter, sans-serif', background: '#fff' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', alignItems: 'stretch', borderBottom: '1px solid #e5e5e5' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', alignItems: 'start', borderBottom: '1px solid #e5e5e5' }}>
       
-        {/* LEFT COLUMN: Gallery */}
-        <div style={{ position: 'relative', width: '100%', height: '100%', background: '#f5f5f5', overflow: 'hidden', display: 'flex' }}>
+        <div style={{ position: 'sticky', top: '100px', width: '100%', background: '#f5f5f5', overflow: 'hidden', display: 'flex', flexDirection: 'column', zIndex: 10 }}>
           
           {/* Top Overlays */}
           <div style={{ position: 'absolute', top: '24px', left: '24px', background: '#000', color: '#fff', fontSize: '0.8rem', fontWeight: 800, padding: '4px 12px', borderRadius: '4px', letterSpacing: '1px', zIndex: 20 }}>
@@ -115,11 +114,11 @@ export default function ProductDetailsClient({ product: serverProduct, productId
           </div>
 
           {/* Main Image/Video */}
-          <div style={{ width: '100%', flex: 1, position: 'relative', minHeight: '600px' }}>
+          <div style={{ width: '100%', position: 'relative' }}>
             {(images[activeImageIdx]?.startsWith('data:video') || images[activeImageIdx]?.endsWith('.mp4')) ? (
-              <video src={images[activeImageIdx]} controls autoPlay muted loop style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0 }} />
+              <video src={images[activeImageIdx]} controls autoPlay muted loop style={{ width: '100%', height: 'auto', display: 'block' }} />
             ) : (
-              <img src={images[activeImageIdx]} alt="Product view" style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0 }} />
+              <img src={images[activeImageIdx]} alt="Product view" style={{ width: '100%', height: 'auto', display: 'block' }} />
             )}
 
             {/* Navigation Arrows */}
@@ -382,9 +381,6 @@ export default function ProductDetailsClient({ product: serverProduct, productId
            }
            div[style*="padding: 2rem 10%"] {
              padding: 1.5rem 5% !important;
-           }
-           div[style*="height: 600px"] {
-             height: 400px !important;
            }
            .cta-container {
              flex-direction: column;

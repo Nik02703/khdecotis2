@@ -2,7 +2,6 @@
   min-width: 0;
   background: #fff;
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
   overflow: hidden;
   position: relative;
   display: flex;
