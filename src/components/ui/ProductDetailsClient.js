@@ -142,6 +142,12 @@ export default function ProductDetailsClient({ product: serverProduct, productId
         <div style={{ display: 'flex', flexDirection: 'column', padding: '2rem 10%', background: '#fff' }}>
           <h1 style={{ fontSize: '1.8rem', fontWeight: 600, color: '#1a1a1a', margin: '0 0 12px 0' }}>{product?.title || "Khaki Beige-Clove Field Tote Bag"}</h1>
           
+          {product?.productNumber && (
+            <div style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '16px', fontWeight: 500 }}>
+              Product Number: <span style={{ color: '#0f172a', fontWeight: 600 }}>{product.productNumber}</span>
+            </div>
+          )}
+
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', marginBottom: '8px' }}>
             <span style={{ fontSize: '1.8rem', fontWeight: 800, color: '#000' }}>₹{displayPrice}</span>
             <span style={{ fontSize: '1.2rem', color: '#a3a3a3', textDecoration: 'line-through', fontWeight: 500 }}>₹{Math.floor(displayPrice * 2.3)}</span>

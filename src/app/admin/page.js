@@ -35,8 +35,9 @@ export default function AdminPage() {
   const { products, addProduct, removeProduct, editProduct } = useProducts();
   const { messages, markAsRead, deleteMessage } = useMessages();
   const unreadCount = messages ? messages.filter(m => m.status === 'unread').length : 0;
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const [newProd, setNewProd] = useState({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', barcode: '' });
+  const [newProd, setNewProd] = useState({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', barcode: '', productNumber: '' });
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [newCoupon, setNewCoupon] = useState({ code: '', discount: '', maxUses: '' });
   const [tmpColorName, setTmpColorName] = useState('');
@@ -128,7 +129,7 @@ export default function AdminPage() {
     }
   };
 
-  const handlePublish = (e) => {
+  const handlePublish = async (e) => {
     e.preventDefault();
     if (!newProd.title || !newProd.price) return alert("Title and Selling Price are strictly required.");
     
@@ -146,19 +147,19 @@ export default function AdminPage() {
       colors: newProd.colors || [],
       sizes: newProd.sizes || [],
       productDetails: newProd.productDetails || '',
-      barcode: newProd.barcode || ''
+      barcode: newProd.barcode || '',
+      productNumber: newProd.productNumber || ''
     };
 
     if (newProd._id || newProd.id) {
-      editProduct(newProd._id || newProd.id, productData);
+      await editProduct(newProd._id || newProd.id, productData);
       alert('Product successfully updated!');
     } else {
-      addProduct(productData);
+      await addProduct(productData);
       alert('Product successfully published across global storefront databases!');
+      setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', barcode: '', productNumber: '' });
+      setActiveTab('manageProducts');
     }
-    
-    setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', barcode: '' });
-    setActiveTab('manageProducts');
   };
 
   const handleMediaUpload = (e) => {
@@ -295,6 +296,27 @@ export default function AdminPage() {
   const mockVisitors = 0;
   const mockConversion = mockVisitors > 0 ? ((totalOrders / mockVisitors) * 100).toFixed(2) : '0.00';
 
+  const filteredProducts = products.filter(product => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      (product.title && product.title.toLowerCase().includes(query)) ||
+      (product.category && product.category.toLowerCase().includes(query)) ||
+      (product.productNumber && product.productNumber.toLowerCase().includes(query)) ||
+      (product.barcode && product.barcode.toLowerCase().includes(query))
+    );
+  });
+
+  const filteredOrders = orders.filter(order => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      (order.id && order.id.toLowerCase().includes(query)) ||
+      (order.name && order.name.toLowerCase().includes(query)) ||
+      (order.status && order.status.toLowerCase().includes(query))
+    );
+  });
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', fontFamily: 'Outfit, sans-serif' }} className="animate-fade-in">
       
@@ -311,7 +333,7 @@ export default function AdminPage() {
           <button onClick={() => setActiveTab('orders')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'orders' ? '#eff6ff' : 'transparent', color: activeTab === 'orders' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'orders' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
             <ShoppingBag size={20} /> Orders & Fulfillment
           </button>
-          <button onClick={() => { setActiveTab('addProduct'); setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '' }); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'addProduct' ? '#eff6ff' : 'transparent', color: activeTab === 'addProduct' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'addProduct' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
+          <button onClick={() => { setActiveTab('addProduct'); setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', barcode: '', productNumber: '' }); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'addProduct' ? '#eff6ff' : 'transparent', color: activeTab === 'addProduct' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'addProduct' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
             <PackageOpen size={20} /> Add New Product
           </button>
           <button onClick={() => setActiveTab('manageProducts')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'manageProducts' ? '#eff6ff' : 'transparent', color: activeTab === 'manageProducts' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'manageProducts' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
@@ -342,7 +364,13 @@ export default function AdminPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
             <div style={{ position: 'relative', width: '100%', maxWidth: '400px' }}>
               <Search size={18} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
-              <input type="text" placeholder="Search orders, clients, or products..." style={{ width: '100%', padding: '10px 16px 10px 40px', background: '#f1f5f9', border: 'none', borderRadius: '8px', outline: 'none', fontSize: '0.9rem', color: '#334155' }} />
+              <input 
+                type="text" 
+                placeholder="Search orders, clients, or products..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ width: '100%', padding: '10px 16px 10px 40px', background: '#f1f5f9', border: 'none', borderRadius: '8px', outline: 'none', fontSize: '0.9rem', color: '#334155' }} 
+              />
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
@@ -478,7 +506,7 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.slice(0, 5).map((order, idx) => (
+                  {filteredOrders.slice(0, 5).map((order, idx) => (
                     <tr key={order.id} onClick={() => setSelectedOrder(order)} style={{ borderTop: idx !== 0 ? '1px solid #e2e8f0' : 'none', transition: 'all 0.2s', cursor: 'pointer' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor='#f1f5f9'} onMouseOut={(e) => e.currentTarget.style.backgroundColor='transparent'}>
                       <td style={{ padding: '16px 24px', fontSize: '0.95rem', fontWeight: 600, color: '#3b82f6' }}>{order.id}</td>
                       <td style={{ padding: '16px 24px', fontSize: '0.95rem', color: '#0f172a', fontWeight: 500 }}>{order.name}</td>
@@ -515,7 +543,7 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map((order, idx) => (
+                  {filteredOrders.map((order, idx) => (
                     <tr key={order.id} onClick={() => setSelectedOrder(order)} style={{ borderTop: idx !== 0 ? '1px solid #e2e8f0' : 'none', transition: 'all 0.2s', background: order.status === 'Cancelled' ? '#fcfcfc' : '#fff', cursor: 'pointer' }} onMouseOver={(e) => e.currentTarget.style.filter='brightness(0.98)'} onMouseOut={(e) => e.currentTarget.style.filter='none'}>
                       <td style={{ padding: '16px 24px', fontSize: '0.95rem', fontWeight: 600, color: '#3b82f6' }}>{order.id}</td>
                       <td style={{ padding: '16px 24px', fontSize: '0.95rem', color: '#0f172a', fontWeight: 500 }}>{order.name}<br /><span style={{fontSize:'0.8rem', color:'#64748b'}}>{order.date}</span></td>
@@ -585,6 +613,12 @@ export default function AdminPage() {
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Product Title</label>
                 <input id="product-title-input" type="text" value={newProd.title} onChange={e => setNewProd({...newProd, title: e.target.value})} placeholder="e.g. Premium Linen Bedsheet" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem' }} />
               </div>
+              {newProd.productNumber && (
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Product Number</label>
+                  <input type="text" value={newProd.productNumber} readOnly style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem', background: '#f1f5f9', color: '#475569', cursor: 'not-allowed' }} />
+                </div>
+              )}
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Barcode / UPC</label>
                 <input type="text" value={newProd.barcode || ''} onChange={e => setNewProd({...newProd, barcode: e.target.value})} placeholder="e.g. 4011200296908" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem' }} />
@@ -792,17 +826,24 @@ export default function AdminPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {products.map((product, idx) => (
+                    {filteredProducts.map((product, idx) => (
                       <tr key={product._id || product.id} style={{ borderTop: idx !== 0 ? '1px solid #e2e8f0' : 'none', transition: 'background-color 0.2s' }}>
                         <td style={{ padding: '16px 24px' }}>
                           <img src={product.images?.[0] || 'https://via.placeholder.com/300'} alt={product.title} style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px' }} />
                         </td>
-                        <td style={{ padding: '16px 24px', fontSize: '0.95rem', color: '#0f172a', fontWeight: 500 }}>{product.title}</td>
+                        <td style={{ padding: '16px 24px', fontSize: '0.95rem', color: '#0f172a', fontWeight: 500 }}>
+                          {product.title}
+                          {product.productNumber && (
+                            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
+                              Number: <span style={{ fontWeight: 600, color: '#334155' }}>{product.productNumber}</span>
+                            </div>
+                          )}
+                        </td>
                         <td style={{ padding: '16px 24px', fontSize: '0.95rem', color: '#64748b' }}>{product.category}</td>
                         <td style={{ padding: '16px 24px', fontSize: '0.95rem', fontWeight: 600, color: '#0f172a' }}>₹{product.price || product.currentPrice}</td>
                         <td style={{ padding: '16px 24px', textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                            <button onClick={() => { setNewProd({...product, images: product.images || [], colors: product.colors || [], sizes: product.sizes || [], productDetails: product.productDetails || '', oldPrice: product.oldPrice || '', isDealOfDay: !!product.isDealOfDay, isNewArrival: !!product.isNewArrival, isBestseller: !!product.isBestseller, inStock: product.inStock !== false, description: product.description || '', category: product.category || 'Bedsheets'}); setActiveTab('addProduct'); }} style={{ background: '#eff6ff', color: '#3b82f6', border: '1px solid #bfdbfe', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>
+                            <button onClick={() => { setNewProd({...product, images: product.images || [], colors: product.colors || [], sizes: product.sizes || [], productDetails: product.productDetails || '', oldPrice: product.oldPrice || '', isDealOfDay: !!product.isDealOfDay, isNewArrival: !!product.isNewArrival, isBestseller: !!product.isBestseller, inStock: product.inStock !== false, description: product.description || '', category: product.category || 'Bedsheets', barcode: product.barcode || '', productNumber: product.productNumber || ''}); setActiveTab('addProduct'); }} style={{ background: '#eff6ff', color: '#3b82f6', border: '1px solid #bfdbfe', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>
                               <Edit size={16} /> Edit
                             </button>
                             <button onClick={() => { if(confirm('Permanently delete this product from the global database?')) removeProduct(product._id || product.id); }} style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>

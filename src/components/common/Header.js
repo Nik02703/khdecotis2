@@ -35,7 +35,7 @@ export default function Header() {
             <SidebarMenu isProfileIcon={false} />
             {/* Sidebar menu completely removed as requested, nav actions migrating to profile dropdown */}
             <Link href="/" className={styles.logo}>
-              <img src="/logo.png" alt="KH Decotis" className={styles.logoImage} />
+              <img src="/logo_transparent.png" alt="OES" className={styles.logoImage} />
             </Link>
           </div>
 

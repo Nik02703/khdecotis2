@@ -7,7 +7,7 @@ export default function Footer() {
       <div className={`container ${styles.grid}`}>
         <div className={styles.col}>
           <div style={{ marginBottom: '1rem', background: 'rgba(255,255,255,0.9)', display: 'inline-block', padding: '0.5rem', borderRadius: '8px' }}>
-            <img src="/logo.png" alt="KH Decotis" style={{ height: '60px', width: 'auto', objectFit: 'contain' }} />
+            <img src="/logo_transparent.png" alt="OES" style={{ height: '60px', width: 'auto', objectFit: 'contain' }} />
           </div>
           <p style={{ color: '#d1d5db', fontSize: '0.9rem', lineHeight: '1.6' }}>
             Elevate your home with our premium, brightly styled collections of everyday essentials and home decor.

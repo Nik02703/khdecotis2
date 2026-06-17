@@ -23,6 +23,22 @@ export async function PUT(request, { params }) {
     const resolvedParams = await params;
     const { id } = resolvedParams || {};
     const body = await request.json();
+    
+    if (!body.productNumber) {
+      const existing = await Product.findById(id);
+      if (existing && !existing.productNumber) {
+        let isUnique = false;
+        let code = '';
+        while (!isUnique) {
+          const rand = Math.floor(10000 + Math.random() * 90000);
+          code = `KHD-${rand}`;
+          const dup = await Product.findOne({ productNumber: code });
+          if (!dup) isUnique = true;
+        }
+        body.productNumber = code;
+      }
+    }
+
     const product = await Product.findByIdAndUpdate(id, body, { new: true, runValidators: true });
     if (!product) return NextResponse.json({ success: false, error: 'Product not found' }, { status: 404 });
     return NextResponse.json({ success: true, data: product });
