@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongoose';
 import Order from '@/models/Order';
+import { decrementOrderStock } from '@/lib/stock';
 
 /**
  * GET /api/orders/[orderId]
@@ -62,6 +63,10 @@ export async function PATCH(req, { params }) {
     }
 
     await order.save();
+
+    if (order.paymentStatus === 'paid' || order.paymentMethod === 'COD') {
+      await decrementOrderStock(order);
+    }
 
     return NextResponse.json({ success: true, order });
 

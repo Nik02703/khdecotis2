@@ -87,7 +87,7 @@ export default function ProductCard({ product }) {
         </div>
         
         <div className={styles.buttonsWrapper}>
-          {product?.inStock === false ? (
+          {product?.inStock === false || (product?.stock !== undefined && product?.stock <= 0) ? (
             <button 
               disabled
               style={{ width: '100%', background: '#d4d4d4', color: '#737373', fontSize: '0.85rem', fontWeight: 800, padding: '10px 4px', border: 'none', borderRadius: '4px', cursor: 'not-allowed', letterSpacing: '1px', textTransform: 'uppercase' }}

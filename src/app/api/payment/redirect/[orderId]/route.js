@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongoose';
 import Order from '@/models/Order';
 import { verifyPhonePePayment } from '@/lib/phonepe';
+import { decrementOrderStock } from '@/lib/stock';
 
 /**
  * POST /api/payment/redirect/[orderId]
@@ -56,6 +57,7 @@ export async function POST(req, { params }) {
       orderDoc.text = '#16a34a';
       await orderDoc.save();
       console.log(`[PhonePe Redirect] Order ${orderId} marked as PAID`);
+      await decrementOrderStock(orderDoc);
 
       // ── Trigger Shiprocket (DO NOT REMOVE) ──
       try {

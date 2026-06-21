@@ -22,6 +22,7 @@ const OrderSchema = new mongoose.Schema({
   razorpayOrderId: { type: String },
   razorpayPaymentId: { type: String },
   paidAt: { type: Date },
+  isStockDecremented: { type: Boolean, default: false },
   // Shiprocket Logistics Storage
   shipmentId: { type: String },
   awbCode: { type: String },

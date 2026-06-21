@@ -37,7 +37,7 @@ export default function AdminPage() {
   const unreadCount = messages ? messages.filter(m => m.status === 'unread').length : 0;
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [newProd, setNewProd] = useState({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', barcode: '', productNumber: '' });
+  const [newProd, setNewProd] = useState({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', barcode: '', productNumber: '' });
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [newCoupon, setNewCoupon] = useState({ code: '', discount: '', maxUses: '' });
   const [tmpColorName, setTmpColorName] = useState('');
@@ -144,6 +144,7 @@ export default function AdminPage() {
       isNewArrival: newProd.isNewArrival,
       isBestseller: newProd.isBestseller,
       inStock: newProd.inStock !== false,
+      stock: newProd.stock !== '' && newProd.stock !== undefined ? Number(newProd.stock) : 10,
       colors: newProd.colors || [],
       sizes: newProd.sizes || [],
       productDetails: newProd.productDetails || '',
@@ -157,7 +158,7 @@ export default function AdminPage() {
     } else {
       await addProduct(productData);
       alert('Product successfully published across global storefront databases!');
-      setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', barcode: '', productNumber: '' });
+      setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', barcode: '', productNumber: '' });
       setActiveTab('manageProducts');
     }
   };
@@ -223,6 +224,13 @@ export default function AdminPage() {
     };
     verifySession();
   }, []);
+
+  // Scroll to top of the page on tab change (helps with switching tabs & clicking edit)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo(0, 0);
+    }
+  }, [activeTab]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -307,6 +315,14 @@ export default function AdminPage() {
     );
   });
 
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    const aOutOfStock = (a.stock <= 0 || a.inStock === false);
+    const bOutOfStock = (b.stock <= 0 || b.inStock === false);
+    if (aOutOfStock && !bOutOfStock) return -1;
+    if (!aOutOfStock && bOutOfStock) return 1;
+    return 0;
+  });
+
   const filteredOrders = orders.filter(order => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
@@ -333,7 +349,7 @@ export default function AdminPage() {
           <button onClick={() => setActiveTab('orders')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'orders' ? '#eff6ff' : 'transparent', color: activeTab === 'orders' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'orders' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
             <ShoppingBag size={20} /> Orders & Fulfillment
           </button>
-          <button onClick={() => { setActiveTab('addProduct'); setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', barcode: '', productNumber: '' }); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'addProduct' ? '#eff6ff' : 'transparent', color: activeTab === 'addProduct' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'addProduct' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
+          <button onClick={() => { setActiveTab('addProduct'); setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', barcode: '', productNumber: '' }); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'addProduct' ? '#eff6ff' : 'transparent', color: activeTab === 'addProduct' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'addProduct' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
             <PackageOpen size={20} /> Add New Product
           </button>
           <button onClick={() => setActiveTab('manageProducts')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'manageProducts' ? '#eff6ff' : 'transparent', color: activeTab === 'manageProducts' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'manageProducts' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
@@ -632,6 +648,10 @@ export default function AdminPage() {
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>MRP / Original Price (₹)</label>
                   <input type="number" value={newProd.oldPrice || ''} onChange={e => setNewProd({...newProd, oldPrice: e.target.value})} placeholder="2999" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem' }} />
                 </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Stock Quantity</label>
+                  <input type="number" value={newProd.stock !== undefined ? newProd.stock : ''} onChange={e => setNewProd({...newProd, stock: e.target.value})} placeholder="10" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem' }} />
+                </div>
               </div>
               <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
                 <div style={{ flex: 1, minWidth: '200px' }}>
@@ -654,7 +674,19 @@ export default function AdminPage() {
                     Bestseller
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, color: '#334155', fontSize: '0.95rem', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={newProd.inStock !== false} onChange={e => setNewProd({...newProd, inStock: e.target.checked})} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
+                    <input 
+                      type="checkbox" 
+                      checked={newProd.inStock !== false} 
+                      onChange={e => {
+                        const isChecked = e.target.checked;
+                        setNewProd({
+                          ...newProd,
+                          inStock: isChecked,
+                          stock: isChecked ? (newProd.stock === '0' || newProd.stock === 0 ? '10' : newProd.stock) : '0'
+                        });
+                      }} 
+                      style={{ width: '18px', height: '18px', cursor: 'pointer' }} 
+                    />
                     In Stock
                   </label>
                 </div>
@@ -826,24 +858,34 @@ export default function AdminPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredProducts.map((product, idx) => (
+                    {sortedProducts.map((product, idx) => (
                       <tr key={product._id || product.id} style={{ borderTop: idx !== 0 ? '1px solid #e2e8f0' : 'none', transition: 'background-color 0.2s' }}>
                         <td style={{ padding: '16px 24px' }}>
-                          <img src={product.images?.[0] || 'https://via.placeholder.com/300'} alt={product.title} style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px' }} />
+                          <img src={product.images?.[0] || 'https://via.placeholder.com/300'} alt={product.title} style={{ width: '110px', height: '110px', objectFit: 'cover', borderRadius: '8px' }} />
                         </td>
                         <td style={{ padding: '16px 24px', fontSize: '0.95rem', color: '#0f172a', fontWeight: 500 }}>
-                          {product.title}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                            <span>{product.title}</span>
+                            {(product.stock <= 0 || product.inStock === false) && (
+                              <span style={{ background: '#fee2e2', color: '#ef4444', fontSize: '0.7rem', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', border: '1px solid #fecaca', letterSpacing: '0.05em' }}>
+                                OUT OF STOCK
+                              </span>
+                            )}
+                          </div>
                           {product.productNumber && (
                             <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
                               Number: <span style={{ fontWeight: 600, color: '#334155' }}>{product.productNumber}</span>
                             </div>
                           )}
+                          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                            Stock: <span style={{ fontWeight: 600, color: (product.stock <= 0 || product.inStock === false) ? '#ef4444' : '#16a34a' }}>{product.stock !== undefined ? product.stock : 0} units</span>
+                          </div>
                         </td>
                         <td style={{ padding: '16px 24px', fontSize: '0.95rem', color: '#64748b' }}>{product.category}</td>
                         <td style={{ padding: '16px 24px', fontSize: '0.95rem', fontWeight: 600, color: '#0f172a' }}>₹{product.price || product.currentPrice}</td>
                         <td style={{ padding: '16px 24px', textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                            <button onClick={() => { setNewProd({...product, images: product.images || [], colors: product.colors || [], sizes: product.sizes || [], productDetails: product.productDetails || '', oldPrice: product.oldPrice || '', isDealOfDay: !!product.isDealOfDay, isNewArrival: !!product.isNewArrival, isBestseller: !!product.isBestseller, inStock: product.inStock !== false, description: product.description || '', category: product.category || 'Bedsheets', barcode: product.barcode || '', productNumber: product.productNumber || ''}); setActiveTab('addProduct'); }} style={{ background: '#eff6ff', color: '#3b82f6', border: '1px solid #bfdbfe', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>
+                            <button onClick={() => { setNewProd({...product, images: product.images || [], colors: product.colors || [], sizes: product.sizes || [], productDetails: product.productDetails || '', oldPrice: product.oldPrice || '', isDealOfDay: !!product.isDealOfDay, isNewArrival: !!product.isNewArrival, isBestseller: !!product.isBestseller, inStock: product.inStock !== false, stock: product.stock !== undefined ? product.stock : 10, description: product.description || '', category: product.category || 'Bedsheets', barcode: product.barcode || '', productNumber: product.productNumber || ''}); setActiveTab('addProduct'); }} style={{ background: '#eff6ff', color: '#3b82f6', border: '1px solid #bfdbfe', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>
                               <Edit size={16} /> Edit
                             </button>
                             <button onClick={() => { if(confirm('Permanently delete this product from the global database?')) removeProduct(product._id || product.id); }} style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>

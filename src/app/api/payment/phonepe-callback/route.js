@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongoose';
 import Order from '@/models/Order';
 import { decodeCallbackPayload } from '@/lib/phonepe';
+import { decrementOrderStock } from '@/lib/stock';
 
 /**
  * POST /api/payment/phonepe-callback
@@ -90,6 +91,7 @@ export async function POST(req) {
           orderDoc.phonePeResponse = decoded;
           await orderDoc.save();
           console.log('[PhonePe Callback] Order', orderDoc.orderId, 'marked as PAID');
+          await decrementOrderStock(orderDoc);
         }
       } else if (state === 'FAILED' || paymentCode === 'PAYMENT_ERROR' || paymentCode === 'checkout.order.failed') {
         if (orderDoc.paymentStatus !== 'failed') {

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongoose';
 import Order from '@/models/Order';
 import { verifyPhonePePayment } from '@/lib/phonepe';
+import { decrementOrderStock } from '@/lib/stock';
 
 /**
  * GET /api/payment/status/[orderId]
@@ -43,6 +44,7 @@ export async function GET(req, { params }) {
           orderDoc.color = '#dcfce7';
           orderDoc.text = '#16a34a';
           await orderDoc.save();
+          await decrementOrderStock(orderDoc);
         } else if ((phonePeState === 'FAILED' || data?.responseCode === 'FAILURE' || data?.code === 'PAYMENT_ERROR') && orderDoc.paymentStatus !== 'failed') {
           orderDoc.paymentStatus = 'failed';
           await orderDoc.save();

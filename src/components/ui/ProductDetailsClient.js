@@ -190,7 +190,7 @@ export default function ProductDetailsClient({ product: serverProduct, productId
           )}
 
           <div className="cta-container" style={{ display: 'flex', gap: '16px', marginBottom: '1.5rem' }}>
-            {product?.inStock === false ? (
+            {product?.inStock === false || (product?.stock !== undefined && product?.stock <= 0) ? (
               <button 
                 disabled
                 style={{ width: '100%', background: '#d4d4d4', color: '#737373', fontSize: '1.1rem', fontWeight: 800, padding: '16px', border: 'none', borderRadius: '4px', cursor: 'not-allowed', letterSpacing: '1px', textTransform: 'uppercase' }}

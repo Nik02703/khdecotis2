@@ -3,6 +3,7 @@ import connectDB from '@/lib/mongoose';
 import Order from '@/models/Order';
 import { verifyRazorpayPayment } from '@/lib/razorpay';
 import { createShipmentForOrder } from '@/lib/shipment';
+import { decrementOrderStock } from '@/lib/stock';
 
 // ═══════════════════════════════════════════════════════════════════════
 // POST /api/payment/razorpay/verify
@@ -61,6 +62,9 @@ export async function POST(request) {
     }
 
     console.log(`[RazorpayVerify] ✅ Order ${order.orderId} verified & marked as PAID`);
+
+    // Trigger stock decrement
+    await decrementOrderStock(order);
 
     // ── Create Shiprocket shipment ────────────────────────────────────
     // Uses the shared helper which has a duplicate shipment guard.

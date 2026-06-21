@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import connectDB from '@/lib/mongoose';
 import Order from '@/models/Order';
 import { createShipmentForOrder } from '@/lib/shipment';
+import { decrementOrderStock } from '@/lib/stock';
 
 // ═══════════════════════════════════════════════════════════════════════
 // POST /api/payment/razorpay-webhook
@@ -123,6 +124,9 @@ export async function POST(request) {
       await orderDoc.save();
 
       console.log(`[RazorpayWebhook] ✅ Order ${orderDoc.orderId} marked as PAID`);
+
+      // Trigger stock decrement
+      await decrementOrderStock(orderDoc);
 
       // Create Shiprocket shipment (with duplicate guard built-in)
       try {

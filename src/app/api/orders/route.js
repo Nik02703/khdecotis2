@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongoose';
 import Order from '@/models/Order'; // Assuming we create this model later
+import { decrementOrderStock } from '@/lib/stock';
 
 export async function GET() {
   try {
@@ -55,6 +56,10 @@ export async function POST(req) {
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
+    
+    if (newOrder.paymentMethod === 'COD') {
+      await decrementOrderStock(newOrder);
+    }
     
     return NextResponse.json({ success: true, order: newOrder }, { status: 201 });
   } catch (error) {

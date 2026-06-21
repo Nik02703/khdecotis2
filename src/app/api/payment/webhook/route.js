@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongoose';
 import Order from '@/models/Order';
 import { decodeCallbackPayload } from '@/lib/phonepe';
+import { decrementOrderStock } from '@/lib/stock';
 
 /**
  * POST /api/payment/webhook
@@ -84,6 +85,7 @@ export async function POST(req) {
             orderDoc.text = '#16a34a';
             await orderDoc.save();
             console.log('[Webhook] Order', orderDoc.orderId, 'marked as PAID');
+            await decrementOrderStock(orderDoc);
           }
         } else if (state === 'FAILED' || paymentCode === 'PAYMENT_ERROR' || paymentCode === 'checkout.order.failed') {
           if (orderDoc.paymentStatus !== 'failed') {
