@@ -83,14 +83,14 @@ export default function SidebarMenu({ isProfileIcon = false }) {
               </nav>
             </>
           ) : (
-            <div style={{ fontFamily: 'Playfair Display, serif' }}>
+            <div style={{ fontFamily: "var(--font-ui), 'Inter', sans-serif" }}>
               <Link href="/" onClick={() => setIsOpen(false)} style={{ display: 'block', fontSize: '1.25rem', fontWeight: 500, color: '#333', padding: '12px 0', borderBottom: '1px solid #f1f5f9', textDecoration: 'none' }}>
                 Home
               </Link>
               
               <div style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>
                 <span style={{ display: 'block', fontSize: '1.25rem', fontWeight: 500, color: '#333', marginBottom: '12px' }}>Categories</span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingLeft: '16px', fontFamily: 'Inter, sans-serif' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingLeft: '16px', fontFamily: "var(--font-ui), 'Inter', sans-serif" }}>
                   <Link href="/category/bedsheets" onClick={() => setIsOpen(false)} style={{ color: '#555', textDecoration: 'none', fontSize: '0.95rem' }}>Bedsheets</Link>
                   <Link href="/category/comforter" onClick={() => setIsOpen(false)} style={{ color: '#555', textDecoration: 'none', fontSize: '0.95rem' }}>Comforters</Link>
                   <Link href="/category/blankets" onClick={() => setIsOpen(false)} style={{ color: '#555', textDecoration: 'none', fontSize: '0.95rem' }}>Blankets</Link>

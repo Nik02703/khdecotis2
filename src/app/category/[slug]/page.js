@@ -2,6 +2,7 @@
 import { useState, useMemo, use } from 'react';
 import ProductCard from '@/components/ui/ProductCard';
 import { useProducts } from '@/context/ProductContext';
+import { getDisplayPrice } from '@/lib/priceUtils';
 
 export default function CategoryDetailsPage({ params }) {
   // Unwrap the Next.js 15 Promise-based params using React.use()
@@ -41,12 +42,12 @@ export default function CategoryDetailsPage({ params }) {
     });
     
     // No fallback; if category is empty, it should be empty rather than showing all products
-    if (filterPrice === 'under1000') pool = pool.filter(p => p.price < 1000);
-    if (filterPrice === '1000to3000') pool = pool.filter(p => p.price >= 1000 && p.price <= 3000);
-    if (filterPrice === 'above3000') pool = pool.filter(p => p.price > 3000);
+    if (filterPrice === 'under1000') pool = pool.filter(p => getDisplayPrice(p) < 1000);
+    if (filterPrice === '1000to3000') pool = pool.filter(p => getDisplayPrice(p) >= 1000 && getDisplayPrice(p) <= 3000);
+    if (filterPrice === 'above3000') pool = pool.filter(p => getDisplayPrice(p) > 3000);
 
-    if (sortOrder === 'lowToHigh') pool.sort((a,b) => a.price - b.price);
-    if (sortOrder === 'highToLow') pool.sort((a,b) => b.price - a.price);
+    if (sortOrder === 'lowToHigh') pool.sort((a,b) => getDisplayPrice(a) - getDisplayPrice(b));
+    if (sortOrder === 'highToLow') pool.sort((a,b) => getDisplayPrice(b) - getDisplayPrice(a));
 
     return pool;
   }, [slug, sortOrder, filterPrice, products]);
@@ -56,7 +57,7 @@ export default function CategoryDetailsPage({ params }) {
       <div className="container animate-fade-in" style={{ padding: '4rem 1rem', minHeight: '80vh' }}>
       
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '4rem' }}>
-        <h1 style={{ fontSize: '3rem', fontFamily: 'Playfair Display, serif', fontWeight: 600, color: '#0f172a', margin: '0 0 1rem 0' }}>{categoryName}</h1>
+        <h1 style={{ fontSize: '2.5rem', fontFamily: "var(--font-primary), 'Manrope', sans-serif", fontWeight: 600, letterSpacing: '-0.025em', color: '#0f172a', margin: '0 0 1rem 0' }}>{categoryName}</h1>
         <p style={{ color: '#64748b', fontSize: '1.1rem' }}>Displaying {filteredProducts.length} Premium Items</p>
       </div>
 

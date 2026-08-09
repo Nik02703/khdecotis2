@@ -51,7 +51,7 @@ function PaymentFailedContent() {
   };
 
   return (
-    <div className="container animate-fade-in" style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 1rem', fontFamily: 'Outfit, sans-serif' }}>
+    <div className="container animate-fade-in" style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 1rem', fontFamily: "var(--font-ui), 'Inter', sans-serif" }}>
       {/* Failure Icon */}
       <div style={{
         width: '80px', height: '80px', borderRadius: '50%',
@@ -65,7 +65,7 @@ function PaymentFailedContent() {
         </svg>
       </div>
 
-      <h1 style={{ fontSize: '2.4rem', marginBottom: '8px', color: '#0f172a', fontWeight: 800, textAlign: 'center' }}>
+      <h1 style={{ fontSize: '2.25rem', fontFamily: "var(--font-primary), 'Manrope', sans-serif", fontWeight: 600, letterSpacing: '-0.025em', marginBottom: '8px', color: '#0f172a', textAlign: 'center' }}>
         Payment Failed
       </h1>
       <p style={{ color: '#64748b', fontSize: '1.1rem', marginBottom: '8px', textAlign: 'center', maxWidth: '500px' }}>
@@ -86,7 +86,7 @@ function PaymentFailedContent() {
         borderRadius: '20px', border: '1px solid #e2e8f0',
         boxShadow: '0 10px 40px rgba(0, 0, 0, 0.06)',
       }}>
-        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
+        <h2 style={{ fontSize: '1.25rem', fontFamily: "var(--font-primary), 'Manrope', sans-serif", fontWeight: 600, letterSpacing: '-0.02em', color: '#0f172a', marginBottom: '8px' }}>
           What would you like to do?
         </h2>
         <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '28px' }}>
@@ -101,7 +101,7 @@ function PaymentFailedContent() {
               width: '100%', padding: '16px', border: 'none', borderRadius: '12px',
               background: 'linear-gradient(135deg, #6C4FE1 0%, #8B5CF6 100%)',
               color: '#fff', fontSize: '1rem', fontWeight: 700,
-              cursor: 'pointer', fontFamily: 'Outfit, sans-serif',
+              cursor: 'pointer', fontFamily: "var(--font-ui), 'Inter', sans-serif", letterSpacing: '0.04em',
               boxShadow: '0 4px 15px rgba(108, 79, 225, 0.3)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
               transition: 'all 0.2s',
@@ -120,7 +120,7 @@ function PaymentFailedContent() {
             style={{
               width: '100%', padding: '16px', border: '2px solid #e2e8f0', borderRadius: '12px',
               background: '#fff', color: '#0f172a', fontSize: '1rem', fontWeight: 700,
-              cursor: 'pointer', fontFamily: 'Outfit, sans-serif',
+              cursor: 'pointer', fontFamily: "var(--font-ui), 'Inter', sans-serif", letterSpacing: '0.04em',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
               transition: 'all 0.2s',
             }}

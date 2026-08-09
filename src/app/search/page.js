@@ -25,7 +25,7 @@ function SearchResultsContent() {
   return (
     <div className="container animate-fade-in" style={{ padding: '4rem 2rem', minHeight: '80vh' }}>
       <div style={{ marginBottom: '3rem', textAlign: 'center', marginTop: '2rem' }}>
-        <h1 style={{ fontSize: '2.5rem', fontFamily: 'Outfit, sans-serif', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>
+        <h1 style={{ fontSize: '2.25rem', fontFamily: "var(--font-primary), 'Manrope', sans-serif", fontWeight: 600, letterSpacing: '-0.025em', color: '#0f172a', marginBottom: '8px' }}>
           Search Results
         </h1>
         <p style={{ color: '#64748b', fontSize: '1.1rem' }}>

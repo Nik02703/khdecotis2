@@ -55,7 +55,10 @@
 }
 
 .heroTitle {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-primary), 'Manrope', sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
   font-size: clamp(2rem, 4vw, 3.5rem); /* Substantially decreased */
   font-weight: 400;
   margin-bottom: var(--spacing-3);
@@ -149,7 +152,9 @@
 .categoryTitle {
   position: relative;
   z-index: 2;
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-primary), 'Manrope', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.025em;
   font-size: 2rem;
   font-weight: 500;
   text-shadow: 0 4px 12px rgba(0,0,0,0.3);
@@ -188,7 +193,9 @@
 }
 
 .promoTitle {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-primary), 'Manrope', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.03em;
   font-size: clamp(3.5rem, 8vw, 6rem);
   font-weight: 600;
   margin-bottom: var(--spacing-2);
@@ -199,7 +206,7 @@
 }
 
 .promoSubtitle {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-ui), 'Inter', sans-serif;
   font-size: clamp(1.2rem, 3vw, 1.8rem);
   font-weight: 300;
   margin-bottom: var(--spacing-5);

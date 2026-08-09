@@ -198,7 +198,9 @@
 }
 
 .sectionTitle {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-primary), 'Manrope', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.025em;
   font-size: 2rem;
   color: #0f172a;
   margin-bottom: 2rem;

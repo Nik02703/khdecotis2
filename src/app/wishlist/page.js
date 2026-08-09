@@ -8,7 +8,7 @@ export default function WishlistPage() {
 
   return (
     <div className="container animate-fade-in" style={{ padding: '4rem 2rem', minHeight: '80vh' }}>
-      <h1 style={{ fontSize: '2rem', fontFamily: 'Outfit, sans-serif', fontWeight: 800, textAlign: 'center', marginBottom: '3rem', marginTop: '2rem' }}>Your Saved Wishlist</h1>
+      <h1 style={{ fontSize: '2.25rem', fontFamily: "var(--font-primary), 'Manrope', sans-serif", fontWeight: 600, letterSpacing: '-0.025em', textAlign: 'center', marginBottom: '3rem', marginTop: '2rem' }}>Your Saved Wishlist</h1>
       
       {wishlistItems.length > 0 ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '32px' }}>

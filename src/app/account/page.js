@@ -11,7 +11,7 @@ export default function AccountPage() {
   const router = useRouter();
 
   return (
-    <div className="container animate-fade-in" style={{ minHeight: '70vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 2rem', fontFamily: 'Outfit, sans-serif' }}>
+    <div className="container animate-fade-in" style={{ minHeight: '70vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 2rem', fontFamily: "var(--font-ui), 'Inter', sans-serif" }}>
       <div style={{ 
         width: '80px', height: '80px', borderRadius: '50%', 
         background: '#f0fdf4', border: '2px solid #bbf7d0',

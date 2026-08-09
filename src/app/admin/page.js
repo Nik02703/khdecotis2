@@ -266,10 +266,10 @@ export default function AdminPage() {
   if (!isAdminLoggedIn) {
     return (
       <div className="container animate-fade-in page-wrapper content-centered" style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <h1 className="page-title" style={{ fontFamily: 'Playfair Display, serif', marginBottom: '2rem' }}>Secure Admin Access</h1>
+        <h1 className="page-title" style={{ fontFamily: "var(--font-primary), 'Manrope', sans-serif", fontWeight: 600, letterSpacing: '-0.025em', marginBottom: '2rem' }}>Secure Admin Access</h1>
         <form onSubmit={handleLogin} style={{ maxWidth: '400px', width: '100%', padding: '3rem', background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)', textAlign: 'center' }}>
            <div style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--primary)', fontFamily: 'Outfit, sans-serif' }}>Admin Email</label>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--primary)', fontFamily: "var(--font-ui), 'Inter', sans-serif" }}>Admin Email</label>
             <input 
               type="email" 
               placeholder="admin@khdecotis.com" 
@@ -279,7 +279,7 @@ export default function AdminPage() {
             />
           </div>
           <div style={{ marginBottom: '2rem', textAlign: 'left' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--primary)', fontFamily: 'Outfit, sans-serif' }}>Master Passcode</label>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--primary)', fontFamily: "var(--font-ui), 'Inter', sans-serif" }}>Master Passcode</label>
             <input 
               type="password" 
               placeholder="••••••••••••" 
@@ -334,12 +334,12 @@ export default function AdminPage() {
   });
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', fontFamily: 'Outfit, sans-serif' }} className="animate-fade-in">
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', fontFamily: "var(--font-ui), 'Inter', sans-serif" }} className="animate-fade-in">
       
       {/* Sidebar Navigation */}
       <aside style={{ width: '260px', background: '#fff', borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', position: 'fixed', height: '100vh', zIndex: 40, overflowY: 'auto', transition: 'transform 0.3s ease', transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(0)' }} className="admin-sidebar">
         <div style={{ padding: '24px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.5rem', m: 0, fontWeight: 700, color: '#0f172a' }}>Khdecotis</h2>
+          <h2 style={{ fontFamily: "var(--font-primary), 'Manrope', sans-serif", fontWeight: 600, letterSpacing: '-0.025em', fontSize: '1.5rem', m: 0, color: '#0f172a' }}>Khdecotis</h2>
         </div>
         <nav style={{ padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
           <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: '12px', marginBottom: '8px' }}>Analytics Core</div>

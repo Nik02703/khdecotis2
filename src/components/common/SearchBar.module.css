@@ -17,7 +17,7 @@
   border: none;
   background: transparent;
   outline: none;
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-ui), 'Inter', sans-serif;
   font-size: 0.9rem;
   color: var(--text-main);
   width: 170px;

@@ -73,7 +73,7 @@ function OrderSuccessContent() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Outfit, sans-serif' }}>
+      <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "var(--font-ui), 'Inter', sans-serif" }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ width: '48px', height: '48px', border: '4px solid #e2e8f0', borderTopColor: '#6C4FE1', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }} />
           <p style={{ color: '#64748b', fontSize: '1.1rem' }}>Loading order details...</p>
@@ -83,7 +83,7 @@ function OrderSuccessContent() {
   }
 
   return (
-    <div className="container animate-fade-in" style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 1rem', fontFamily: 'Outfit, sans-serif' }}>
+    <div className="container animate-fade-in" style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 1rem', fontFamily: "var(--font-ui), 'Inter', sans-serif" }}>
       {/* Success Icon */}
       <div style={{
         width: '80px', height: '80px', borderRadius: '50%',

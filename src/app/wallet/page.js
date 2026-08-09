@@ -10,9 +10,9 @@ export default function WalletPage() {
   ];
 
   return (
-    <div className="container animate-fade-in" style={{ padding: '4rem 2rem', minHeight: '80vh', maxWidth: '800px', margin: '0 auto', fontFamily: 'Outfit, sans-serif' }}>
+    <div className="container animate-fade-in" style={{ padding: '4rem 2rem', minHeight: '80vh', maxWidth: '800px', margin: '0 auto', fontFamily: "var(--font-ui), 'Inter', sans-serif" }}>
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0' }}>Khdecotis Wallet</h1>
+        <h1 style={{ fontSize: '2.25rem', fontFamily: "var(--font-primary), 'Manrope', sans-serif", fontWeight: 600, letterSpacing: '-0.025em', color: '#0f172a', margin: '0 0 8px 0' }}>Khdecotis Wallet</h1>
         <p style={{ color: '#64748b', fontSize: '1.05rem', margin: 0 }}>Manage your store credits, refunds, and loyalty bonuses.</p>
       </div>
 

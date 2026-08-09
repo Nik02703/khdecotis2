@@ -23,7 +23,9 @@
 }
 
 .headline {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-primary), 'Manrope', sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.03em;
   font-size: clamp(2rem, 3vw, 2.8rem);
   color: #1a1a1a;
   line-height: 1.5;
@@ -44,9 +46,9 @@
   background: #facc15;
   padding: 4px 16px;
   border-radius: 24px;
-  font-family: 'Outfit', sans-serif;
-  font-size: 0.8em;
-  font-weight: 700;
+  font-family: var(--font-ui), 'Inter', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   display: inline-block;
   transform: translateY(-4px);
   margin-left: 12px;
@@ -59,8 +61,9 @@
   padding: 10px 24px;
   border-radius: 6px;
   text-decoration: none;
-  font-family: 'Outfit', sans-serif;
-  font-weight: 400;
+  font-family: var(--font-ui), 'Inter', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   font-size: 0.95rem;
   transition: background-color var(--transition-fast);
   display: inline-block;

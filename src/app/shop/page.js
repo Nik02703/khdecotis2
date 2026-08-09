@@ -8,7 +8,7 @@ export default function ShopPage() {
   return (
     <div className={`container animate-fade-in`} style={{ padding: '4rem 1rem', minHeight: '80vh' }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '4rem' }}>
-        <h1 style={{ fontSize: '3rem', fontFamily: 'Playfair Display, serif', fontWeight: 600, color: '#0f172a', margin: '0 0 1rem 0' }}>All Products</h1>
+        <h1 style={{ fontSize: '2.5rem', fontFamily: "var(--font-primary), 'Manrope', sans-serif", fontWeight: 600, letterSpacing: '-0.025em', color: '#0f172a', margin: '0 0 1rem 0' }}>All Products</h1>
         <p style={{ color: '#64748b', fontSize: '1.1rem' }}>Browse our complete collection of premium home decor.</p>
       </div>
 

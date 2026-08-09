@@ -8,6 +8,8 @@ import { useWishlist } from '@/context/WishlistContext';
 import { useProducts } from '@/context/ProductContext';
 
 
+import { getDisplayPrice, getOldPrice, getDiscountText, getDefaultSizeName } from '@/lib/priceUtils';
+
 export default function ProductDetailsClient({ product: serverProduct, productId, similarProducts = [] }) {
   const { products } = useProducts();
   const clientProduct = products.find(p => (p._id || p.id) === productId);
@@ -35,7 +37,7 @@ export default function ProductDetailsClient({ product: serverProduct, productId
 
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const [activeColor, setActiveColor] = useState(colors[0]?.name || "");
-  const [activeSize, setActiveSize] = useState(sizes[0]?.name || "");
+  const [activeSize, setActiveSize] = useState(getDefaultSizeName(product));
   const [accordion, setAccordion] = useState({ details: false, specs: false });
   const [pincode, setPincode] = useState('');
   const [pincodeResult, setPincodeResult] = useState(null);
@@ -47,9 +49,23 @@ export default function ProductDetailsClient({ product: serverProduct, productId
     v => (!activeColor || v.color === activeColor) && (!activeSize || v.size === activeSize)
   );
 
-  // Derive price: size-specific price > variant price > base product price
-  const selectedSize = sizes.find(s => s.name === activeSize);
-  const displayPrice = selectedSize?.price || selectedVariant?.price || product?.price || 1599;
+  // Derive prices & discount consistently with priceUtils
+  const displayPrice = getDisplayPrice(product, activeSize, activeColor);
+  const displayOldPrice = getOldPrice(product, displayPrice);
+  const discountStr = getDiscountText(product, displayPrice, displayOldPrice);
+
+  // Sync activeSize & activeColor when product prop resolves
+  useEffect(() => {
+    if (product) {
+      const defaultSize = getDefaultSizeName(product);
+      if (defaultSize && (!activeSize || (sizes.length > 0 && !sizes.some(s => s.name === activeSize)))) {
+        setActiveSize(defaultSize);
+      }
+      if (colors.length > 0 && (!activeColor || !colors.some(c => c.name === activeColor))) {
+        setActiveColor(colors[0]?.name || "");
+      }
+    }
+  }, [product]);
 
   // Sync image with color selection or variant when selections change
   useEffect(() => {
@@ -74,7 +90,7 @@ export default function ProductDetailsClient({ product: serverProduct, productId
   }, [activeColor, selectedVariant]);
 
   if (!product) {
-    return <div style={{ padding: '4rem', textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>Loading product details...</div>;
+    return <div suppressHydrationWarning style={{ padding: '4rem', textAlign: 'center', fontFamily: "var(--font-ui), 'Inter', sans-serif" }}>Loading product details...</div>;
   }
 
   const inCart = cartItems.some(item => (item._id || item.id) === (product._id || product.id) + '-' + activeColor + '-' + activeSize);
@@ -83,13 +99,13 @@ export default function ProductDetailsClient({ product: serverProduct, productId
   const prevImg = () => setActiveImageIdx((i) => (i - 1 + images.length) % images.length);
 
   return (
-    <div style={{ fontFamily: 'Inter, sans-serif', background: '#fff' }}>
+    <div suppressHydrationWarning style={{ fontFamily: "var(--font-ui), 'Inter', sans-serif", background: '#fff' }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', alignItems: 'start', borderBottom: '1px solid #e5e5e5' }}>
       
         <div style={{ position: 'sticky', top: '100px', width: '100%', background: '#f5f5f5', overflow: 'hidden', display: 'flex', flexDirection: 'column', zIndex: 10 }}>
           
           {/* Top Overlays */}
-          <div style={{ position: 'absolute', top: '24px', left: '24px', background: '#000', color: '#fff', fontSize: '0.8rem', fontWeight: 800, padding: '4px 12px', borderRadius: '4px', letterSpacing: '1px', zIndex: 20 }}>
+          <div style={{ position: 'absolute', top: '24px', left: '24px', background: '#000', color: '#fff', fontSize: '0.75rem', fontFamily: "var(--font-ui), 'Inter', sans-serif", fontWeight: 600, padding: '4px 12px', borderRadius: '4px', letterSpacing: '0.06em', zIndex: 20 }}>
             STEAL DEAL
           </div>
           
@@ -140,7 +156,7 @@ export default function ProductDetailsClient({ product: serverProduct, productId
 
         {/* RIGHT COLUMN: Details */}
         <div style={{ display: 'flex', flexDirection: 'column', padding: '2rem 10%', background: '#fff' }}>
-          <h1 style={{ fontSize: '1.8rem', fontWeight: 600, color: '#1a1a1a', margin: '0 0 12px 0' }}>{product?.title || "Khaki Beige-Clove Field Tote Bag"}</h1>
+          <h1 style={{ fontSize: '36px', fontFamily: "var(--font-primary), 'Manrope', sans-serif", fontWeight: 500, lineHeight: 1.15, letterSpacing: '-0.03em', color: '#0f172a', margin: '0 0 12px 0' }}>{product?.title || "Khaki Beige-Clove Field Tote Bag"}</h1>
           
           {product?.productNumber && (
             <div style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '16px', fontWeight: 500 }}>
@@ -148,10 +164,17 @@ export default function ProductDetailsClient({ product: serverProduct, productId
             </div>
           )}
 
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', marginBottom: '8px' }}>
-            <span style={{ fontSize: '1.8rem', fontWeight: 800, color: '#000' }}>₹{displayPrice}</span>
-            <span style={{ fontSize: '1.2rem', color: '#a3a3a3', textDecoration: 'line-through', fontWeight: 500 }}>₹{Math.floor(displayPrice * 2.3)}</span>
-            <span style={{ fontSize: '0.8rem', color: '#a3a3a3', fontWeight: 500 }}>MRP Inclusive of all taxes</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '1.8rem', fontFamily: "var(--font-primary), 'Manrope', sans-serif", fontWeight: 700, letterSpacing: '-0.02em', color: '#000' }}>₹{displayPrice}</span>
+            {displayOldPrice > displayPrice && (
+              <span style={{ fontSize: '1.2rem', fontFamily: "var(--font-ui), 'Inter', sans-serif", color: '#a3a3a3', textDecoration: 'line-through', fontWeight: 500 }}>₹{displayOldPrice}</span>
+            )}
+            {discountStr && (
+              <span style={{ fontSize: '0.85rem', fontFamily: "var(--font-ui), 'Inter', sans-serif", fontWeight: 600, letterSpacing: '0.04em', color: '#059669', background: '#ecfdf5', padding: '4px 8px', borderRadius: '4px' }}>
+                {discountStr}
+              </span>
+            )}
+            <span style={{ fontSize: '0.8rem', fontFamily: "var(--font-ui), 'Inter', sans-serif", color: '#737373', fontWeight: 500 }}>MRP Inclusive of all taxes</span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px' }}>
@@ -373,7 +396,7 @@ export default function ProductDetailsClient({ product: serverProduct, productId
       {/* MORE PRODUCTS CROSSLINK */}
       {similarProducts.length > 0 && (
         <div style={{ borderTop: '1px solid #e5e5e5', paddingTop: '4rem', paddingBottom: '4rem', overflow: 'hidden' }}>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 700, textAlign: 'center', marginBottom: '2rem', fontFamily: 'Outfit, sans-serif' }}>More Products To Browse</h2>
+          <h2 style={{ fontSize: '1.75rem', fontWeight: 600, letterSpacing: '-0.025em', textAlign: 'center', marginBottom: '2rem', fontFamily: "var(--font-primary), 'Manrope', sans-serif" }}>More Products To Browse</h2>
           <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
             <MinimalProductCarousel products={similarProducts} />
           </div>

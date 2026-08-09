@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import styles from './page.module.css';
 import { useCart } from '@/context/CartContext';
+import { getOldPrice } from '@/lib/priceUtils';
 
 export default function CartPage() {
   const { cartItems, removeFromCart, updateQuantity, getCartTotal, getCartCount, getCartSubtotal, getDiscountAmount, coupon, applyCoupon, removeCoupon, clearBuyNow } = useCart();
@@ -54,7 +55,9 @@ export default function CartPage() {
                   <h3 className={styles.itemTitle}>{item.title}</h3>
                   <div className={styles.priceRow}>
                     <span className={styles.currentPrice}>₹{item.price}</span>
-                    <span className={styles.oldPrice}>₹{(item.oldPrice || Math.round(item.price * 1.5))}</span>
+                    {getOldPrice(item, item.price) > item.price && (
+                      <span className={styles.oldPrice}>₹{getOldPrice(item, item.price)}</span>
+                    )}
                   </div>
                   
                   <div className={styles.controlsRow}>

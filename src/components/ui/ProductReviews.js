@@ -8,8 +8,8 @@ export default function ProductReviews() {
   ];
 
   return (
-    <div style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: '1px solid var(--border)', fontFamily: 'Outfit, sans-serif' }}>
-      <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '2rem', color: 'var(--primary)', marginBottom: '2rem' }}>Customer Reviews</h2>
+    <div suppressHydrationWarning style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: '1px solid var(--border)', fontFamily: "var(--font-ui), 'Inter', sans-serif" }}>
+      <h2 suppressHydrationWarning style={{ fontFamily: "var(--font-primary), 'Manrope', sans-serif", fontWeight: 600, letterSpacing: '-0.025em', fontSize: '1.75rem', color: 'var(--primary)', marginBottom: '2rem' }}>Customer Reviews</h2>
       
       {/* Review Summary Block */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3rem', marginBottom: '3rem', background: '#f8fafc', padding: '2rem', borderRadius: '16px', border: '1px solid #e2e8f0' }}>

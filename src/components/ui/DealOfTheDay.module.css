@@ -73,7 +73,9 @@
 }
 
 .wordDeal {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-primary), 'Manrope', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.03em;
   font-size: 3.2rem;
   font-weight: 800;
   color: #1a1a1a;
@@ -82,8 +84,9 @@
 }
 
 .wordOf {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-primary), 'Manrope', sans-serif;
   font-weight: 500;
+  letter-spacing: -0.02em;
   font-style: italic;
   font-size: 1.6rem;
   color: #1a1a1a;
@@ -92,7 +95,9 @@
 }
 
 .wordDay {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-primary), 'Manrope', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.03em;
   font-size: 3.2rem;
   font-weight: 800;
   color: #1a1a1a;
@@ -105,7 +110,7 @@
   font-weight: 500;
   margin-bottom: var(--spacing-2);
   font-size: 1.15rem;
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-ui), 'Inter', sans-serif;
 }
 
 .timer {
@@ -113,7 +118,7 @@
   align-items: center;
   gap: 6px;
   justify-content: center;
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-ui), 'Inter', sans-serif;
   font-weight: 600;
 }
 
@@ -193,7 +198,9 @@
   background: #f97316; /* Vibrant Orange */
   color: #fff;
   font-size: 0.75rem;
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-ui), 'Inter', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   font-weight: 700;
   padding: 4px 12px;
   border-radius: 0 4px 4px 0;

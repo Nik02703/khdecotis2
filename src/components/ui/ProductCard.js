@@ -6,6 +6,8 @@ import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import styles from './ProductCard.module.css';
 
+import { getDisplayPrice, getOldPrice, getDiscountText } from '@/lib/priceUtils';
+
 export default function ProductCard({ product }) {
   const { cartItems, addToCart, initiateBuyNow } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
@@ -31,9 +33,9 @@ export default function ProductCard({ product }) {
   const nextImg = (e) => { e.preventDefault(); e.stopPropagation(); setActiveImageIdx(i => i + 1); };
   const prevImg = (e) => { e.preventDefault(); e.stopPropagation(); setActiveImageIdx(i => (i - 1 + images.length) % images.length); };
   
-  const rawOldPrice = product.oldPrice ? Number(product.oldPrice) : 0;
-  const oldPrice = rawOldPrice > Number(product.price) ? rawOldPrice : Math.round(Number(product.price) * 1.4);
-  const discountStr = product.discount || (oldPrice && product.price && Number(oldPrice) > Number(product.price) ? `${Math.round(((Number(oldPrice) - Number(product.price)) / Number(oldPrice)) * 100)}% OFF` : null);
+  const currentPrice = getDisplayPrice(product);
+  const oldPrice = getOldPrice(product, currentPrice);
+  const discountStr = getDiscountText(product, currentPrice, oldPrice);
 
   return (
     <div className={styles.card}>
@@ -81,8 +83,8 @@ export default function ProductCard({ product }) {
         </Link>
         <p className={styles.category}>{product.category}</p>
         <div className={styles.priceRow}>
-          <span className={styles.currentPrice}>₹{product.price}</span>
-          {oldPrice > Number(product.price) && <span className={styles.oldPrice}>₹{oldPrice}</span>}
+          <span className={styles.currentPrice}>₹{currentPrice}</span>
+          {oldPrice > currentPrice && <span className={styles.oldPrice}>₹{oldPrice}</span>}
           {discountStr && <span className={styles.discountBadge}>{discountStr}</span>}
         </div>
         

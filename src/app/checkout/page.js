@@ -260,7 +260,7 @@ export default function CheckoutPage() {
         <div style={{ background: '#f0fdf4', width: '70px', height: '70px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', border: '2px solid #bbf7d0' }}>
           <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
         </div>
-        <h1 style={{ fontSize: '2.2rem', marginBottom: '8px', color: '#0f172a', fontWeight: 800, fontFamily: 'Outfit, sans-serif' }}>Order Successfully Placed</h1>
+        <h1 style={{ fontSize: '2.25rem', fontFamily: "var(--font-primary), 'Manrope', sans-serif", fontWeight: 600, letterSpacing: '-0.025em', marginBottom: '8px', color: '#0f172a' }}>Order Successfully Placed</h1>
         <p style={{ color: '#64748b', fontSize: '1.1rem', marginBottom: '40px' }}>Thank you for shopping, {orderSuccessDetails.name}.</p>
         
         <div style={{ width: '100%', maxWidth: '540px', background: '#fff', padding: '36px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.04)', textAlign: 'left' }}>
@@ -330,7 +330,7 @@ export default function CheckoutPage() {
         background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px',
         padding: '24px', marginBottom: '2rem',
       }}>
-        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0f172a', marginBottom: '20px', fontFamily: 'Outfit, sans-serif' }}>Order Summary</h2>
+        <h2 style={{ fontSize: '1.25rem', fontFamily: "var(--font-primary), 'Manrope', sans-serif", fontWeight: 600, letterSpacing: '-0.02em', color: '#0f172a', marginBottom: '20px' }}>Order Summary</h2>
         
         {/* Items preview */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0' }}>
@@ -489,7 +489,7 @@ export default function CheckoutPage() {
                   : 'linear-gradient(135deg, #6C4FE1 0%, #8B5CF6 50%, #A78BFA 100%)',
                 color: '#fff', fontSize: '1.05rem', fontWeight: 700,
                 cursor: isProcessing ? 'not-allowed' : 'pointer',
-                fontFamily: 'Outfit, sans-serif', letterSpacing: '0.02em',
+                fontFamily: "var(--font-ui), 'Inter', sans-serif", letterSpacing: '0.04em',
                 transition: 'all 0.3s ease',
                 boxShadow: isProcessing ? 'none' : '0 4px 15px rgba(108, 79, 225, 0.35)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
@@ -516,7 +516,7 @@ export default function CheckoutPage() {
                 width: '100%', padding: '16px', border: 'none', borderRadius: '12px',
                 background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
                 color: '#fff', fontSize: '1.05rem', fontWeight: 700,
-                cursor: 'pointer', fontFamily: 'Outfit, sans-serif',
+                cursor: 'pointer', fontFamily: "var(--font-ui), 'Inter', sans-serif", letterSpacing: '0.04em',
                 letterSpacing: '0.02em', transition: 'all 0.3s ease',
                 boxShadow: '0 4px 15px rgba(15, 23, 42, 0.25)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',

@@ -45,16 +45,7 @@ export default function NewArrivals() {
 
         <div className={styles.productGrid}>
           {currentProducts.map(product => (
-            <ProductCard key={product._id || product.id} product={{
-              _id: product._id || product.id,
-              title: product.title,
-              category: product.category,
-              price: String(product.price || '').replace(',',''),
-              oldPrice: product.oldPrice ? String(product.oldPrice).replace(',','') : '',
-              isDealOfDay: product.isDealOfDay,
-              isNewArrival: product.isNewArrival,
-              images: product.images
-            }} />
+            <ProductCard key={product._id || product.id} product={product} />
           ))}
         </div>
       </div>

@@ -2,12 +2,14 @@
   background-color: #ffffff;
   min-height: 100vh;
   padding-bottom: 6rem;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-ui), 'Inter', sans-serif;
 }
 
 .headerText {
   text-align: center;
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-primary), 'Manrope', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.025em;
   font-size: 1.5rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -211,7 +213,9 @@
 }
 
 .summaryTitle {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-primary), 'Manrope', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.025em;
   font-size: 1.1rem;
   font-weight: 800;
   color: #111;
@@ -271,7 +275,9 @@
   width: 100%;
   background-color: #10b981;
   color: #fff;
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-ui), 'Inter', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   font-size: 1.05rem;
   font-weight: 700;
   padding: 16px;

@@ -129,10 +129,10 @@
   padding: var(--spacing-2) var(--spacing-4);
   text-decoration: none;
   display: block;
-  font-family: 'Outfit', sans-serif;
-  font-size: 0.95rem;
+  font-family: var(--font-ui), 'Inter', sans-serif;
+  font-size: 14px;
   font-weight: 500;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   transition: all var(--transition-fast);
 }
 
@@ -239,8 +239,8 @@
 }
 
 .megaMenuCol h4 {
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-weight: 700;
+  font-family: var(--font-primary), 'Manrope', sans-serif;
+  font-weight: 600;
   font-size: 0.95rem;
   color: #111;
   margin-bottom: 8px;
@@ -305,7 +305,8 @@
 
 .mobileMenuLink {
   font-size: 1.8rem;
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-ui), 'Inter', sans-serif;
+  font-weight: 500;
   color: var(--primary);
   margin-bottom: var(--spacing-2);
   text-decoration: none;

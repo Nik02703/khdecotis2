@@ -62,9 +62,9 @@ export default function OrdersPage() {
 
   return (
     <>
-      <div className="container animate-fade-in" style={{ padding: '4rem 2rem', minHeight: '80vh', maxWidth: '1000px', margin: '0 auto', fontFamily: 'Outfit, sans-serif' }}>
+      <div className="container animate-fade-in" style={{ padding: '4rem 2rem', minHeight: '80vh', maxWidth: '1000px', margin: '0 auto', fontFamily: "var(--font-ui), 'Inter', sans-serif" }}>
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0' }}>Order History</h1>
+        <h1 style={{ fontSize: '2.25rem', fontFamily: "var(--font-primary), 'Manrope', sans-serif", fontWeight: 600, letterSpacing: '-0.025em', color: '#0f172a', margin: '0 0 8px 0' }}>Order History</h1>
         <p style={{ color: '#64748b', fontSize: '1.05rem', margin: 0 }}>Track, manage, and review your recent purchases.</p>
       </div>
 
@@ -419,7 +419,7 @@ export default function OrdersPage() {
             <button onClick={() => setSelectedOrder(null)} style={{ position: 'absolute', top: '24px', right: '24px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}><X size={24} /></button>
             
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-              <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '2rem', margin: '0 0 8px 0', color: '#0f172a' }}>Invoice</h2>
+              <h2 style={{ fontFamily: "var(--font-primary), 'Manrope', sans-serif", fontWeight: 600, letterSpacing: '-0.025em', fontSize: '1.75rem', margin: '0 0 8px 0', color: '#0f172a' }}>Invoice</h2>
               <p style={{ color: '#64748b', margin: 0 }}>Order #{selectedOrder.id}</p>
             </div>
 

@@ -8,6 +8,7 @@ import { useProducts } from '@/context/ProductContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './DealOfTheDay.module.css';
+import { getDisplayPrice, getOldPrice, getDiscountText } from '@/lib/priceUtils';
 
 export default function DealOfTheDay() {
   const router = useRouter();
@@ -89,14 +90,13 @@ export default function DealOfTheDay() {
                 <h3 className={styles.productTitle}>{deal.title}</h3>
                 <p className={styles.productCategory}>{deal.category}</p>
                 <div className={styles.priceRow}>
-                  <span className={styles.currentPrice}>₹{deal.price || deal.currentPrice}</span>
                   {(() => {
-                    const rawOldPrice = deal.oldPrice ? Number(deal.oldPrice) : 0;
-                    const price = Number(deal.price || deal.currentPrice);
-                    const effectiveOldPrice = rawOldPrice > price ? rawOldPrice : Math.round(price * 1.4);
-                    const discountText = deal.discount || (effectiveOldPrice > price ? `${Math.round(((effectiveOldPrice - price) / effectiveOldPrice) * 100)}% OFF` : null);
+                    const price = getDisplayPrice(deal);
+                    const effectiveOldPrice = getOldPrice(deal, price);
+                    const discountText = getDiscountText(deal, price, effectiveOldPrice);
                     return (
                       <>
+                        <span className={styles.currentPrice}>₹{price}</span>
                         {effectiveOldPrice > price && <span className={styles.oldPrice}>₹{effectiveOldPrice}</span>}
                         {discountText && <span className={styles.discountBadge}>{discountText}</span>}
                       </>

@@ -21,7 +21,7 @@
 }
 
 .newBadge {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-primary), 'Manrope', sans-serif;
   font-size: 3.5rem;
   font-weight: 800;
   font-style: italic;
@@ -39,7 +39,9 @@
 }
 
 .titleText {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-primary), 'Manrope', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.025em;
   font-size: 3.5rem;
   font-weight: 700;
   color: var(--primary);
@@ -89,7 +91,8 @@
   background: transparent;
   border: none;
   border-radius: 36px;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-ui), 'Inter', sans-serif;
+  font-weight: 600;
   font-size: 1rem;
   font-weight: 700;
   color: #525252;

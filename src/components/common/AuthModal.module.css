@@ -20,7 +20,7 @@
   border-radius: 4px;
   overflow: hidden;
   position: relative;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-ui), 'Inter', sans-serif;
   padding: 40px;
 }
 
@@ -54,8 +54,9 @@
 }
 
 .title {
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-weight: 700;
+  font-family: var(--font-primary), 'Manrope', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.025em;
   color: #111;
   font-size: 1.8rem;
   margin-bottom: 2rem;

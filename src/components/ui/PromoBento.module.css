@@ -56,17 +56,19 @@
 }
 
 .bentoTitle {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-ui), 'Inter', sans-serif;
   font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   margin-bottom: var(--spacing-1);
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.9);
 }
 
 .bentoDiscount {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-primary), 'Manrope', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.03em;
   font-size: clamp(1.6rem, 3vw, 2.2rem);
   font-weight: 500;
   margin-bottom: var(--spacing-3);
@@ -80,8 +82,9 @@
   border: none;
   padding: 8px 20px;
   border-radius: 8px; /* Slightly rounded edges mapping screenshot */
-  font-family: 'Outfit', sans-serif;
-  font-weight: 500;
+  font-family: var(--font-ui), 'Inter', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   font-size: 0.95rem;
   cursor: pointer;
   width: max-content;
