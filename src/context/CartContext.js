@@ -105,12 +105,16 @@ export function CartProvider({ children }) {
 
   useEffect(() => {
     if (isMounted && hasLoaded) {
-      const timer = setTimeout(() => {
-        trackAbandonedCart();
-      }, 1000);
-      return () => clearTimeout(timer);
+      const activeItems = buyNowItem ? [buyNowItem] : cartItems;
+      if (activeItems && activeItems.length > 0) {
+        const timer = setTimeout(() => {
+          trackAbandonedCart();
+        }, 500);
+        return () => clearTimeout(timer);
+      }
     }
   }, [cartItems, buyNowItem, isMounted, hasLoaded]);
+
 
 
   const addToCart = (product, quantity = 1) => {

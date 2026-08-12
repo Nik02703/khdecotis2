@@ -19,19 +19,10 @@ const AbandonedCartSchema = new mongoose.Schema(
       district: { type: String, default: '' },
       postcode: { type: String, default: '' },
     },
-    cartItems: [
-      {
-        id: String,
-        _id: String,
-        title: String,
-        price: Schema => Schema.Types.Mixed,
-        quantity: Number,
-        color: String,
-        size: String,
-        images: [String],
-        image: String,
-      },
-    ],
+    cartItems: {
+      type: Array,
+      default: [],
+    },
     subtotal: {
       type: Number,
       default: 0,

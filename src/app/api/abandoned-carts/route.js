@@ -44,7 +44,21 @@ export async function POST(request) {
       return NextResponse.json({ success: true, message: 'Empty cart session cleared' });
     }
 
-    // Normalize customer name if provided
+    // Clean cartItems to prevent large Base64 images from failing MongoDB doc size limits
+    const cleanItems = (cartItems || []).map(item => {
+      let safeImage = item.image || item.images?.[0] || '';
+      if (safeImage && safeImage.length > 50000) safeImage = '';
+      return {
+        id: item.id || item._id || String(Math.random()),
+        title: item.title || 'Product',
+        price: typeof item.price === 'string' ? parseFloat(item.price.replace(/,/g, '')) || 0 : (item.price || 0),
+        quantity: item.quantity || 1,
+        color: item.color || '',
+        size: item.size || '',
+        image: safeImage,
+      };
+    });
+
     let updatedCustomerInfo = customerInfo || {};
     if (updatedCustomerInfo.firstName || updatedCustomerInfo.lastName) {
       updatedCustomerInfo.name = `${updatedCustomerInfo.firstName || ''} ${updatedCustomerInfo.lastName || ''}`.trim();
@@ -53,10 +67,10 @@ export async function POST(request) {
     const cartData = {
       sessionId,
       customerInfo: updatedCustomerInfo,
-      cartItems: cartItems || [],
+      cartItems: cleanItems,
       subtotal: subtotal || 0,
       totalAmount: totalAmount || 0,
-      itemCount: itemCount || (cartItems ? cartItems.length : 0),
+      itemCount: itemCount || cleanItems.length,
       status: status || 'abandoned',
       lastActive: new Date(),
     };
