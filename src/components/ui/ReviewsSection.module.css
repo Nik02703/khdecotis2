@@ -1,81 +1,196 @@
-.reviewsSection {
-  padding: var(--spacing-8) 0;
-  background-color: var(--background);
-  overflow: hidden;
+.section {
+  padding: 3rem 1.5rem;
+  background-color: var(--background, #e8e3f5);
 }
 
-.reviewsHeading {
-  text-align: center;
-  font-family: var(--font-primary), 'Manrope', sans-serif;
-  font-weight: 600;
-  letter-spacing: -0.025em;
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 400;
-  color: var(--primary);
-  margin-bottom: var(--spacing-6);
-}
-
-.marqueeContainer {
-  width: 100%;
-  overflow: hidden;
+/* Full-width banner container with reviews.webp filling it */
+.bannerContainer {
   position: relative;
-  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  max-width: 1360px;
+  margin: 0 auto;
+  border-radius: 20px;
+  overflow: hidden;
+  height: 480px;
 }
 
-.marqueeTrack {
-  display: flex;
-  gap: var(--spacing-4);
-  width: max-content;
-  animation: scrollLeft 35s linear infinite;
+/* Static background image fills entire container */
+.bgImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  z-index: 1;
 }
 
-.marqueeTrack:hover {
-  animation-play-state: paused;
+/* Gradient scrim — creamy on the left, transparent on right */
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(
+    to right,
+    rgba(244, 240, 234, 0.97) 0%,
+    rgba(244, 240, 234, 0.96) 30%,
+    rgba(244, 240, 234, 0.82) 48%,
+    rgba(244, 240, 234, 0.3) 66%,
+    rgba(244, 240, 234, 0) 80%
+  );
 }
 
-@keyframes scrollLeft {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(calc(-50% - (var(--spacing-4) / 2))); }
-}
-
-.reviewCard {
-  background-color: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-4);
-  width: 350px;
-  flex-shrink: 0;
-  box-shadow: var(--shadow-sm);
+/* Text & controls on top of the scrim */
+.content {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-3);
-  transition: box-shadow var(--transition-fast);
+  justify-content: space-between;
+  padding: 3.5rem 3.5rem 3rem 3.5rem;
+  max-width: 620px;
 }
 
-.reviewCard:hover {
-  box-shadow: var(--shadow-md);
+.quoteIcon {
+  flex-shrink: 0;
 }
 
-.stars {
-  color: #fbbf24;
-  font-size: 1.25rem;
-  letter-spacing: 2px;
-}
-
-.reviewText {
-  font-size: 1.05rem;
-  color: var(--text-main);
-  line-height: 1.7;
-  font-style: italic;
+.quoteBlock {
   flex-grow: 1;
+  display: flex;
+  align-items: center;
+  transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
-.reviewerName {
+.quoteText {
+  font-family: var(--font-primary), 'Manrope', sans-serif;
+  font-size: clamp(1.5rem, 2.6vw, 2.2rem);
+  font-weight: 500;
+  line-height: 1.35;
+  color: #1c1a17;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.highlight {
+  color: #b45309;
   font-weight: 600;
-  color: var(--primary);
-  font-size: 0.95rem;
-  margin-top: auto;
-  letter-spacing: 0.05em;
+}
+
+/* Bottom controls row */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(180, 160, 135, 0.35);
+  margin-top: 2rem;
+}
+
+.navBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(140, 120, 95, 0.5);
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(6px);
+  color: #1c1a17;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.22s ease;
+}
+
+.navBtn:hover {
+  background: #1c1a17;
+  color: #fff;
+  border-color: #1c1a17;
+  transform: scale(1.06);
+}
+
+.authorBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: opacity 0.4s ease;
+}
+
+.authorName {
+  font-family: var(--font-ui), 'Inter', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #1c1a17;
   text-transform: uppercase;
+}
+
+.authorLocation {
+  font-family: var(--font-ui), 'Inter', sans-serif;
+  font-size: 0.78rem;
+  font-style: italic;
+  color: #7a7060;
+}
+
+.dots {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(140, 120, 95, 0.4);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.3s ease;
+}
+
+.dot:hover {
+  background: rgba(140, 120, 95, 0.7);
+}
+
+.activeDot {
+  width: 22px;
+  border-radius: 10px;
+  background: #5a3fc0;
+}
+
+/* Fade animation */
+.fadeOut {
+  opacity: 0.15;
+  transform: translateY(4px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .bannerContainer {
+    height: auto;
+    min-height: 460px;
+  }
+
+  .content {
+    max-width: 100%;
+    padding: 2.5rem 2rem 2rem 2rem;
+  }
+
+  .scrim {
+    background: linear-gradient(
+      to bottom,
+      rgba(244, 240, 234, 0.98) 0%,
+      rgba(244, 240, 234, 0.96) 55%,
+      rgba(244, 240, 234, 0.7) 80%,
+      rgba(244, 240, 234, 0) 100%
+    );
+  }
+
+  .quoteText {
+    font-size: 1.4rem;
+  }
 }

@@ -42,6 +42,9 @@ export function CartProvider({ children }) {
           if(safeImages.length === 0 && rest.image && rest.image.length < 100000) {
             safeImages = [rest.image];
           }
+          if(safeImages.length === 0 && rest.imageUrl && rest.imageUrl.length < 100000) {
+            safeImages = [rest.imageUrl];
+          }
           return { ...rest, images: safeImages.length > 0 ? safeImages : null };
         });
         localStorage.setItem('khd_cart', JSON.stringify(slimCart));

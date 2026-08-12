@@ -120,14 +120,14 @@ export default function DealOfTheDay() {
                       <button 
                         className={styles.addToCartBtn}
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); addToCart({ ...deal, price: deal.price || deal.currentPrice }, 1); alert(`${deal.title} added to cart!`); }}
-                        style={{ flex: 1, background: cartItems?.some(item => (item._id || item.id) === (deal._id || deal.id)) ? '#f1f5f9' : '#fff', color: cartItems?.some(item => (item._id || item.id) === (deal._id || deal.id)) ? '#334155' : '#111', border: '1px solid #e2e8f0', padding: '10px 4px', fontSize: '0.85rem', whiteSpace: 'nowrap', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
+                        style={{ flex: 1, background: cartItems?.some(item => (item._id || item.id) === (deal._id || deal.id)) ? '#f0edf9' : '#fff', color: cartItems?.some(item => (item._id || item.id) === (deal._id || deal.id)) ? '#5a3fc0' : '#3b2d6e', border: '1px solid #d4cce8', padding: '10px 4px', fontSize: '0.85rem', whiteSpace: 'nowrap', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
                       >
                         {cartItems?.some(item => (item._id || item.id) === (deal._id || deal.id)) ? 'In Cart' : 'Add To Cart'}
                       </button>
                       <button 
                         className={styles.addToCartBtn}
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); initiateBuyNow({ ...deal, price: deal.price || deal.currentPrice }, 1); router.push('/checkout'); }}
-                        style={{ flex: 1, background: '#111', color: '#fff', padding: '10px 4px', fontSize: '0.85rem', border: '1px solid #111', whiteSpace: 'nowrap', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
+                        style={{ flex: 1, background: '#3b2d6e', color: '#fff', padding: '10px 4px', fontSize: '0.85rem', border: '1px solid #3b2d6e', whiteSpace: 'nowrap', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
                       >
                         Buy Now
                       </button>

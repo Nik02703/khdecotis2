@@ -33,7 +33,9 @@ export default async function Home() {
           autoPlay 
           loop 
           muted 
-          playsInline 
+          playsInline
+          preload="auto"
+          poster="/bedsheets.png"
         />
         <div className={styles.heroOverlay}></div>
         <div className={styles.heroContent}>

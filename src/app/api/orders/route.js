@@ -35,8 +35,48 @@ export async function POST(req) {
     
     const body = await req.json();
     
+    // Perform server-side PIN -> state -> district validation before saving
+    const { postcode, state, district } = body.shippingDetails || {};
+    if (postcode && /^\d{6}$/.test(postcode)) {
+      try {
+        const pinRes = await fetch(`https://api.postalpincode.in/pincode/${postcode}`);
+        if (pinRes.ok) {
+          const pinData = await pinRes.json();
+          if (Array.isArray(pinData) && pinData[0]?.Status === 'Success' && Array.isArray(pinData[0]?.PostOffice)) {
+            const apiDistricts = pinData[0].PostOffice.map(po => po.District).filter(Boolean);
+            const apiStates = pinData[0].PostOffice.map(po => po.State).filter(Boolean);
+            
+            if (district && apiDistricts.length > 0) {
+              const normDist = district.toLowerCase().replace(/[^a-z0-9]/g, '');
+              const matchDist = apiDistricts.some(d => {
+                const normApi = d.toLowerCase().replace(/[^a-z0-9]/g, '');
+                return normApi.includes(normDist) || normDist.includes(normApi);
+              });
+              if (!matchDist) {
+                return NextResponse.json({ error: `PIN code ${postcode} belongs to ${apiDistricts[0]} district, not ${district}.` }, { status: 400 });
+              }
+            }
+
+            if (state && apiStates.length > 0) {
+              const normState = state.toLowerCase().replace(/[^a-z0-9]/g, '');
+              const matchState = apiStates.some(s => {
+                const normApi = s.toLowerCase().replace(/[^a-z0-9]/g, '');
+                return normApi.includes(normState) || normState.includes(normApi);
+              });
+              if (!matchState) {
+                return NextResponse.json({ error: `PIN code ${postcode} belongs to ${apiStates[0]} state, not ${state}.` }, { status: 400 });
+              }
+            }
+          }
+        }
+      } catch (pinErr) {
+        console.warn('Backend PIN verification skip due to external API warning:', pinErr);
+      }
+    }
+
     // Upsert robust Order document to prevent duplicate entries/race conditions
     const newOrder = await Order.findOneAndUpdate(
+
       { orderId: body.id },
       {
         $set: {

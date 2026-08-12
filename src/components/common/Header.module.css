@@ -9,7 +9,7 @@
 }
 
 .authNav {
-  background-color: var(--secondary);
+  background-color: #4a3b6e;
   color: #fff;
   text-align: center;
   font-size: 0.8rem;
@@ -279,7 +279,7 @@
   left: 0; 
   width: 100vw; 
   height: 100vh;
-  background: #fdfcf9;
+  background: #ffffff;
 
   z-index: 1000;
   padding: var(--spacing-4);

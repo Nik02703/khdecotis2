@@ -5,14 +5,15 @@
   --font-primary: var(--font-manrope), 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-ui: var(--font-inter), 'Inter', system-ui, sans-serif;
 
-  /* Premium Soft Luxury Theme */
-  --primary: #2c2a29; /* Deep charcoal almost black */
-  --secondary: #bba288; /* Soft desert sand / taupe */
-  --background: #e6dfd3; /* Darker elevated luxury sand background */
+  /* Premium Purple Luxury Theme */
+  --primary: #3b2d6e;        /* Deep rich purple */
+  --secondary: #7c5cbf;      /* Medium vibrant purple */
+  --accent: #9b7fe8;         /* Soft highlight purple */
+  --background: #ffffff;     /* White background */
   --surface: #ffffff;
-  --text-main: #333333;
-  --text-muted: #888888;
-  --border: #eaeaea;
+  --text-main: #1e1a2e;
+  --text-muted: #7a7490;
+  --border: #d4cce8;
   
   /* 8px Grid System (Base 16px font -> 1rem = 16px, 0.5rem = 8px) */
   --spacing-1: 0.5rem;  /* 8px */
@@ -45,7 +46,7 @@
 html, body {
   font-family: var(--font-ui), 'Inter', sans-serif;
   font-weight: 400;
-  background-color: var(--background);
+  background-color: #ffffff;
   color: var(--text-main);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;

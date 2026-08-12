@@ -110,7 +110,7 @@
 .input:focus, .textarea:focus {
   outline: none;
   border-color: var(--secondary);
-  box-shadow: 0 0 0 2px rgba(187, 162, 136, 0.2); /* Matching secondary color */
+  box-shadow: 0 0 0 2px rgba(124, 92, 191, 0.2); /* Purple focus ring */
 }
 
 .textarea {
@@ -118,7 +118,7 @@
 }
 
 .pageBg {
-  background-color: #f4f0ea; /* Smooth luxury sand background */
+  background-color: #ffffff;
   width: 100%;
   min-height: 100vh;
 }

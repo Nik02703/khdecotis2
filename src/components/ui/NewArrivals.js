@@ -1,21 +1,16 @@
 'use client';
-import { useState } from 'react';
 import { useProducts } from '@/context/ProductContext';
 import styles from './NewArrivals.module.css';
 import ProductCard from './ProductCard';
 
 export default function NewArrivals() {
-  const [activeIndex, setActiveIndex] = useState(0);
   const { products, isMounted } = useProducts();
 
   if (!isMounted) return null;
 
-  // Filter New Arrivals natively
+  // Filter New Arrivals natively and cap at 8 products max
   const newArrivalsData = products.filter(p => p.isNewArrival);
-  const BEDROOM_PRODS = newArrivalsData.filter(p => !['Decor', 'Lighting', 'Hand Towels', 'Door Mats'].includes(p.category));
-  const OTHER_PRODS = newArrivalsData.filter(p => ['Hand Towels', 'Door Mats'].includes(p.category));
-
-  const currentProducts = activeIndex === 0 ? BEDROOM_PRODS : OTHER_PRODS;
+  const displayProducts = (newArrivalsData.length > 0 ? newArrivalsData : products).slice(0, 8);
 
   return (
     <section className={styles.section}>
@@ -30,21 +25,8 @@ export default function NewArrivals() {
           </p>
         </div>
 
-        {/* Animated Pill Toggle mapping user requested screenshot behavior */}
-        <div className={styles.toggleWrapper}>
-          <div className={styles.toggleTrack}>
-            <div className={styles.toggleThumb} style={{ transform: activeIndex === 0 ? 'translateX(0)' : 'translateX(100%)' }} />
-            <button className={`${styles.toggleBtn} ${activeIndex === 0 ? styles.activeBtn : ''}`} onClick={() => setActiveIndex(0)}>
-              Shop Bedroom & Essentials
-            </button>
-            <button className={`${styles.toggleBtn} ${activeIndex === 1 ? styles.activeBtn : ''}`} onClick={() => setActiveIndex(1)}>
-              Shop Decor & Floorings
-            </button>
-          </div>
-        </div>
-
         <div className={styles.productGrid}>
-          {currentProducts.map(product => (
+          {displayProducts.map(product => (
             <ProductCard key={product._id || product.id} product={product} />
           ))}
         </div>

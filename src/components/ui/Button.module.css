@@ -20,7 +20,7 @@
   position: absolute;
   width: 100%;
   height: 100%;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   top: 0; left: 0;
   transform: scaleX(0);
   transform-origin: right;
@@ -32,28 +32,31 @@
   transform-origin: left;
 }
 
+/* Primary — Deep Purple */
 .primary {
   background-color: var(--primary);
   color: #fff;
 }
 
 .primary:hover {
-  background-color: #403e3d;
-  box-shadow: var(--shadow-md);
+  background-color: #2e2257;
+  box-shadow: 0 8px 20px rgba(59, 45, 110, 0.35);
   transform: translateY(-2px);
 }
 
+/* Secondary — Used for hero CTA and featured actions */
 .secondary {
   background-color: var(--secondary);
   color: #fff;
 }
 
 .secondary:hover {
-  background-color: #a88e73;
-  box-shadow: var(--shadow-md);
+  background-color: #6a4db0;
+  box-shadow: 0 8px 20px rgba(124, 92, 191, 0.4);
   transform: translateY(-2px);
 }
 
+/* Outline */
 .outline {
   background-color: transparent;
   border-color: var(--primary);
@@ -69,20 +72,19 @@
   width: 100%;
 }
 
-/* Eye-Catching Promotional Interactive State */
+/* Vibrant — Promo/sale CTAs */
 .vibrant {
-  background-color: #d97706; /* Rich golden amber sunset */
+  background: linear-gradient(135deg, #5a3fc0 0%, #7c5cbf 100%);
   color: #fff;
-  border-color: #d97706;
+  border-color: transparent;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4);
+  box-shadow: 0 4px 14px rgba(90, 63, 192, 0.4);
 }
 
 .vibrant:hover {
-  background-color: #b45309;
-  border-color: #b45309;
-  box-shadow: 0 6px 16px rgba(180, 83, 9, 0.5);
+  background: linear-gradient(135deg, #4a30a8 0%, #6a4db0 100%);
+  box-shadow: 0 6px 20px rgba(90, 63, 192, 0.55);
   transform: translateY(-2px);
 }

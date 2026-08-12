@@ -204,7 +204,7 @@ export default function ProductDetailsClient({ product: serverProduct, productId
               <h3 style={{ fontSize: '0.9rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '16px', color: '#000' }}>SIZE</h3>
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                 {sizes.map(s => (
-                  <button key={s.name} onClick={() => setActiveSize(s.name)} style={{ background: activeSize === s.name ? '#111' : '#fff', color: activeSize === s.name ? '#fff' : '#111', border: '1px solid #e5e5e5', padding: '10px 18px', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
+                  <button key={s.name} onClick={() => setActiveSize(s.name)} style={{ background: activeSize === s.name ? '#3b2d6e' : '#fff', color: activeSize === s.name ? '#fff' : '#3b2d6e', border: '1px solid #d4cce8', padding: '10px 18px', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
                     {s.name}
                   </button>
                 ))}
@@ -224,29 +224,29 @@ export default function ProductDetailsClient({ product: serverProduct, productId
               <>
                 {inCart ? (
                   <Link href="/cart" style={{ textDecoration: 'none', flex: 1 }}>
-                    <button style={{ width: '100%', background: '#111', color: '#fff', fontSize: '1.1rem', fontWeight: 800, padding: '16px', border: 'none', borderRadius: '4px', cursor: 'pointer', letterSpacing: '1px', textTransform: 'uppercase', transition: 'background 0.2s' }}>
+                    <button style={{ width: '100%', background: '#3b2d6e', color: '#fff', fontSize: '1.1rem', fontWeight: 800, padding: '16px', border: 'none', borderRadius: '4px', cursor: 'pointer', letterSpacing: '1px', textTransform: 'uppercase', transition: 'background 0.2s' }}>
                       GO TO CART
                     </button>
                   </Link>
                 ) : (
                   <button 
                     onClick={() => { 
-                      const variantProduct = { ...product, _id: (product._id || product.id) + '-' + activeColor + '-' + activeSize, price: displayPrice, selectedColor: activeColor, selectedSize: activeSize, images: [images[activeImageIdx], ...images] };
+                      const variantProduct = { ...product, _id: (product._id || product.id) + '-' + activeColor + '-' + activeSize, price: displayPrice, selectedColor: activeColor, selectedSize: activeSize, images: [images[activeImageIdx], ...images], imageUrl: images[activeImageIdx] || product.imageUrl };
                       addToCart(variantProduct, 1); alert('Item added to Shopping Bag!'); 
                     }} 
-                    style={{ flex: 1, background: '#22c55e', color: '#fff', fontSize: '1.1rem', fontWeight: 800, padding: '16px', border: 'none', borderRadius: '4px', cursor: 'pointer', letterSpacing: '1px', textTransform: 'uppercase', transition: 'background 0.2s' }}
-                    onMouseOver={(e) => e.target.style.background = '#16a34a'}
-                    onMouseOut={(e) => e.target.style.background = '#22c55e'}
+                    style={{ flex: 1, background: '#ffffff', color: '#7c5cbf', fontSize: '1.1rem', fontWeight: 800, padding: '16px', border: '2px solid #7c5cbf', borderRadius: '4px', cursor: 'pointer', letterSpacing: '1px', textTransform: 'uppercase', transition: 'background 0.2s' }}
+                    onMouseOver={(e) => { e.currentTarget.style.background = '#f0edf9'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.background = '#ffffff'; }}
                   >
                     ADD TO CART
                   </button>
                 )}
                 <button 
                   onClick={() => { 
-                    const variantProduct = { ...product, _id: (product._id || product.id) + '-' + activeColor + '-' + activeSize, price: displayPrice, selectedColor: activeColor, selectedSize: activeSize, images: [images[activeImageIdx], ...images] };
+                    const variantProduct = { ...product, _id: (product._id || product.id) + '-' + activeColor + '-' + activeSize, price: displayPrice, selectedColor: activeColor, selectedSize: activeSize, images: [images[activeImageIdx], ...images], imageUrl: images[activeImageIdx] || product.imageUrl };
                     initiateBuyNow(variantProduct, 1); window.location.href = '/checkout'; 
                   }} 
-                  style={{ flex: 1, background: '#111', color: '#fff', fontSize: '1.1rem', fontWeight: 800, padding: '16px', border: 'none', borderRadius: '4px', cursor: 'pointer', letterSpacing: '1px', textTransform: 'uppercase', transition: 'background 0.2s' }}
+                  style={{ flex: 1, background: '#7c5cbf', color: '#fff', fontSize: '1.1rem', fontWeight: 800, padding: '16px', border: 'none', borderRadius: '4px', cursor: 'pointer', letterSpacing: '1px', textTransform: 'uppercase', transition: 'background 0.2s' }}
                 >
                   BUY NOW
                 </button>
@@ -291,12 +291,12 @@ export default function ProductDetailsClient({ product: serverProduct, productId
             {pincodeResult && (
               <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
-                  <span style={{ color: '#16a34a', fontWeight: 600, fontSize: '0.9rem' }}>Estimated Delivery within 1 week</span>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c5cbf" strokeWidth="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                  <span style={{ color: '#7c5cbf', fontWeight: 600, fontSize: '0.9rem' }}>Estimated Delivery within 1 week</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"></path><path d="M12 6v6l4 2"></path></svg>
-                  <span style={{ color: '#16a34a', fontWeight: 600, fontSize: '0.9rem' }}>COD Available</span>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c5cbf" strokeWidth="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"></path><path d="M12 6v6l4 2"></path></svg>
+                  <span style={{ color: '#7c5cbf', fontWeight: 600, fontSize: '0.9rem' }}>COD Available</span>
                 </div>
               </div>
             )}

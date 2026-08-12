@@ -2,7 +2,7 @@
   padding: var(--spacing-6) var(--spacing-6);
   display: flex;
   gap: var(--spacing-4);
-  background: #e0f2fe;
+  background: #d4cce8;
   border-radius: 32px;
   max-width: 1440px;
   width: 96%;
@@ -45,7 +45,7 @@
   background: repeating-conic-gradient(
     from 0deg,
     transparent 0deg 15deg,
-    rgba(255, 255, 255, 0.4) 15deg 30deg
+    rgba(255, 255, 255, 0.25) 15deg 30deg
   );
   animation: spin 60s linear infinite;
   z-index: 0;
@@ -195,7 +195,7 @@
 .dealTag {
   position: absolute;
   top: 10px; left: 0;
-  background: #f97316; /* Vibrant Orange */
+  background: #5a3fc0; /* Deep Purple */
   color: #fff;
   font-size: 0.75rem;
   font-family: var(--font-ui), 'Inter', sans-serif;
@@ -271,7 +271,7 @@
 }
 
 .discountBadge {
-  background: #0d9488; /* Teal */
+  background: #7c5cbf; /* Purple */
   color: #fff;
   font-size: 0.7rem;
   font-weight: 700;
@@ -283,8 +283,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #fdf2f8;
-  color: #be185d; /* Raspberry */
+  background: #f0edf9;
+  color: #5a3fc0; /* Purple */
   font-size: 0.75rem;
   font-weight: 500;
   padding: 4px 8px;
@@ -296,8 +296,8 @@
 .addToCartBtn {
   margin-top: auto;
   background: transparent;
-  border: 1px solid #1e293b;
-  color: #1e293b;
+  border: 1px solid var(--primary);
+  color: var(--primary);
   font-family: inherit;
   font-weight: 600;
   padding: 8px;
@@ -307,6 +307,6 @@
 }
 
 .addToCartBtn:hover {
-  background: #1e293b;
+  background: var(--primary);
   color: #fff;
 }
