@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import Button from '@/components/ui/Button';
-import { useCart } from '@/context/CartContext';
+import SuccessCheck from '@/components/ui/SuccessCheck';
 
 /**
  * /order-success?orderId=xxx&txnId=xxx
@@ -15,6 +15,7 @@ import { useCart } from '@/context/CartContext';
  * "verification in progress" message — the webhook will catch up.
  */
 function OrderSuccessContent() {
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
@@ -84,18 +85,10 @@ function OrderSuccessContent() {
 
   return (
     <div className="container animate-fade-in" style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 1rem', fontFamily: "var(--font-ui), 'Inter', sans-serif" }}>
-      {/* Success Icon */}
-      <div style={{
-        width: '80px', height: '80px', borderRadius: '50%',
-        background: 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        margin: '0 auto 24px', border: '3px solid #86efac',
-        animation: 'bounceIn 0.5s ease-out',
-      }}>
-        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="20 6 9 17 4 12" />
-        </svg>
-      </div>
+      {/* Animated Success Icon */}
+      <SuccessCheck size={48} color="#ffffff" />
+
+
 
       <h1 style={{ fontSize: '2.4rem', marginBottom: '8px', color: '#0f172a', fontWeight: 800, textAlign: 'center' }}>
         Payment Successful!

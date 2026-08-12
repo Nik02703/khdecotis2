@@ -273,10 +273,9 @@
 
 .checkoutBtn {
   width: 100%;
-  background-color: #10b981;
+  background-color: #7c5cbf;
   color: #fff;
   font-family: var(--font-ui), 'Inter', sans-serif;
-  font-weight: 600;
   letter-spacing: 0.04em;
   font-size: 1.05rem;
   font-weight: 700;
@@ -289,5 +288,24 @@
 }
 
 .checkoutBtn:hover {
-  background-color: #059669;
+  background-color: #6b4cae;
 }
+
+.continueShoppingBtn {
+  display: inline-block;
+  background-color: #7c5cbf;
+  color: #fff;
+  padding: 14px 28px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border-radius: 6px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.continueShoppingBtn:hover {
+  background-color: #6b4cae;
+}
+
+

@@ -16,7 +16,12 @@ export default function SidebarMenu({ isProfileIcon = false }) {
   const menuContent = (
     <>
       <div className={styles.overlay} onClick={() => setIsOpen(false)}></div>
-      <div className={`${styles.drawer} ${isOpen ? styles.open : ''}`}>
+      <div 
+        className={`${styles.drawer} ${isProfileIcon ? styles.drawerRight : styles.drawerLeft} ${isOpen ? styles.open : ''}`}
+        style={isProfileIcon ? { right: 0, left: 'auto' } : { left: 0, right: 'auto' }}
+      >
+
+
         <div className={styles.drawerHeader}>
           {isProfileIcon ? (
             <div className={styles.accountInfo}>

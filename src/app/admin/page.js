@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
-import { LayoutDashboard, ShoppingBag, Users, Settings, LogOut, TrendingUp, DollarSign, PackageOpen, MousePointerClick, Search, Bell, Menu, Trash2, IndianRupee, X, Edit, UploadCloud, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Users, Settings, LogOut, TrendingUp, DollarSign, PackageOpen, MousePointerClick, Search, Bell, Menu, Trash2, IndianRupee, X, Edit, UploadCloud, ChevronLeft, ChevronRight, MessageSquare, Phone, ExternalLink, CheckCircle, Eye, RefreshCw } from 'lucide-react';
+
 import { useOrders } from '@/context/OrderContext';
 import { useProducts } from '@/context/ProductContext';
 import { useMessages } from '@/context/MessageContext';
@@ -36,6 +37,60 @@ export default function AdminPage() {
   const { messages, markAsRead, deleteMessage } = useMessages();
   const unreadCount = messages ? messages.filter(m => m.status === 'unread').length : 0;
   const [searchQuery, setSearchQuery] = useState('');
+
+  const [abandonedCarts, setAbandonedCarts] = useState([]);
+  const [abandonedLoading, setAbandonedLoading] = useState(false);
+  const [abandonedFilter, setAbandonedFilter] = useState('all');
+  const [selectedAbandonedCart, setSelectedAbandonedCart] = useState(null);
+
+  const fetchAbandonedCarts = async () => {
+    setAbandonedLoading(true);
+    try {
+      const res = await fetch('/api/abandoned-carts');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.carts) setAbandonedCarts(data.carts);
+      }
+    } catch (e) {
+      console.error('Failed to fetch abandoned carts:', e);
+    } finally {
+      setAbandonedLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAdminLoggedIn) {
+      fetchAbandonedCarts();
+    }
+  }, [isAdminLoggedIn, activeTab]);
+
+  const handleMarkRecovered = async (id) => {
+    try {
+      const res = await fetch('/api/abandoned-carts', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status: 'recovered' })
+      });
+      if (res.ok) {
+        fetchAbandonedCarts();
+      }
+    } catch (e) {
+      alert('Failed to mark cart as recovered');
+    }
+  };
+
+  const handleDeleteAbandonedCart = async (id) => {
+    if (!confirm('Are you sure you want to delete this abandoned cart record?')) return;
+    try {
+      const res = await fetch(`/api/abandoned-carts?id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchAbandonedCarts();
+      }
+    } catch (e) {
+      alert('Failed to delete abandoned cart record');
+    }
+  };
+
 
   const [newProd, setNewProd] = useState({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', barcode: '', productNumber: '' });
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -349,6 +404,15 @@ export default function AdminPage() {
           <button onClick={() => setActiveTab('orders')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'orders' ? '#eff6ff' : 'transparent', color: activeTab === 'orders' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'orders' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
             <ShoppingBag size={20} /> Orders & Fulfillment
           </button>
+          <button onClick={() => { setActiveTab('abandonedCarts'); fetchAbandonedCarts(); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'abandonedCarts' ? '#fff7ed' : 'transparent', color: activeTab === 'abandonedCarts' ? '#ea580c' : '#64748b', border: 'none', fontWeight: activeTab === 'abandonedCarts' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
+            <ShoppingBag size={20} color={activeTab === 'abandonedCarts' ? '#ea580c' : '#64748b'} /> Abandoned Carts
+            {abandonedCarts.filter(c => c.status === 'abandoned').length > 0 && (
+              <span style={{ background: '#f97316', color: '#fff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, marginLeft: 'auto' }}>
+                {abandonedCarts.filter(c => c.status === 'abandoned').length}
+              </span>
+            )}
+          </button>
+
           <button onClick={() => { setActiveTab('addProduct'); setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', barcode: '', productNumber: '' }); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'addProduct' ? '#eff6ff' : 'transparent', color: activeTab === 'addProduct' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'addProduct' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
             <PackageOpen size={20} /> Add New Product
           </button>
@@ -1018,7 +1082,7 @@ export default function AdminPage() {
         )}
 
         {/* Other Tabs Fallback */}
-        {!['dashboard', 'addProduct', 'manageProducts', 'messages', 'coupons', 'settings'].includes(activeTab) && (
+        {!['dashboard', 'addProduct', 'manageProducts', 'messages', 'coupons', 'settings', 'abandonedCarts'].includes(activeTab) && (
           <div style={{ padding: '32px', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
             <div style={{ textAlign: 'center', color: '#64748b' }}>
               <PackageOpen size={48} style={{ opacity: 0.3, marginBottom: '16px' }} />
@@ -1027,6 +1091,243 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
+        {/* Abandoned Carts Content */}
+        {activeTab === 'abandonedCarts' && (
+          <div style={{ padding: '32px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>Abandoned Carts Recovery</h2>
+                <p style={{ color: '#64748b', margin: '4px 0 0 0' }}>Track potential buyers who added items to their cart without completing checkout.</p>
+              </div>
+              <button
+                onClick={fetchAbandonedCarts}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, color: '#475569' }}
+              >
+                <RefreshCw size={16} className={abandonedLoading ? 'spin' : ''} /> Refresh Data
+              </button>
+            </div>
+
+            {/* Metrics Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+              <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>Total Abandoned</span>
+                <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#ea580c', margin: '8px 0 0 0' }}>
+                  {abandonedCarts.filter(c => c.status === 'abandoned').length}
+                </h3>
+              </div>
+              <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>Lost Revenue Potential</span>
+                <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#ef4444', margin: '8px 0 0 0' }}>
+                  ₹{abandonedCarts.filter(c => c.status === 'abandoned').reduce((acc, c) => acc + (c.totalAmount || 0), 0).toLocaleString('en-IN')}
+                </h3>
+              </div>
+              <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>Recovered Carts</span>
+                <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#16a34a', margin: '8px 0 0 0' }}>
+                  {abandonedCarts.filter(c => c.status === 'recovered').length}
+                </h3>
+              </div>
+              <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>Total Tracked Sessions</span>
+                <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#0f172a', margin: '8px 0 0 0' }}>
+                  {abandonedCarts.length}
+                </h3>
+              </div>
+            </div>
+
+            {/* Filter Row */}
+            <div style={{ display: 'flex', gap: '16px', marginBottom: '20px' }}>
+              <select
+                value={abandonedFilter}
+                onChange={e => setAbandonedFilter(e.target.value)}
+                style={{ padding: '10px 16px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', background: '#fff', fontWeight: 600, color: '#334155' }}
+              >
+                <option value="all">All Statuses</option>
+                <option value="abandoned">Abandoned Only</option>
+                <option value="recovered">Recovered Only</option>
+                <option value="converted">Converted Only</option>
+              </select>
+            </div>
+
+            {/* Carts Table */}
+            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                  <thead>
+                    <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#64748b', fontWeight: 600 }}>
+                      <th style={{ padding: '16px 24px' }}>Customer</th>
+                      <th style={{ padding: '16px 24px' }}>Cart Products</th>
+                      <th style={{ padding: '16px 24px' }}>Total Amount</th>
+                      <th style={{ padding: '16px 24px' }}>Last Active</th>
+                      <th style={{ padding: '16px 24px' }}>Status</th>
+                      <th style={{ padding: '16px 24px', textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {abandonedCarts
+                      .filter(cart => {
+                        if (abandonedFilter !== 'all' && cart.status !== abandonedFilter) return false;
+                        if (searchQuery) {
+                          const q = searchQuery.toLowerCase();
+                          const name = (cart.customerInfo?.name || cart.customerInfo?.firstName || '').toLowerCase();
+                          const email = (cart.customerInfo?.email || '').toLowerCase();
+                          const phone = (cart.customerInfo?.phone || '').toLowerCase();
+                          return name.includes(q) || email.includes(q) || phone.includes(q);
+                        }
+                        return true;
+                      })
+                      .map(cart => {
+                        const cust = cart.customerInfo || {};
+                        const name = cust.name || `${cust.firstName || ''} ${cust.lastName || ''}`.trim() || 'Guest Visitor';
+                        const email = cust.email || '';
+                        const phone = cust.phone || '';
+                        const items = cart.cartItems || [];
+
+                        const waMessage = encodeURIComponent(
+                          `Hi ${name !== 'Guest Visitor' ? name : 'there'}! We noticed you left items in your cart at KH Decotis. Click here to complete your order with free delivery!`
+                        );
+                        const cleanPhone = phone.replace(/[^0-9]/g, '');
+                        const waUrl = cleanPhone ? `https://wa.me/91${cleanPhone}?text=${waMessage}` : null;
+
+                        return (
+                          <tr key={cart._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <td style={{ padding: '16px 24px' }}>
+                              <p style={{ margin: 0, fontWeight: 700, color: '#0f172a' }}>{name}</p>
+                              {email && <p style={{ margin: '2px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>{email}</p>}
+                              {phone && <p style={{ margin: '2px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>📞 {phone}</p>}
+                              {cust.city && <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: '#94a3b8' }}>📍 {cust.city}, {cust.state}</p>}
+                            </td>
+                            <td style={{ padding: '16px 24px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <div style={{ display: 'flex', gap: '4px' }}>
+                                  {items.slice(0, 3).map((item, idx) => (
+                                    <img
+                                      key={idx}
+                                      src={item.image || item.images?.[0] || 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=100&q=80'}
+                                      alt={item.title}
+                                      style={{ width: '38px', height: '38px', borderRadius: '6px', objectFit: 'cover', border: '1px solid #e2e8f0' }}
+                                    />
+                                  ))}
+                                </div>
+                                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#475569' }}>
+                                  {items.length} item{items.length !== 1 ? 's' : ''}
+                                </span>
+                              </div>
+                            </td>
+                            <td style={{ padding: '16px 24px', fontWeight: 700, color: '#0f172a' }}>
+                              ₹{(cart.totalAmount || 0).toLocaleString('en-IN')}
+                            </td>
+                            <td style={{ padding: '16px 24px', fontSize: '0.82rem', color: '#64748b' }}>
+                              {new Date(cart.updatedAt || cart.lastActive).toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </td>
+                            <td style={{ padding: '16px 24px' }}>
+                              <span style={{
+                                padding: '4px 10px', borderRadius: '12px', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase',
+                                background: cart.status === 'abandoned' ? '#fff7ed' : cart.status === 'recovered' ? '#f0fdf4' : '#eff6ff',
+                                color: cart.status === 'abandoned' ? '#ea580c' : cart.status === 'recovered' ? '#16a34a' : '#2563eb',
+                                border: `1px solid ${cart.status === 'abandoned' ? '#ffedd5' : cart.status === 'recovered' ? '#bbf7d0' : '#bfdbfe'}`
+                              }}>
+                                {cart.status}
+                              </span>
+                            </td>
+                            <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
+                                {waUrl && (
+                                  <a href={waUrl} target="_blank" rel="noreferrer" title="Chat on WhatsApp" style={{ padding: '6px 10px', background: '#25D366', color: '#fff', borderRadius: '6px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 600 }}>
+                                    <MessageSquare size={14} /> WA
+                                  </a>
+                                )}
+                                {cart.status === 'abandoned' && (
+                                  <button onClick={() => handleMarkRecovered(cart._id)} title="Mark Recovered" style={{ padding: '6px 10px', background: '#dcfce7', color: '#16a34a', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 600 }}>
+                                    <CheckCircle size={14} /> Recover
+                                  </button>
+                                )}
+                                <button onClick={() => setSelectedAbandonedCart(cart)} title="View Cart Details" style={{ padding: '6px', background: '#f1f5f9', border: 'none', borderRadius: '6px', cursor: 'pointer', color: '#475569' }}>
+                                  <Eye size={16} />
+                                </button>
+                                <button onClick={() => handleDeleteAbandonedCart(cart._id)} title="Delete Record" style={{ padding: '6px', background: '#fef2f2', border: 'none', borderRadius: '6px', cursor: 'pointer', color: '#ef4444' }}>
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    {abandonedCarts.length === 0 && (
+                      <tr>
+                        <td colSpan="6" style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                          No abandoned cart sessions recorded yet.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {selectedAbandonedCart && (
+          <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fadeIn 0.2s ease-out' }}>
+            <div style={{ background: '#fff', width: '100%', maxWidth: '640px', borderRadius: '16px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', overflow: 'hidden' }}>
+              <div style={{ padding: '24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#0f172a' }}>Abandoned Cart Details</h3>
+                <button onClick={() => setSelectedAbandonedCart(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}><X size={24} color="#64748b" /></button>
+              </div>
+              <div style={{ padding: '24px', maxHeight: '70vh', overflowY: 'auto' }}>
+                {/* Customer Details */}
+                <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1px solid #e2e8f0', marginBottom: '20px' }}>
+                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.95rem', fontWeight: 700, color: '#0f172a' }}>Customer Information</h4>
+                  <p style={{ margin: '4px 0', fontWeight: 600, color: '#0f172a' }}>
+                    {selectedAbandonedCart.customerInfo?.name || `${selectedAbandonedCart.customerInfo?.firstName || ''} ${selectedAbandonedCart.customerInfo?.lastName || ''}`.trim() || 'Guest Visitor'}
+                  </p>
+                  {selectedAbandonedCart.customerInfo?.email && <p style={{ margin: '4px 0', fontSize: '0.85rem', color: '#64748b' }}>✉️ {selectedAbandonedCart.customerInfo.email}</p>}
+                  {selectedAbandonedCart.customerInfo?.phone && <p style={{ margin: '4px 0', fontSize: '0.85rem', color: '#64748b' }}>📞 {selectedAbandonedCart.customerInfo.phone}</p>}
+                  {selectedAbandonedCart.customerInfo?.address && (
+                    <p style={{ margin: '4px 0', fontSize: '0.85rem', color: '#64748b' }}>
+                      🏠 {selectedAbandonedCart.customerInfo.address}, {selectedAbandonedCart.customerInfo.city}, {selectedAbandonedCart.customerInfo.state} - {selectedAbandonedCart.customerInfo.postcode}
+                    </p>
+                  )}
+                </div>
+
+                {/* Items List */}
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: '#0f172a' }}>
+                  Cart Products ({(selectedAbandonedCart.cartItems || []).length})
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+                  {(selectedAbandonedCart.cartItems || []).map((item, idx) => (
+                    <div key={idx} style={{ display: 'flex', gap: '14px', alignItems: 'center', padding: '12px', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                      <img
+                        src={item.image || item.images?.[0] || 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=100&q=80'}
+                        alt={item.title}
+                        style={{ width: '50px', height: '50px', borderRadius: '6px', objectFit: 'cover' }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <p style={{ margin: 0, fontWeight: 600, fontSize: '0.9rem', color: '#0f172a' }}>{item.title}</p>
+                        <p style={{ margin: '2px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+                          Qty: {item.quantity || 1} {item.color ? `| Color: ${item.color}` : ''} {item.size ? `| Size: ${item.size}` : ''}
+                        </p>
+                      </div>
+                      <span style={{ fontWeight: 700, color: '#0f172a' }}>₹{(item.price || 0) * (item.quantity || 1)}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: '1.1rem', color: '#0f172a' }}>
+                  <span>Total Cart Value</span>
+                  <span>₹{(selectedAbandonedCart.totalAmount || 0).toLocaleString('en-IN')}</span>
+                </div>
+              </div>
+              <div style={{ padding: '20px', borderTop: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'flex-end' }}>
+                <button onClick={() => setSelectedAbandonedCart(null)} style={{ padding: '10px 20px', background: '#0f172a', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {selectedOrder && (
           <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fadeIn 0.2s ease-out' }}>
             <div style={{ background: '#fff', width: '100%', maxWidth: '600px', borderRadius: '16px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', overflow: 'hidden', animation: 'slideUp 0.3s ease-out' }}>

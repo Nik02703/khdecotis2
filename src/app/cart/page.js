@@ -8,9 +8,15 @@ import { getOldPrice } from '@/lib/priceUtils';
 
 export default function CartPage() {
   const { cartItems, removeFromCart, updateQuantity, getCartTotal, getCartCount, getCartSubtotal, getDiscountAmount, coupon, applyCoupon, removeCoupon, clearBuyNow } = useCart();
+  const [mounted, setMounted] = useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [openAccordion, setOpenAccordion] = useState(null);
   const [couponInput, setCouponInput] = useState('');
   const [couponMessage, setCouponMessage] = useState({ text: '', type: '' });
+
 
   const handleApplyCoupon = async () => {
     if (!couponInput) {
@@ -35,13 +41,16 @@ export default function CartPage() {
   const shippingCharges = discountedSubtotal > 400 ? 0 : 79;
   const totalAmount = discountedSubtotal + shippingCharges;
 
+  const hasItems = mounted && cartItems.length > 0;
+
   return (
-    <div className={styles.pageContainer}>
+    <div className={styles.pageContainer} suppressHydrationWarning>
       <header className={styles.headerText}>
         SHOPPING BAG
       </header>
 
-      {cartItems.length > 0 ? (
+      {hasItems ? (
+
         <div className={styles.splitContainer}>
           
           {/* LEFT COLUMN: Cart Items */}
@@ -172,12 +181,15 @@ export default function CartPage() {
           </div>
         </div>
       ) : (
-        <div style={{ textAlign: 'center', padding: '6rem 2rem' }}>
+        <div suppressHydrationWarning style={{ textAlign: 'center', padding: '6rem 2rem' }}>
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: '#111' }}>Your Shopping Bag is empty.</h2>
-          <Link href="/">
-            <button style={{ background: '#10b981', color: '#fff', border: 'none', padding: '14px 28px', fontSize: '1.05rem', fontWeight: 700, borderRadius: '6px', cursor: 'pointer' }}>Continue Shopping</button>
+          <Link href="/" className={styles.continueShoppingBtn} suppressHydrationWarning>
+            Continue Shopping
           </Link>
+
+
         </div>
+
       )}
     </div>
   );

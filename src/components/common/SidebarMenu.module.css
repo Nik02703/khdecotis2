@@ -32,12 +32,11 @@
 
 .drawer {
   position: fixed;
-  top: 0; left: 0; bottom: 0;
+  top: 0; bottom: 0;
   width: 85%;
   max-width: 360px;
   background: #fff;
   z-index: 9999;
-  transform: translateX(-100%);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
@@ -45,9 +44,23 @@
   box-shadow: var(--shadow-xl);
 }
 
-.drawer.open {
-  transform: translateX(0);
+.drawerLeft {
+  left: 0 !important;
+  right: auto !important;
+  transform: translateX(-100%);
 }
+
+.drawerRight {
+  right: 0 !important;
+  left: auto !important;
+  transform: translateX(100%);
+}
+
+.drawer.open {
+  transform: translateX(0) !important;
+}
+
+
 
 .drawerHeader {
   display: flex;

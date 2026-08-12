@@ -8,7 +8,9 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useOrders } from '@/context/OrderContext';
 import Button from '@/components/ui/Button';
+import SuccessCheck from '@/components/ui/SuccessCheck';
 import styles from './page.module.css';
+
 
 const INDIAN_STATES = [
   "Andhra Pradesh",
@@ -98,7 +100,8 @@ export default function CheckoutPage() {
 
 
   const router = useRouter();
-  const { cartItems, getCartTotal, getCartSubtotal, getDiscountAmount, coupon, clearCart, buyNowItem, clearBuyNow } = useCart();
+  const { cartItems, getCartTotal, getCartSubtotal, getDiscountAmount, coupon, clearCart, buyNowItem, clearBuyNow, trackAbandonedCart } = useCart();
+
   const { addOrder } = useOrders();
   
   const [formData, setFormData] = useState({
@@ -288,10 +291,12 @@ export default function CheckoutPage() {
     }
     if (validateAddressForm()) {
       localStorage.setItem('khd_guest_address', JSON.stringify(formData));
+      if (trackAbandonedCart) trackAbandonedCart(formData, 'abandoned');
       setIsEditingAddress(false);
     } else {
       setIsEditingAddress(true);
     }
+
   };
 
   /**
@@ -345,6 +350,8 @@ export default function CheckoutPage() {
 
     // Save address locally for future convenience
     localStorage.setItem('khd_guest_address', JSON.stringify(formData));
+    if (trackAbandonedCart) trackAbandonedCart(formData, 'converted');
+
 
     const orderRecord = buildOrderRecord();
     addOrder(orderRecord, formData, 'COD');
@@ -515,10 +522,10 @@ export default function CheckoutPage() {
   if (orderSuccessDetails) {
     return (
       <div className={`container animate-fade-in ${styles.page}`} style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 1rem' }}>
-        <div style={{ background: '#f0fdf4', width: '70px', height: '70px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', border: '2px solid #bbf7d0' }}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-        </div>
+        <SuccessCheck size={48} color="#ffffff" />
+
         <h1 style={{ fontSize: '2.25rem', fontFamily: "var(--font-primary), 'Manrope', sans-serif", fontWeight: 600, letterSpacing: '-0.025em', marginBottom: '8px', color: '#0f172a' }}>Order Successfully Placed</h1>
+
         <p style={{ color: '#64748b', fontSize: '1.1rem', marginBottom: '40px' }}>Thank you for shopping, {orderSuccessDetails.name}.</p>
         
         <div style={{ width: '100%', maxWidth: '540px', background: '#fff', padding: '36px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.04)', textAlign: 'left' }}>
@@ -1146,9 +1153,10 @@ export default function CheckoutPage() {
                     </span>
                   </span>
                   {paymentState === 'cancelled'
-                    ? `Payment Cancelled - Retry Pay \u20B9${formattedTotal}`
-                    : `Continue to Pay \u20B9${formattedTotal}`
+                    ? `Payment Cancelled - Retry Pay ₹${formattedTotal}`
+                    : `Continue to Pay ₹${formattedTotal}`
                   }
+
 
                 </>
               )}
@@ -1166,7 +1174,8 @@ export default function CheckoutPage() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
               }}
             >
-              Place COD Order - \u20B9${formattedTotal}
+              {`Place COD Order - ₹${formattedTotal}`}
+
 
             </button>
           )}

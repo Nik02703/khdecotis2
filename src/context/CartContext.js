@@ -54,6 +54,65 @@ export function CartProvider({ children }) {
     }
   }, [cartItems, isMounted, hasLoaded]);
 
+  // ─── Automated Abandoned Cart Tracking ───
+  const getSessionId = () => {
+    if (typeof window === 'undefined') return '';
+    let sid = localStorage.getItem('khd_session_id');
+    if (!sid) {
+      sid = 'sess_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
+      localStorage.setItem('khd_session_id', sid);
+    }
+    return sid;
+  };
+
+  const trackAbandonedCart = async (customerData = null, statusOverride = null) => {
+    if (typeof window === 'undefined') return;
+    try {
+      const sessionId = getSessionId();
+      let customerInfo = {};
+      const savedAddress = localStorage.getItem('khd_guest_address');
+      if (savedAddress) {
+        try { customerInfo = JSON.parse(savedAddress); } catch(e) {}
+      }
+      if (customerData) {
+        customerInfo = { ...customerInfo, ...customerData };
+      }
+
+      const activeItems = buyNowItem ? [buyNowItem] : cartItems;
+      const subtotal = getCartSubtotal();
+      const discountAmt = getDiscountAmount();
+      const discountedSubtotal = subtotal - discountAmt;
+      const shippingCharges = discountedSubtotal > 400 ? 0 : 79;
+      const totalAmount = discountedSubtotal + shippingCharges;
+
+      await fetch('/api/abandoned-carts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          customerInfo,
+          cartItems: activeItems,
+          subtotal,
+          totalAmount,
+          itemCount: activeItems.length,
+          status: statusOverride || 'abandoned'
+        })
+      });
+    } catch (e) {
+      console.warn('Abandoned cart tracking sync error:', e);
+    }
+  };
+
+  useEffect(() => {
+    if (isMounted && hasLoaded) {
+      const timer = setTimeout(() => {
+        trackAbandonedCart();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [cartItems, buyNowItem, isMounted, hasLoaded]);
+
+
   const addToCart = (product, quantity = 1) => {
     setCartItems(prev => {
       const existing = prev.find(item => (item._id || item.id) === (product._id || product.id));
@@ -150,7 +209,8 @@ export function CartProvider({ children }) {
   };
 
   return (
-    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, getCartTotal, getCartCount, clearCart, getCartSubtotal, getDiscountAmount, coupon, applyCoupon, removeCoupon, buyNowItem, initiateBuyNow, clearBuyNow }}>
+    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, getCartTotal, getCartCount, clearCart, getCartSubtotal, getDiscountAmount, coupon, applyCoupon, removeCoupon, buyNowItem, initiateBuyNow, clearBuyNow, trackAbandonedCart }}>
+
       {children}
     </CartContext.Provider>
   );
