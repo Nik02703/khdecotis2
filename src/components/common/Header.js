@@ -1,17 +1,23 @@
 'use client';
 import { useState, useRef } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import styles from './Header.module.css';
 import SearchBar from './SearchBar';
 import SidebarMenu from './SidebarMenu';
 import { useCart } from '@/context/CartContext';
 
 export default function Header() {
+  const pathname = usePathname();
   const { getCartCount } = useCart();
   const count = getCartCount();
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
 
   const hoverTimeout = useRef(null);
+
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   const handleMouseEnter = () => {
     if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
