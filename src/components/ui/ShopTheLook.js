@@ -5,11 +5,11 @@ import Button from './Button';
 import styles from './ShopTheLook.module.css';
 
 const HOTSPOTS = [
-  { id: '1', title: 'Ergonomic Sleep Pillows', category: 'pillows', price: 1499, description: 'Provide excellent neck support and align your spine for the perfect night\'s sleep. Crafted from hyper-responsive memory materials.', images: ['https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1000&q=80'], top: '30%', left: '50%' },
-  { id: '2', title: 'Premium Cotton Bedsheet', category: 'bedsheets', price: 1299, description: 'Experience the ultimate comfort with our premium floral cotton bedsheet. Highly breathable and exceptionally soft against your skin.', images: ['/bedsheets.png'], top: '60%', left: '50%' },
-  { id: '3', title: 'Orthopedic Memory Foam Mattress', category: 'mattress', price: 12999, description: 'Wake up pain-free on our advanced orthopedic mattress designed for optimal spine support across all weight thresholds.', images: ['/mattress%20protector.avif'], top: '80%', left: '30%' },
-  { id: '4', title: 'Ultrasonic Reversible Blanket', category: 'comforter', price: 2499, description: 'Stay warm and cozy through harsh winters. Featuring reversible designs mapping to your room\'s overarching decor.', images: ['/Blanket.avif'], top: '65%', left: '75%' },
-  { id: '5', title: 'Waterproof Mattress Protector', category: 'mattress', price: 999, description: 'Keep your pristine mattress completely safe with our breathable, 100% waterproof protector wrapper.', images: ['/mattress%20protector.avif'], top: '75%', left: '45%' }
+  { id: '1', title: 'Ergonomic Sleep Pillows', category: 'pillows', price: 1499, description: 'Provide excellent neck support and align your spine for the perfect night\'s sleep. Crafted from hyper-responsive memory materials.', images: ['/deal_prod_pillows.jpg'], top: '56%', left: '38%' },
+  { id: '2', title: 'Premium Cotton Bedsheet', category: 'bedsheets', price: 1299, description: 'Experience the ultimate comfort with our premium breathable cotton bedsheet. Exceptionally soft and cooling against your skin.', images: ['/deal_bedsheets.jpg'], top: '66%', left: '33%' },
+  { id: '3', title: 'Orthopedic Memory Foam Mattress', category: 'mattress', price: 12999, description: 'Wake up pain-free on our advanced orthopedic mattress designed for optimal spine support across all weight thresholds.', images: ['/mattress%20protector.avif'], top: '75%', left: '26%' },
+  { id: '4', title: 'Ultrasonic Reversible Blanket', category: 'comforter', price: 2499, description: 'Stay warm and cozy with our ultra-soft textured blanket. Lightweight warmth crafted for year-round luxury.', images: ['/Blanket.avif'], top: '70%', left: '56%' },
+  { id: '5', title: 'Waterproof Mattress Protector', category: 'mattress', price: 999, description: 'Keep your pristine mattress completely safe with our breathable, 100% waterproof protector wrapper.', images: ['/mattress%20protector.avif'], top: '82%', left: '46%' }
 ];
 
 export default function ShopTheLook() {
@@ -23,8 +23,8 @@ export default function ShopTheLook() {
       
       <div className={styles.imageContainer}>
         <img 
-          src="/bedsheets.png" 
-          alt="Premium Dark Bedroom Setup" 
+          src="/shop_the_look.jpg" 
+          alt="Modern Luxury Bedroom Setup" 
           className={styles.mainImage} 
         />
         
