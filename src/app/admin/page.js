@@ -50,6 +50,7 @@ export default function AdminPage() {
   const { messages, markAsRead, deleteMessage } = useMessages();
   const unreadCount = messages ? messages.filter(m => m.status === 'unread').length : 0;
   const [searchQuery, setSearchQuery] = useState('');
+  const [previewModalImage, setPreviewModalImage] = useState(null);
 
   // Subscribers state
   const [subscribers, setSubscribers] = useState([]);
@@ -1134,7 +1135,7 @@ export default function AdminPage() {
               <div style={{ width: '100%', overflowX: 'auto', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', tableLayout: 'fixed' }}>
                   <colgroup>
-                    <col style={{ width: '68px' }} />
+                    <col style={{ width: '108px' }} />
                     <col />
                     <col style={{ width: '110px' }} />
                     <col style={{ width: '85px' }} />
@@ -1142,8 +1143,8 @@ export default function AdminPage() {
                   </colgroup>
                   <thead>
                     <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                      <th style={{ padding: '12px 8px', fontSize: '0.8rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center' }}>Preview</th>
-                      <th style={{ padding: '12px 12px', fontSize: '0.8rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Product Details</th>
+                      <th style={{ padding: '12px 10px', fontSize: '0.8rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center' }}>Preview</th>
+                      <th style={{ padding: '12px 14px', fontSize: '0.8rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Product Details</th>
                       <th style={{ padding: '12px 8px', fontSize: '0.8rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Category</th>
                       <th style={{ padding: '12px 8px', fontSize: '0.8rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Price</th>
                       <th style={{ padding: '12px 8px', fontSize: '0.8rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', textAlign: 'right' }}>Actions</th>
@@ -1158,27 +1159,66 @@ export default function AdminPage() {
 
                       return (
                         <tr key={product._id || product.id} style={{ borderTop: idx !== 0 ? '1px solid #f1f5f9' : 'none', background: '#fff', transition: 'background-color 0.2s' }}>
-                          <td style={{ padding: '10px 8px', textAlign: 'center', verticalAlign: 'middle' }}>
-                            <img 
-                              src={imgSrc} 
-                              alt={product.title || 'Product'} 
-                              loading="lazy"
-                              style={{ width: '52px', height: '52px', objectFit: 'cover', borderRadius: '6px', background: '#f1f5f9', display: 'inline-block', border: '1px solid #e2e8f0' }} 
-                              onError={(e) => {
-                                const target = e.currentTarget;
-                                if (!target.dataset.retried) {
-                                  target.dataset.retried = 'true';
-                                  if (firstImg && !firstImg.startsWith('http')) {
-                                    target.src = encodeURI(firstImg);
-                                    return;
-                                  }
-                                }
-                                target.src = 'https://images.unsplash.com/photo-1522771731478-4eb4f9446d6f?w=400&q=80';
+                          <td style={{ padding: '12px 10px', textAlign: 'center', verticalAlign: 'middle' }}>
+                            <div 
+                              onClick={() => setPreviewModalImage({ url: imgSrc, title: product.title })}
+                              title="Click to view full image"
+                              style={{ 
+                                width: '88px', 
+                                height: '88px', 
+                                borderRadius: '8px', 
+                                overflow: 'hidden', 
+                                border: '1px solid #e2e8f0', 
+                                background: '#f8fafc', 
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.06)', 
+                                display: 'inline-block',
+                                cursor: 'pointer',
+                                position: 'relative'
                               }}
-                            />
+                            >
+                              <img 
+                                src={imgSrc} 
+                                alt={product.title || 'Product'} 
+                                loading="lazy"
+                                style={{ 
+                                  width: '100%', 
+                                  height: '100%', 
+                                  objectFit: 'cover', 
+                                  display: 'block'
+                                }} 
+                                onError={(e) => {
+                                  const target = e.currentTarget;
+                                  if (!target.dataset.retried) {
+                                    target.dataset.retried = 'true';
+                                    if (firstImg && !firstImg.startsWith('http')) {
+                                      target.src = encodeURI(firstImg);
+                                      return;
+                                    }
+                                  }
+                                  target.src = 'https://images.unsplash.com/photo-1522771731478-4eb4f9446d6f?w=400&q=80';
+                                }}
+                              />
+                              <div 
+                                style={{
+                                  position: 'absolute',
+                                  bottom: '3px',
+                                  right: '3px',
+                                  background: 'rgba(15, 23, 42, 0.65)',
+                                  color: '#fff',
+                                  borderRadius: '4px',
+                                  padding: '2px 4px',
+                                  fontSize: '0.65rem',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  opacity: 0.85
+                                }}
+                              >
+                                <Eye size={11} />
+                              </div>
+                            </div>
                           </td>
-                          <td style={{ padding: '10px 12px', verticalAlign: 'middle', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                            <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#0f172a', lineHeight: 1.35, marginBottom: '4px' }}>
+                          <td style={{ padding: '12px 14px', verticalAlign: 'middle', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                            <div style={{ fontSize: '0.92rem', fontWeight: 600, color: '#0f172a', lineHeight: 1.4, marginBottom: '5px' }}>
                               {product.title}
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -1779,6 +1819,61 @@ export default function AdminPage() {
               </div>
               <div style={{ padding: '24px', borderTop: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                 <button onClick={() => setSelectedOrder(null)} style={{ padding: '10px 20px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', fontWeight: 600, color: '#64748b', cursor: 'pointer' }}>Close Modal</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Image Zoom Modal */}
+        {previewModalImage && (
+          <div 
+            onClick={() => setPreviewModalImage(null)} 
+            style={{ 
+              position: 'fixed', 
+              top: 0, 
+              left: 0, 
+              right: 0, 
+              bottom: 0, 
+              background: 'rgba(0,0,0,0.75)', 
+              zIndex: 9999, 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              padding: '20px',
+              backdropFilter: 'blur(4px)'
+            }}
+          >
+            <div 
+              onClick={e => e.stopPropagation()} 
+              style={{ 
+                background: '#fff', 
+                borderRadius: '16px', 
+                maxWidth: '700px', 
+                width: '100%', 
+                overflow: 'hidden', 
+                boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid #e2e8f0' }}>
+                <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: '12px' }}>
+                  {previewModalImage.title}
+                </h3>
+                <button 
+                  type="button"
+                  onClick={() => setPreviewModalImage(null)}
+                  style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              <div style={{ padding: '16px', display: 'flex', justifyContent: 'center', background: '#f8fafc', maxHeight: '75vh' }}>
+                <img 
+                  src={previewModalImage.url} 
+                  alt={previewModalImage.title} 
+                  style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain', borderRadius: '8px' }} 
+                />
               </div>
             </div>
           </div>
