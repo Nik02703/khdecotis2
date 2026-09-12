@@ -23,29 +23,47 @@ export const ProductProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [isMounted, setIsMounted] = useState(false);
 
+  const refreshProducts = async () => {
+    try {
+      const res = await fetch('/api/products?t=' + Date.now());
+      if (res.ok) {
+        const dbProducts = await res.json();
+        setProducts(dbProducts);
+        try {
+          localStorage.setItem('khd_products_db', JSON.stringify(dbProducts));
+        } catch (e) {}
+        return dbProducts;
+      }
+    } catch (err) {
+      console.warn('refreshProducts failed:', err);
+    }
+  };
+
   useEffect(() => {
     const initProducts = async () => {
       try {
-        const res = await fetch('/api/products');
-        if (res.ok) {
-          const dbProducts = await res.json();
-          setProducts(dbProducts);
-          localStorage.setItem('khd_products_db', JSON.stringify(dbProducts));
-        }
-      } catch (err) {
-        console.warn('API Fetch failed, using localStorage fallback');
         const stored = localStorage.getItem('khd_products_db');
         if (stored) {
-          setProducts(JSON.parse(stored));
-        } else {
-          const initialDb = [...DUMMY_PRODUCTS, ...SEED_DEALS, ...SEED_NEW_ARRIVALS];
-          setProducts(initialDb);
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setProducts(parsed);
+          }
         }
+      } catch (e) {}
+
+      try {
+        await refreshProducts();
       } finally {
         setIsMounted(true);
       }
     };
     initProducts();
+
+    const handleFocus = () => {
+      refreshProducts();
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
   const addProduct = async (productParams) => {
@@ -124,7 +142,7 @@ export const ProductProvider = ({ children }) => {
   };
 
   return (
-    <ProductContext.Provider value={{ products, addProduct, removeProduct, editProduct, isMounted }}>
+    <ProductContext.Provider value={{ products, addProduct, removeProduct, editProduct, isMounted, refreshProducts }}>
       {children}
     </ProductContext.Provider>
   );

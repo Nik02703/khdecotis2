@@ -33,7 +33,20 @@ export default function AdminPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('orders'); // set orders as default for testing
   const { orders, updateOrderStatus, fetchAllOrders } = useOrders();
-  const { products, addProduct, removeProduct, editProduct } = useProducts();
+  const { products, addProduct, removeProduct, editProduct, refreshProducts } = useProducts();
+  const [isSyncingProducts, setIsSyncingProducts] = useState(false);
+
+  const handleRefreshProducts = async () => {
+    if (!refreshProducts) return;
+    setIsSyncingProducts(true);
+    try {
+      await refreshProducts();
+    } catch (err) {
+      console.error('Failed to sync products:', err);
+    } finally {
+      setIsSyncingProducts(false);
+    }
+  };
   const { messages, markAsRead, deleteMessage } = useMessages();
   const unreadCount = messages ? messages.filter(m => m.status === 'unread').length : 0;
   const [searchQuery, setSearchQuery] = useState('');
@@ -94,6 +107,9 @@ export default function AdminPage() {
       fetchAbandonedCarts();
       fetchSubscribers();
       fetchAllOrders();
+    }
+    if (activeTab === 'manageProducts' && refreshProducts) {
+      refreshProducts();
     }
   }, [isAdminLoggedIn, activeTab]);
 
@@ -483,7 +499,7 @@ export default function AdminPage() {
       </aside>
 
       {/* Main Content Area */}
-      <main style={{ flex: 1, marginLeft: '280px', display: 'flex', flexDirection: 'column', minHeight: '100vh', maxWidth: '100%', overflowX: 'hidden' }} className="admin-main">
+      <main style={{ flex: 1, marginLeft: '280px', width: 'calc(100% - 280px)', minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: '100vh', maxWidth: 'calc(100% - 280px)', overflowX: 'hidden', boxSizing: 'border-box' }} className="admin-main">
         {/* Top Header */}
         <header style={{ height: '72px', background: '#fff', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 32px', position: 'sticky', top: 0, zIndex: 30 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
@@ -882,10 +898,15 @@ export default function AdminPage() {
                             alt="Preview" 
                             style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                             onError={(e) => {
-                              if (!e.currentTarget.dataset.retried && !imgSrc.startsWith('http')) {
-                                e.currentTarget.dataset.retried = 'true';
-                                e.currentTarget.src = encodeURI(imgSrc);
+                              const target = e.currentTarget;
+                              if (!target.dataset.retried) {
+                                target.dataset.retried = 'true';
+                                if (imgSrc && !imgSrc.startsWith('http')) {
+                                  target.src = encodeURI(imgSrc);
+                                  return;
+                                }
                               }
+                              target.src = 'https://images.unsplash.com/photo-1522771731478-4eb4f9446d6f?w=400&q=80';
                             }}
                           />
                         )}
@@ -1078,73 +1099,187 @@ export default function AdminPage() {
 
         {/* Manage Products Content */}
         {activeTab === 'manageProducts' && (
-          <div style={{ padding: '32px', maxWidth: '1600px', width: '100%', margin: '0 auto' }}>
-            <div style={{ background: '#fff', padding: '32px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: '#0f172a', margin: 0 }}>Manage Inventory Directory</h2>
+          <div style={{ padding: '24px 20px', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
+            <div style={{ background: '#fff', padding: '24px 20px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', width: '100%', boxSizing: 'border-box' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>Manage Inventory Directory</h2>
+                  <p style={{ color: '#64748b', margin: '4px 0 0 0', fontSize: '0.88rem' }}>Review active storefront inventory, edit product specs, or delete items synced with the database.</p>
+                </div>
+                <button 
+                  type="button"
+                  onClick={handleRefreshProducts}
+                  disabled={isSyncingProducts}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '9px 16px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    background: isSyncingProducts ? '#f1f5f9' : '#fff',
+                    color: '#334155',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    cursor: isSyncingProducts ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <RefreshCw size={15} style={{ animation: isSyncingProducts ? 'spin 1s linear infinite' : 'none' }} />
+                  {isSyncingProducts ? 'Syncing Catalog...' : 'Refresh Directory'}
+                </button>
               </div>
-              <p style={{ color: '#64748b', marginBottom: '32px' }}>Review the active storefront inventory and selectively delete outdated product lines instantly syncing off the global mapping engine.</p>
 
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <div style={{ width: '100%', overflowX: 'auto', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', tableLayout: 'fixed' }}>
+                  <colgroup>
+                    <col style={{ width: '68px' }} />
+                    <col />
+                    <col style={{ width: '110px' }} />
+                    <col style={{ width: '85px' }} />
+                    <col style={{ width: '155px' }} />
+                  </colgroup>
                   <thead>
-                    <tr style={{ background: '#f8fafc' }}>
-                      <th style={{ padding: '16px 24px', fontSize: '0.85rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Preview</th>
-                      <th style={{ padding: '16px 24px', fontSize: '0.85rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Title</th>
-                      <th style={{ padding: '16px 24px', fontSize: '0.85rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Category</th>
-                      <th style={{ padding: '16px 24px', fontSize: '0.85rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Price</th>
-                      <th style={{ padding: '16px 24px', fontSize: '0.85rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', textAlign: 'right' }}>Action</th>
+                    <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                      <th style={{ padding: '12px 8px', fontSize: '0.8rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center' }}>Preview</th>
+                      <th style={{ padding: '12px 12px', fontSize: '0.8rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Product Details</th>
+                      <th style={{ padding: '12px 8px', fontSize: '0.8rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Category</th>
+                      <th style={{ padding: '12px 8px', fontSize: '0.8rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Price</th>
+                      <th style={{ padding: '12px 8px', fontSize: '0.8rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', textAlign: 'right' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedProducts.map((product, idx) => (
-                      <tr key={product._id || product.id} style={{ borderTop: idx !== 0 ? '1px solid #e2e8f0' : 'none', transition: 'background-color 0.2s' }}>
-                        <td style={{ padding: '16px 24px' }}>
-                          <img 
-                            src={product.images?.[0] || 'https://via.placeholder.com/300'} 
-                            alt={product.title} 
-                            style={{ width: '110px', height: '110px', objectFit: 'cover', borderRadius: '8px' }} 
-                            onError={(e) => {
-                              const src0 = product.images?.[0];
-                              if (!e.currentTarget.dataset.retried && src0 && !src0.startsWith('http')) {
-                                e.currentTarget.dataset.retried = 'true';
-                                e.currentTarget.src = encodeURI(src0);
-                              }
-                            }}
-                          />
-                        </td>
-                        <td style={{ padding: '16px 24px', fontSize: '0.95rem', color: '#0f172a', fontWeight: 500 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                            <span>{product.title}</span>
-                            {(product.stock <= 0 || product.inStock === false) && (
-                              <span style={{ background: '#fee2e2', color: '#ef4444', fontSize: '0.7rem', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', border: '1px solid #fecaca', letterSpacing: '0.05em' }}>
-                                OUT OF STOCK
-                              </span>
-                            )}
-                          </div>
-                          {product.productNumber && (
-                            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                              Number: <span style={{ fontWeight: 600, color: '#334155' }}>{product.productNumber}</span>
+                    {sortedProducts.map((product, idx) => {
+                      const firstImg = product.images?.[0];
+                      const imgSrc = (firstImg && typeof firstImg === 'string' && firstImg.trim()) 
+                        ? (firstImg.startsWith('http') ? firstImg : encodeURI(firstImg))
+                        : 'https://images.unsplash.com/photo-1522771731478-4eb4f9446d6f?w=400&q=80';
+
+                      return (
+                        <tr key={product._id || product.id} style={{ borderTop: idx !== 0 ? '1px solid #f1f5f9' : 'none', background: '#fff', transition: 'background-color 0.2s' }}>
+                          <td style={{ padding: '10px 8px', textAlign: 'center', verticalAlign: 'middle' }}>
+                            <img 
+                              src={imgSrc} 
+                              alt={product.title || 'Product'} 
+                              loading="lazy"
+                              style={{ width: '52px', height: '52px', objectFit: 'cover', borderRadius: '6px', background: '#f1f5f9', display: 'inline-block', border: '1px solid #e2e8f0' }} 
+                              onError={(e) => {
+                                const target = e.currentTarget;
+                                if (!target.dataset.retried) {
+                                  target.dataset.retried = 'true';
+                                  if (firstImg && !firstImg.startsWith('http')) {
+                                    target.src = encodeURI(firstImg);
+                                    return;
+                                  }
+                                }
+                                target.src = 'https://images.unsplash.com/photo-1522771731478-4eb4f9446d6f?w=400&q=80';
+                              }}
+                            />
+                          </td>
+                          <td style={{ padding: '10px 12px', verticalAlign: 'middle', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                            <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#0f172a', lineHeight: 1.35, marginBottom: '4px' }}>
+                              {product.title}
                             </div>
-                          )}
-                          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
-                            Stock: <span style={{ fontWeight: 600, color: (product.stock <= 0 || product.inStock === false) ? '#ef4444' : '#16a34a' }}>{product.stock !== undefined ? product.stock : 0} units</span>
-                          </div>
-                        </td>
-                        <td style={{ padding: '16px 24px', fontSize: '0.95rem', color: '#64748b' }}>{product.category}</td>
-                        <td style={{ padding: '16px 24px', fontSize: '0.95rem', fontWeight: 600, color: '#0f172a' }}>₹{product.price || product.currentPrice}</td>
-                        <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                            <button onClick={() => { setNewProd({...product, images: product.images || [], colors: product.colors || [], sizes: product.sizes || [], productDetails: product.productDetails || '', responsibleDesign: product.responsibleDesign || '', care: product.care || '', oldPrice: product.oldPrice || '', isDealOfDay: !!product.isDealOfDay, isNewArrival: !!product.isNewArrival, isBestseller: !!product.isBestseller, inStock: product.inStock !== false, stock: product.stock !== undefined ? product.stock : 10, description: product.description || '', category: product.category || 'Bedsheets', barcode: product.barcode || '', productNumber: product.productNumber || ''}); setActiveTab('editProduct'); }} style={{ background: '#eff6ff', color: '#3b82f6', border: '1px solid #bfdbfe', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>
-                              <Edit size={16} /> Edit
-                            </button>
-                            <button onClick={() => { if(confirm('Permanently delete this product from the global database?')) removeProduct(product._id || product.id); }} style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>
-                              <Trash2 size={16} /> Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                              {(product.stock <= 0 || product.inStock === false) ? (
+                                <span style={{ background: '#fee2e2', color: '#dc2626', fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', border: '1px solid #fecaca', letterSpacing: '0.04em' }}>
+                                  OUT OF STOCK
+                                </span>
+                              ) : (
+                                <span style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 600 }}>
+                                  ● {product.stock !== undefined ? product.stock : 10} units in stock
+                                </span>
+                              )}
+                              {product.productNumber && (
+                                <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                                  SKU: <span style={{ fontWeight: 600, color: '#475569' }}>{product.productNumber}</span>
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td style={{ padding: '10px 8px', fontSize: '0.84rem', color: '#64748b', textTransform: 'capitalize', verticalAlign: 'middle', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {product.category}
+                          </td>
+                          <td style={{ padding: '10px 8px', fontSize: '0.88rem', fontWeight: 600, color: '#0f172a', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                            ₹{product.price || product.currentPrice}
+                          </td>
+                          <td style={{ padding: '10px 8px', textAlign: 'right', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                              <button 
+                                type="button"
+                                onClick={() => { 
+                                  setNewProd({
+                                    ...product, 
+                                    images: product.images || [], 
+                                    colors: product.colors || [], 
+                                    sizes: product.sizes || [], 
+                                    productDetails: product.productDetails || '', 
+                                    responsibleDesign: product.responsibleDesign || '', 
+                                    care: product.care || '', 
+                                    oldPrice: product.oldPrice || '', 
+                                    isDealOfDay: !!product.isDealOfDay, 
+                                    isNewArrival: !!product.isNewArrival, 
+                                    isBestseller: !!product.isBestseller, 
+                                    inStock: product.inStock !== false, 
+                                    stock: product.stock !== undefined ? product.stock : 10, 
+                                    description: product.description || '', 
+                                    category: product.category || 'Bedsheets', 
+                                    barcode: product.barcode || '', 
+                                    productNumber: product.productNumber || ''
+                                  }); 
+                                  setActiveTab('editProduct'); 
+                                }} 
+                                style={{ 
+                                  background: '#eff6ff', 
+                                  color: '#2563eb', 
+                                  border: '1px solid #bfdbfe', 
+                                  padding: '6px 10px', 
+                                  borderRadius: '6px', 
+                                  cursor: 'pointer', 
+                                  display: 'inline-flex', 
+                                  alignItems: 'center', 
+                                  gap: '4px', 
+                                  fontWeight: 600, 
+                                  fontSize: '0.78rem', 
+                                  transition: 'all 0.2s',
+                                  whiteSpace: 'nowrap'
+                                }}
+                                title="Edit Product"
+                              >
+                                <Edit size={13} /> Edit
+                              </button>
+                              <button 
+                                type="button"
+                                onClick={() => { 
+                                  if (confirm(`Permanently delete "${product.title}" from catalog?`)) {
+                                    removeProduct(product._id || product.id); 
+                                  }
+                                }} 
+                                style={{ 
+                                  background: '#fef2f2', 
+                                  color: '#dc2626', 
+                                  border: '1px solid #fecaca', 
+                                  padding: '6px 10px', 
+                                  borderRadius: '6px', 
+                                  cursor: 'pointer', 
+                                  display: 'inline-flex', 
+                                  alignItems: 'center', 
+                                  gap: '4px', 
+                                  fontWeight: 600, 
+                                  fontSize: '0.78rem', 
+                                  transition: 'all 0.2s',
+                                  whiteSpace: 'nowrap'
+                                }}
+                                title="Delete Product"
+                              >
+                                <Trash2 size={13} /> Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
