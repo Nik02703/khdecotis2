@@ -245,6 +245,8 @@ export default function AdminPage() {
     if (newProd._id || newProd.id) {
       await editProduct(newProd._id || newProd.id, productData);
       alert('Product successfully updated!');
+      setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', responsibleDesign: '', care: '', barcode: '', productNumber: '' });
+      setActiveTab('manageProducts');
     } else {
       await addProduct(productData);
       alert('Product successfully published across global storefront databases!');
@@ -448,8 +450,11 @@ export default function AdminPage() {
           <button onClick={() => { setActiveTab('addProduct'); setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', responsibleDesign: '', care: '', barcode: '', productNumber: '' }); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'addProduct' ? '#eff6ff' : 'transparent', color: activeTab === 'addProduct' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'addProduct' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
             <PackageOpen size={20} style={{ flexShrink: 0 }} /> Add New Product
           </button>
-          <button onClick={() => setActiveTab('manageProducts')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'manageProducts' ? '#eff6ff' : 'transparent', color: activeTab === 'manageProducts' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'manageProducts' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+          <button onClick={() => { setActiveTab('manageProducts'); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: (activeTab === 'manageProducts' || activeTab === 'editProduct') ? '#eff6ff' : 'transparent', color: (activeTab === 'manageProducts' || activeTab === 'editProduct') ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: (activeTab === 'manageProducts' || activeTab === 'editProduct') ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
             <Trash2 size={20} style={{ flexShrink: 0 }} /> Manage Products
+            {activeTab === 'editProduct' && (
+              <span style={{ fontSize: '0.7rem', background: '#3b82f6', color: '#fff', padding: '2px 8px', borderRadius: '12px', fontWeight: 700, marginLeft: 'auto', flexShrink: 0 }}>Editing</span>
+            )}
           </button>
           <button onClick={() => setActiveTab('messages')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'messages' ? '#eff6ff' : 'transparent', color: activeTab === 'messages' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'messages' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
             <MessageSquare size={20} style={{ flexShrink: 0 }} /> Customer Messages
@@ -690,29 +695,77 @@ export default function AdminPage() {
         </div>
         )}
 
-        {/* Add Product Content */}
-        {activeTab === 'addProduct' && (
+        {/* Add / Edit Product Content */}
+        {(activeTab === 'addProduct' || activeTab === 'editProduct') && (
           <div style={{ padding: '32px', maxWidth: '1600px', width: '100%', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
-              <div>
-                <h2 style={{ fontSize: '1.8rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-                  {newProd._id || newProd.id ? `Edit Product: ${newProd.title || ''}` : 'Publish New Product'}
-                </h2>
-                <p style={{ color: '#64748b', margin: '4px 0 0 0' }}>
-                  {newProd._id || newProd.id ? 'Modify specifications, pricing, inventory stock, images, and product page accordions.' : 'Upload new inventory items directly to the storefront catalog without developer intervention.'}
-                </p>
-              </div>
-              {(newProd._id || newProd.id) && (
+            {(activeTab === 'editProduct' || newProd._id || newProd.id) && (
+              <div style={{ marginBottom: '16px' }}>
                 <button 
                   type="button" 
                   onClick={() => {
                     setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', responsibleDesign: '', care: '', barcode: '', productNumber: '' });
+                    setActiveTab('manageProducts');
                   }}
-                  style={{ padding: '10px 18px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, color: '#475569', fontSize: '0.9rem' }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 16px',
+                    background: '#fff',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    color: '#334155',
+                    fontSize: '0.9rem',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                    transition: 'all 0.2s'
+                  }}
                 >
-                  + Switch to New Product
+                  <ChevronLeft size={18} /> Back to Manage Products
                 </button>
-              )}
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: '#64748b', marginBottom: '6px' }}>
+                  <span style={{ cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setActiveTab('manageProducts')}>Manage Products</span>
+                  <span>/</span>
+                  <span style={{ fontWeight: 600, color: '#334155' }}>{activeTab === 'editProduct' || newProd._id || newProd.id ? 'Edit Product' : 'Add New Product'}</span>
+                </div>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                  {activeTab === 'editProduct' || newProd._id || newProd.id ? `Edit Product: ${newProd.title || ''}` : 'Publish New Product'}
+                </h2>
+                <p style={{ color: '#64748b', margin: '4px 0 0 0' }}>
+                  {activeTab === 'editProduct' || newProd._id || newProd.id ? 'Modify specifications, pricing, inventory stock, images, and product page accordions.' : 'Upload new inventory items directly to the storefront catalog without developer intervention.'}
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                {(activeTab === 'editProduct' || newProd._id || newProd.id) && (
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', responsibleDesign: '', care: '', barcode: '', productNumber: '' });
+                      setActiveTab('manageProducts');
+                    }}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 18px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, color: '#475569', fontSize: '0.9rem' }}
+                  >
+                    <ChevronLeft size={16} /> Back to Products
+                  </button>
+                )}
+                {(activeTab === 'editProduct' || newProd._id || newProd.id) && (
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', responsibleDesign: '', care: '', barcode: '', productNumber: '' });
+                      setActiveTab('addProduct');
+                    }}
+                    style={{ padding: '10px 18px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, color: '#1d4ed8', fontSize: '0.9rem' }}
+                  >
+                    + Switch to New Product
+                  </button>
+                )}
+              </div>
             </div>
             <form onSubmit={handlePublish} style={{ background: '#fff', padding: '36px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '24px' }}>
               
@@ -824,7 +877,17 @@ export default function AdminPage() {
                         {(imgSrc.startsWith('data:video') || imgSrc.endsWith('.mp4')) ? (
                           <video src={imgSrc} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
                         ) : (
-                          <img src={imgSrc} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img 
+                            src={imgSrc} 
+                            alt="Preview" 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                            onError={(e) => {
+                              if (!e.currentTarget.dataset.retried && !imgSrc.startsWith('http')) {
+                                e.currentTarget.dataset.retried = 'true';
+                                e.currentTarget.src = encodeURI(imgSrc);
+                              }
+                            }}
+                          />
                         )}
                         <button 
                           type="button" 
@@ -992,9 +1055,23 @@ export default function AdminPage() {
                   </div>
                 </div>
               </div>
-              <button type="submit" style={{ background: '#2563eb', color: '#fff', padding: '14px', borderRadius: '8px', fontWeight: 600, fontSize: '1rem', border: 'none', cursor: 'pointer', marginTop: '10px' }}>
-                {newProd._id || newProd.id ? 'Save Product Changes' : 'Publish to Storefront'}
-              </button>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                <button type="submit" style={{ flex: 1, background: '#2563eb', color: '#fff', padding: '14px', borderRadius: '8px', fontWeight: 600, fontSize: '1rem', border: 'none', cursor: 'pointer' }}>
+                  {activeTab === 'editProduct' || newProd._id || newProd.id ? 'Save Product Changes' : 'Publish to Storefront'}
+                </button>
+                {(activeTab === 'editProduct' || newProd._id || newProd.id) && (
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', responsibleDesign: '', care: '', barcode: '', productNumber: '' });
+                      setActiveTab('manageProducts');
+                    }}
+                    style={{ padding: '14px 24px', background: '#f1f5f9', color: '#475569', borderRadius: '8px', fontWeight: 600, fontSize: '1rem', border: '1px solid #cbd5e1', cursor: 'pointer' }}
+                  >
+                    Cancel & Back
+                  </button>
+                )}
+              </div>
             </form>
           </div>
         )}
@@ -1023,7 +1100,18 @@ export default function AdminPage() {
                     {sortedProducts.map((product, idx) => (
                       <tr key={product._id || product.id} style={{ borderTop: idx !== 0 ? '1px solid #e2e8f0' : 'none', transition: 'background-color 0.2s' }}>
                         <td style={{ padding: '16px 24px' }}>
-                          <img src={product.images?.[0] || 'https://via.placeholder.com/300'} alt={product.title} style={{ width: '110px', height: '110px', objectFit: 'cover', borderRadius: '8px' }} />
+                          <img 
+                            src={product.images?.[0] || 'https://via.placeholder.com/300'} 
+                            alt={product.title} 
+                            style={{ width: '110px', height: '110px', objectFit: 'cover', borderRadius: '8px' }} 
+                            onError={(e) => {
+                              const src0 = product.images?.[0];
+                              if (!e.currentTarget.dataset.retried && src0 && !src0.startsWith('http')) {
+                                e.currentTarget.dataset.retried = 'true';
+                                e.currentTarget.src = encodeURI(src0);
+                              }
+                            }}
+                          />
                         </td>
                         <td style={{ padding: '16px 24px', fontSize: '0.95rem', color: '#0f172a', fontWeight: 500 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -1047,7 +1135,7 @@ export default function AdminPage() {
                         <td style={{ padding: '16px 24px', fontSize: '0.95rem', fontWeight: 600, color: '#0f172a' }}>₹{product.price || product.currentPrice}</td>
                         <td style={{ padding: '16px 24px', textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                            <button onClick={() => { setNewProd({...product, images: product.images || [], colors: product.colors || [], sizes: product.sizes || [], productDetails: product.productDetails || '', responsibleDesign: product.responsibleDesign || '', care: product.care || '', oldPrice: product.oldPrice || '', isDealOfDay: !!product.isDealOfDay, isNewArrival: !!product.isNewArrival, isBestseller: !!product.isBestseller, inStock: product.inStock !== false, stock: product.stock !== undefined ? product.stock : 10, description: product.description || '', category: product.category || 'Bedsheets', barcode: product.barcode || '', productNumber: product.productNumber || ''}); setActiveTab('addProduct'); }} style={{ background: '#eff6ff', color: '#3b82f6', border: '1px solid #bfdbfe', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>
+                            <button onClick={() => { setNewProd({...product, images: product.images || [], colors: product.colors || [], sizes: product.sizes || [], productDetails: product.productDetails || '', responsibleDesign: product.responsibleDesign || '', care: product.care || '', oldPrice: product.oldPrice || '', isDealOfDay: !!product.isDealOfDay, isNewArrival: !!product.isNewArrival, isBestseller: !!product.isBestseller, inStock: product.inStock !== false, stock: product.stock !== undefined ? product.stock : 10, description: product.description || '', category: product.category || 'Bedsheets', barcode: product.barcode || '', productNumber: product.productNumber || ''}); setActiveTab('editProduct'); }} style={{ background: '#eff6ff', color: '#3b82f6', border: '1px solid #bfdbfe', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>
                               <Edit size={16} /> Edit
                             </button>
                             <button onClick={() => { if(confirm('Permanently delete this product from the global database?')) removeProduct(product._id || product.id); }} style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>
