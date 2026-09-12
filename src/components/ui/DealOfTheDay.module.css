@@ -13,11 +13,28 @@
 @media (max-width: 900px) {
   .section {
     flex-direction: column;
+    width: calc(100% - 2rem);
+    margin: var(--spacing-6) auto;
     padding: var(--spacing-4);
+    border-radius: 24px;
   }
   .leftSidebar {
     width: 100%;
     padding: var(--spacing-4);
+  }
+}
+
+@media (max-width: 768px) {
+  .section {
+    width: calc(100% - 1.25rem);
+    margin: 1.25rem auto;
+    padding: 1.25rem 0.75rem;
+    border-radius: 20px;
+    gap: 12px;
+  }
+  .leftSidebar {
+    width: 100%;
+    padding: 0.5rem 0.25rem 0.75rem 0.25rem;
   }
 }
 
@@ -75,8 +92,6 @@
 
 .wordDeal {
   font-family: var(--font-primary), 'Manrope', sans-serif;
-  font-weight: 600;
-  letter-spacing: -0.03em;
   font-size: 3.2rem;
   font-weight: 800;
   color: #1a1a1a;
@@ -87,7 +102,6 @@
 .wordOf {
   font-family: var(--font-primary), 'Manrope', sans-serif;
   font-weight: 500;
-  letter-spacing: -0.02em;
   font-style: italic;
   font-size: 1.6rem;
   color: #1a1a1a;
@@ -97,13 +111,25 @@
 
 .wordDay {
   font-family: var(--font-primary), 'Manrope', sans-serif;
-  font-weight: 600;
-  letter-spacing: -0.03em;
   font-size: 3.2rem;
   font-weight: 800;
   color: #1a1a1a;
   line-height: 1;
   letter-spacing: -1.5px;
+}
+
+@media (max-width: 768px) {
+  .wordDeal, .wordDay {
+    font-size: 2.2rem;
+    letter-spacing: -1px;
+  }
+  .wordOf {
+    font-size: 1.2rem;
+    margin: 2px 0;
+  }
+  .titleWrap {
+    margin-bottom: 10px;
+  }
 }
 
 .endsInText {
@@ -112,6 +138,13 @@
   margin-bottom: var(--spacing-2);
   font-size: 1.15rem;
   font-family: var(--font-ui), 'Inter', sans-serif;
+}
+
+@media (max-width: 768px) {
+  .endsInText {
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+  }
 }
 
 .timer {
@@ -135,6 +168,14 @@
   gap: 2px;
 }
 
+@media (max-width: 768px) {
+  .timeBlock {
+    padding: 6px 8px;
+    font-size: 0.95rem;
+    border-radius: 6px;
+  }
+}
+
 .timeLabel {
   font-size: 0.75rem;
   color: var(--text-muted);
@@ -150,6 +191,7 @@
   flex: 1;
   overflow: hidden;
   position: relative;
+  width: 100%;
 }
 
 .carouselTrack {
@@ -159,6 +201,8 @@
   padding-bottom: var(--spacing-2);
   scrollbar-width: none;
   scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
 }
 
 .carouselTrack::-webkit-scrollbar {
@@ -166,7 +210,9 @@
 }
 
 .dealCard {
-  min-width: 250px;
+  flex: 0 0 280px;
+  min-width: 280px;
+  max-width: 280px;
   background: #fff;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -176,11 +222,26 @@
   flex-direction: column;
   box-shadow: var(--shadow-sm);
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
 }
 
 .dealCard:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-md);
+}
+
+@media (max-width: 768px) {
+  .dealCard {
+    flex: 0 0 100%;
+    min-width: 100%;
+    max-width: 100%;
+    scroll-snap-align: center;
+    border-radius: 16px;
+  }
+  .dealCard:hover {
+    transform: none;
+  }
 }
 
 .cardImageWrapper {
@@ -190,40 +251,25 @@
 }
 
 .cardImg {
-  width: 100%; height: 100%; object-fit: contain;
+  width: 100%; 
+  height: 100%; 
+  object-fit: contain;
 }
 
 .dealTag {
   position: absolute;
-  top: 10px; left: 0;
+  top: 10px; 
+  left: 0;
   background: #5a3fc0; /* Deep Purple */
   color: #fff;
   font-size: 0.75rem;
   font-family: var(--font-ui), 'Inter', sans-serif;
-  font-weight: 600;
   letter-spacing: 0.04em;
   font-weight: 700;
   padding: 4px 12px;
   border-radius: 0 4px 4px 0;
   box-shadow: var(--shadow-sm);
-}
-
-.heartBtn {
-  position: absolute;
-  top: 10px; right: 10px;
-  background: #fff;
-  border: none;
-  width: 32px; height: 32px;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  color: var(--text-muted);
-  transition: color var(--transition-fast);
-}
-
-.heartBtn:hover {
-  color: #ef4444;
+  z-index: 2;
 }
 
 .cardBody {
@@ -310,4 +356,117 @@
 .addToCartBtn:hover {
   background: var(--primary);
   color: #fff;
+}
+
+/* Carousel Navigation Arrows */
+.navBtn {
+  position: absolute;
+  top: 100px;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+  color: #1e1b4b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 20;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.navBtn:hover {
+  background: #ffffff;
+  transform: translateY(-50%) scale(1.08);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+  color: #5a3fc0;
+}
+
+.navBtn:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.navBtnLeft {
+  left: 8px;
+}
+
+.navBtnRight {
+  right: 8px;
+}
+
+@media (max-width: 768px) {
+  .navBtn {
+    width: 36px;
+    height: 36px;
+  }
+  .navBtnLeft {
+    left: 6px;
+  }
+  .navBtnRight {
+    right: 6px;
+  }
+}
+
+/* Carousel Footer / Dots / Counter */
+.carouselFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding: 0 4px;
+}
+
+.dealPill {
+  font-family: var(--font-ui), 'Inter', sans-serif;
+  font-size: 0.8rem;
+  color: #4b3869;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(6px);
+  padding: 4px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+}
+
+.dealPill strong {
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.dotsTrack {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(75, 56, 105, 0.28);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.dot:hover {
+  background: rgba(90, 63, 192, 0.6);
+}
+
+.activeDot {
+  width: 20px;
+  border-radius: 6px;
+  background: #5a3fc0;
+}
+
+.moreDots {
+  font-size: 0.75rem;
+  color: #5a3fc0;
+  font-weight: 700;
+  margin-left: 2px;
 }

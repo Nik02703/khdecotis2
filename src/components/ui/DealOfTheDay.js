@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Heart } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useWishlist } from '@/context/WishlistContext';
 import { useCart } from '@/context/CartContext';
 import { useProducts } from '@/context/ProductContext';
@@ -18,6 +18,9 @@ export default function DealOfTheDay() {
   const { cartItems, addToCart, initiateBuyNow } = useCart();
   const { products, isMounted } = useProducts();
 
+  const trackRef = useRef(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
   useEffect(() => {
     const calculateSecondsToMidnight = () => {
       const now = new Date();
@@ -33,6 +36,65 @@ export default function DealOfTheDay() {
     return () => clearInterval(timer);
   }, []);
 
+  const dynamicDeals = products.filter(p => p.isDealOfDay);
+
+  const canScrollLeft = currentIndex > 0;
+  const canScrollRight = dynamicDeals.length > 1 && currentIndex < dynamicDeals.length - 1;
+
+  const updateScrollIndex = () => {
+    if (!trackRef.current) return;
+    const container = trackRef.current;
+    const children = Array.from(container.children);
+    if (!children.length) return;
+
+    const scrollLeft = container.scrollLeft;
+    let closestIndex = 0;
+    let minDiff = Infinity;
+    children.forEach((child, idx) => {
+      const diff = Math.abs(child.offsetLeft - scrollLeft);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestIndex = idx;
+      }
+    });
+
+    setCurrentIndex(closestIndex);
+  };
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    track.addEventListener('scroll', updateScrollIndex, { passive: true });
+    window.addEventListener('resize', updateScrollIndex);
+
+    return () => {
+      track.removeEventListener('scroll', updateScrollIndex);
+      window.removeEventListener('resize', updateScrollIndex);
+    };
+  }, [dynamicDeals.length]);
+
+  const scrollToDeal = (index) => {
+    if (!trackRef.current) return;
+    const container = trackRef.current;
+    const children = container.children;
+    if (index >= 0 && index < children.length) {
+      const targetCard = children[index];
+      container.scrollTo({
+        left: targetCard.offsetLeft,
+        behavior: 'smooth'
+      });
+      setCurrentIndex(index);
+    }
+  };
+
+  const scroll = (direction) => {
+    const nextIdx = direction === 'left' 
+      ? Math.max(0, currentIndex - 1) 
+      : Math.min(dynamicDeals.length - 1, currentIndex + 1);
+    scrollToDeal(nextIdx);
+  };
+
   const h = Math.floor(timeLeft / 3600);
   const m = Math.floor((timeLeft % 3600) / 60);
   const s = timeLeft % 60;
@@ -40,9 +102,6 @@ export default function DealOfTheDay() {
   const formatZero = (num) => num.toString().padStart(2, '0');
 
   if (!isMounted) return null;
-
-  // Filter deals algorithmically mapping the dynamic isDealOfDay context
-  const dynamicDeals = products.filter(p => p.isDealOfDay);
   if (dynamicDeals.length === 0) return null;
 
   const encodeImg = (url) => {
@@ -74,7 +133,29 @@ export default function DealOfTheDay() {
       </div>
 
       <div className={styles.carouselWrapper}>
-        <div className={styles.carouselTrack}>
+        {canScrollLeft && (
+          <button 
+            type="button"
+            className={`${styles.navBtn} ${styles.navBtnLeft}`}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); scroll('left'); }}
+            aria-label="Previous Deal"
+          >
+            <ChevronLeft size={20} />
+          </button>
+        )}
+
+        {canScrollRight && (
+          <button 
+            type="button"
+            className={`${styles.navBtn} ${styles.navBtnRight}`}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); scroll('right'); }}
+            aria-label="Next Deal"
+          >
+            <ChevronRight size={20} />
+          </button>
+        )}
+
+        <div ref={trackRef} className={styles.carouselTrack}>
           {dynamicDeals.map(deal => (
             <Link href={getProductUrl(deal)} key={deal._id || deal.id} className={styles.dealCard} style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className={styles.cardImageWrapper}>
@@ -83,6 +164,7 @@ export default function DealOfTheDay() {
                 <button 
                   style={{ position: 'absolute', top: '12px', right: '12px', background: 'transparent', border: 'none', cursor: 'pointer', zIndex: 10 }}
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleWishlist(deal); }}
+                  aria-label={isInWishlist(deal._id || deal.id) ? "Remove from wishlist" : "Add to wishlist"}
                 >
                   <Heart size={24} strokeWidth={1.5} fill={isInWishlist(deal._id || deal.id) ? '#ef4444' : 'transparent'} color={isInWishlist(deal._id || deal.id) ? '#ef4444' : '#525252'} />
                 </button>
@@ -139,6 +221,28 @@ export default function DealOfTheDay() {
             </Link>
           ))}
         </div>
+
+        {dynamicDeals.length > 1 && (
+          <div className={styles.carouselFooter}>
+            <div className={styles.dealPill}>
+              Deal <strong>{currentIndex + 1}</strong> of {dynamicDeals.length}
+            </div>
+            <div className={styles.dotsTrack}>
+              {dynamicDeals.slice(0, Math.min(dynamicDeals.length, 6)).map((_, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  className={`${styles.dot} ${idx === Math.min(currentIndex, 5) ? styles.activeDot : ''}`}
+                  onClick={(e) => { e.preventDefault(); scrollToDeal(idx); }}
+                  aria-label={`Go to deal ${idx + 1}`}
+                />
+              ))}
+              {dynamicDeals.length > 6 && (
+                <span className={styles.moreDots}>+{dynamicDeals.length - 6}</span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
