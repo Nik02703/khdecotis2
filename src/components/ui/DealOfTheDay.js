@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './DealOfTheDay.module.css';
 import { getDisplayPrice, getOldPrice, getDiscountText } from '@/lib/priceUtils';
+import { getProductUrl } from '@/lib/slugUtils';
 
 export default function DealOfTheDay() {
   const router = useRouter();
@@ -75,7 +76,7 @@ export default function DealOfTheDay() {
       <div className={styles.carouselWrapper}>
         <div className={styles.carouselTrack}>
           {dynamicDeals.map(deal => (
-            <Link href={`/product/${deal._id || deal.id}`} key={deal._id || deal.id} className={styles.dealCard} style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Link href={getProductUrl(deal)} key={deal._id || deal.id} className={styles.dealCard} style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className={styles.cardImageWrapper}>
                 <span className={styles.dealTag}>Deal Of The Day</span>
                 <img src={encodeImg(deal.images?.[0]) || 'https://via.placeholder.com/300'} alt={deal.title} className={styles.cardImg} />

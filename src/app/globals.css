@@ -90,7 +90,7 @@ h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); line-height: 1.3; letter-spacing
 
 /* Structural Utility Classes (Replacing Inline Styles) */
 .container {
-  max-width: 1280px;
+  max-width: 1420px;
   margin: 0 auto;
   padding: 0 var(--spacing-4);
 }

@@ -64,6 +64,12 @@ const ProductSchema = new mongoose.Schema({
   productDetails: {
     type: String
   },
+  responsibleDesign: {
+    type: String
+  },
+  care: {
+    type: String
+  },
   barcode: {
     type: String
   },
@@ -72,10 +78,24 @@ const ProductSchema = new mongoose.Schema({
     unique: true,
     sparse: true
   },
+  slug: {
+    type: String,
+    index: true
+  },
   variants: [VariantSchema]
 }, { timestamps: true });
 
 ProductSchema.pre('save', async function(next) {
+  if (this.title && !this.slug) {
+    this.slug = this.title
+      .toString()
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
   if (!this.productNumber) {
     let isUnique = false;
     let code = '';

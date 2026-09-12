@@ -5,6 +5,7 @@ import ShopTheLook from '@/components/ui/ShopTheLook';
 import ReviewsSection from '@/components/ui/ReviewsSection';
 import PromoBento from '@/components/ui/PromoBento';
 import DealOfTheDay from '@/components/ui/DealOfTheDay';
+import BudgetDealsRow from '@/components/ui/BudgetDealsRow';
 import LightningBanner from '@/components/ui/LightningBanner';
 import NewArrivals from '@/components/ui/NewArrivals';
 import connectToDatabase from '@/lib/mongoose';
@@ -14,14 +15,19 @@ import { DUMMY_PRODUCTS } from '@/lib/dummyProducts';
 export default async function Home() {
   // Fetch bestseller products from DB
   let bestsellerProducts = DUMMY_PRODUCTS; // fallback
+  let dealsProducts = [];
   try {
     await connectToDatabase();
     const dbBestsellers = await Product.find({ isBestseller: true }).sort({ createdAt: -1 }).lean();
     if (dbBestsellers && dbBestsellers.length > 0) {
       bestsellerProducts = JSON.parse(JSON.stringify(dbBestsellers));
     }
+    const allDbProducts = await Product.find({}).sort({ createdAt: -1 }).limit(8).lean();
+    if (allDbProducts && allDbProducts.length > 0) {
+      dealsProducts = JSON.parse(JSON.stringify(allDbProducts));
+    }
   } catch (e) {
-    console.warn('[Home] Bestsellers DB fetch failed, using fallback');
+    console.warn('[Home] DB fetch failed, using fallback');
   }
 
   return (
@@ -125,6 +131,9 @@ export default async function Home() {
 
       {/* Deal Of The Day Active Countdown */}
       <DealOfTheDay />
+
+      {/* Budget Deals Row (Under ₹399 / ₹499 & Trending Deals) */}
+      <BudgetDealsRow products={dealsProducts} />
 
       {/* 3D Typography "New Arrivals" block with Filtering Layouts */}
       <NewArrivals />

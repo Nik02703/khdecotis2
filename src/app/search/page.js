@@ -5,6 +5,8 @@ import { useProducts } from '@/context/ProductContext';
 import ProductCard from '@/components/ui/ProductCard';
 import { Search } from 'lucide-react';
 
+import { searchProducts } from '@/lib/searchUtils';
+
 function SearchResultsContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
@@ -13,13 +15,7 @@ function SearchResultsContent() {
 
   const results = useMemo(() => {
     if (!query.trim() || !isMounted) return [];
-    const lowerQuery = query.toLowerCase();
-    return products.filter(product => {
-      const titleMatch = product.title?.toLowerCase().includes(lowerQuery);
-      const categoryMatch = product.category?.toLowerCase().includes(lowerQuery);
-      const descMatch = product.description && product.description.toLowerCase().includes(lowerQuery);
-      return titleMatch || categoryMatch || descMatch;
-    });
+    return searchProducts(products, query);
   }, [query, products, isMounted]);
 
   return (

@@ -1,5 +1,6 @@
 'use client';
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useAuth } from './AuthContext';
 
 const OrderContext = createContext();
 
@@ -19,9 +20,60 @@ const getStatusColors = (status) => {
   }
 };
 
+const mapDbOrder = (dbOrder) => {
+  const st = dbOrder.status || 'Pending';
+  const { bg, fg } = getStatusColors(st);
+  return {
+    id: dbOrder.orderId || `#KHD-${String(dbOrder._id).substring(String(dbOrder._id).length - 4).toUpperCase()}`,
+    name: dbOrder.name || (dbOrder.user && dbOrder.user.name) || 'Unknown Customer',
+    email: dbOrder.email || (dbOrder.shippingDetails && dbOrder.shippingDetails.email) || 'customer@example.com',
+    date: dbOrder.dateString || new Date(dbOrder.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    total: dbOrder.totalString || `₹${dbOrder.totalAmount || 0}`,
+    status: st,
+    color: dbOrder.color || bg,
+    text: dbOrder.text || fg,
+    items: dbOrder.items || (dbOrder.payload ? dbOrder.payload.length : 1),
+    payload: dbOrder.payload || [],
+    shipmentId: dbOrder.shipmentId || null,
+    awbCode: dbOrder.awbCode || null,
+    courierName: dbOrder.courierName || null,
+    trackingStatus: dbOrder.trackingStatus || null,
+    shiprocketOrderId: dbOrder.shiprocketOrderId || null,
+  };
+};
+
+const deduplicateOrders = (mappedDbOrders) => {
+  const orderMap = new Map();
+  for (const o of mappedDbOrders) {
+    const existing = orderMap.get(o.id);
+    if (!existing) {
+      orderMap.set(o.id, o);
+    } else {
+      if (existing.status === 'Pending' && o.status !== 'Pending') {
+        orderMap.set(o.id, o);
+      }
+    }
+  }
+  return Array.from(orderMap.values());
+};
+
 export function OrderProvider({ children }) {
   const [orders, setOrders] = useState([]);
   const [isMounted, setIsMounted] = useState(false);
+  const { user } = useAuth();
+
+  const getActiveUserEmail = useCallback(() => {
+    if (user?.email) return user.email.toLowerCase().trim();
+    if (typeof window !== 'undefined') {
+      const localEmail = localStorage.getItem('khd_user_email');
+      if (localEmail) return localEmail.toLowerCase().trim();
+      try {
+        const guestAddr = JSON.parse(localStorage.getItem('khd_guest_address') || '{}');
+        if (guestAddr?.email) return guestAddr.email.toLowerCase().trim();
+      } catch (e) {}
+    }
+    return null;
+  }, [user]);
 
   const saveOrdersSafely = (ordersList) => {
     try {
@@ -48,91 +100,65 @@ export function OrderProvider({ children }) {
   useEffect(() => {
     setIsMounted(true);
     
-    // Fast initial load from local storage
-    const storedOrders = localStorage.getItem('khd_orders');
+    const activeEmail = getActiveUserEmail();
+    const myOrderIds = typeof window !== 'undefined' 
+      ? JSON.parse(localStorage.getItem('khd_my_order_ids') || '[]') 
+      : [];
+
+    // Fast initial load from local storage — ONLY keep orders belonging to this user
+    const storedOrders = typeof window !== 'undefined' ? localStorage.getItem('khd_orders') : null;
     if (storedOrders) {
       try {
         const parsed = JSON.parse(storedOrders);
-        setOrders(parsed.length > 0 ? parsed : DUMMY_ORDERS);
+        if (Array.isArray(parsed)) {
+          const userOnly = parsed.filter(o => {
+            if (activeEmail && o.email && o.email.toLowerCase() === activeEmail) return true;
+            if (myOrderIds.length > 0 && o.id && myOrderIds.includes(o.id)) return true;
+            return false;
+          });
+          setOrders(userOnly);
+          saveOrdersSafely(userOnly); // Clean up any old leaked orders from localStorage
+        }
       } catch (e) {
-        setOrders(DUMMY_ORDERS);
+        setOrders([]);
       }
     } else {
-      setOrders(DUMMY_ORDERS);
+      setOrders([]);
     }
 
-    // Background sync with Global MongoDB
-    fetch('/api/orders')
+    // Build user-specific API query (never fetch all orders for regular users)
+    const queryParts = [];
+    if (activeEmail) queryParts.push(`email=${encodeURIComponent(activeEmail)}`);
+    if (myOrderIds.length > 0) queryParts.push(`orderIds=${encodeURIComponent(myOrderIds.join(','))}`);
+
+    if (queryParts.length === 0) {
+      return;
+    }
+
+    fetch(`/api/orders?${queryParts.join('&')}`)
       .then(res => {
         if (!res.ok) throw new Error('DB Error');
         return res.json();
       })
       .then(data => {
         if (data && Array.isArray(data) && (!data.length || !data[0].error)) {
-          const mappedDbOrders = data.map(dbOrder => {
-            const st = dbOrder.status || 'Pending';
-            const { bg, fg } = getStatusColors(st);
-            return {
-              id: dbOrder.orderId || `#KHD-${String(dbOrder._id).substring(String(dbOrder._id).length - 4).toUpperCase()}`,
-              name: dbOrder.name || (dbOrder.user && dbOrder.user.name) || 'Unknown Customer',
-              email: dbOrder.email || 'customer@example.com',
-              date: dbOrder.dateString || new Date(dbOrder.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-              total: dbOrder.totalString || `₹${dbOrder.totalAmount || 0}`,
-              status: st,
-              color: dbOrder.color || bg,
-              text: dbOrder.text || fg,
-              items: dbOrder.items || (dbOrder.payload ? dbOrder.payload.length : 1),
-              payload: dbOrder.payload || [],
-              // Shiprocket tracking fields
-              shipmentId: dbOrder.shipmentId || null,
-              awbCode: dbOrder.awbCode || null,
-              courierName: dbOrder.courierName || null,
-              trackingStatus: dbOrder.trackingStatus || null,
-              shiprocketOrderId: dbOrder.shiprocketOrderId || null,
-            };
-          });
-          
-          // Deduplicate by order ID — use Map so the LAST occurrence wins
-          // Since DB returns newest first but duplicates may exist, prefer
-          // the one with a non-Pending status (i.e., the one that was updated)
-          const orderMap = new Map();
-          for (const o of mappedDbOrders) {
-            const existing = orderMap.get(o.id);
-            if (!existing) {
-              orderMap.set(o.id, o);
-            } else {
-              // Prefer whichever has a non-Pending status (i.e., was acted upon)
-              if (existing.status === 'Pending' && o.status !== 'Pending') {
-                orderMap.set(o.id, o);
-              }
-              // If both are non-Pending or both Pending, keep the first (newest by createdAt)
-            }
-          }
-          const uniqueOrders = Array.from(orderMap.values());
-          
+          const uniqueOrders = deduplicateOrders(data.map(mapDbOrder));
           setOrders(uniqueOrders);
           saveOrdersSafely(uniqueOrders);
         }
       })
-      .catch(err => console.warn('Global DB Order sync neglected:', err));
-  }, []);
+      .catch(err => console.warn('User order sync neglected:', err));
+  }, [user, getActiveUserEmail]);
 
   /**
    * Add a new order. Saves to localStorage + MongoDB synchronously,
    * then triggers Shiprocket order creation in the background.
-   * Customer sees confirmation immediately — Shiprocket runs async.
-   * 
-   * @param {object} orderData - Order data from checkout
-   * @param {object} shippingDetails - Shipping form data (firstName, lastName, address, city, postcode, state, phone)
-   * @param {string} paymentMethod - 'COD' or 'PhonePe' (default: 'COD')
    */
   const addOrder = (orderData, shippingDetails = null, paymentMethod = 'COD') => {
-    // Generate a unique ID using timestamp to prevent duplicates
     const timestamp = Date.now();
     const uniqueSuffix = timestamp.toString().slice(-4);
     let nextIdNum = parseInt(uniqueSuffix, 10);
     
-    // Also check existing orders to guarantee uniqueness
     const existingIds = new Set(orders.map(o => o.id));
     let candidateId = `#KHD-${nextIdNum}`;
     while (existingIds.has(candidateId)) {
@@ -150,11 +176,9 @@ export function OrderProvider({ children }) {
     };
     
     setOrders(prev => {
-      // Check for duplicate inside the setter to be safe from stale closures
       const prevIds = new Set(prev.map(o => o.id));
       let safeOrder = newOrder;
       if (prevIds.has(newOrder.id)) {
-        // Extremely unlikely but handle it — append random suffix
         const fallbackId = `#KHD-${Date.now().toString().slice(-5)}`;
         safeOrder = { ...newOrder, id: fallbackId };
       }
@@ -162,7 +186,19 @@ export function OrderProvider({ children }) {
       const updated = [safeOrder, ...prev];
       saveOrdersSafely(updated);
 
-      // Step 1: Push order to MongoDB with shippingDetails and paymentMethod
+      // Track order ID and email locally
+      try {
+        const myOrderIds = JSON.parse(localStorage.getItem('khd_my_order_ids') || '[]');
+        if (!myOrderIds.includes(safeOrder.id)) {
+          myOrderIds.push(safeOrder.id);
+          localStorage.setItem('khd_my_order_ids', JSON.stringify(myOrderIds));
+        }
+        if (orderData.email) {
+          localStorage.setItem('khd_user_email', orderData.email);
+        }
+      } catch (e) {}
+
+      // Push order to MongoDB
       const mongoPayload = { ...safeOrder, paymentMethod };
       if (shippingDetails) {
         mongoPayload.shippingDetails = shippingDetails;
@@ -181,53 +217,63 @@ export function OrderProvider({ children }) {
           }
           console.log('[OrderContext] Order saved to MongoDB:', safeOrder.id, '| Payment:', paymentMethod);
 
-          // Step 2: Trigger Shiprocket in background (fire-and-forget)
-          // For COD orders: ship immediately via Shiprocket
-          // For Prepaid/PhonePe: Shiprocket is triggered from the payment callback after verification
           if (paymentMethod === 'COD') {
-            const shiprocketPayload = {
-              ...safeOrder,
-              orderId: safeOrder.id,
-              shippingDetails: shippingDetails || {},
-            };
-
-            fetch('/api/shiprocket/createOrder', {
+            console.log('[Shiprocket] Triggering auto-ship for COD order:', safeOrder.id);
+            fetch(`/api/orders/${encodeURIComponent(safeOrder.id)}/ship`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(shiprocketPayload),
             })
               .then(res => res.json())
-              .then(srResult => {
-                if (srResult.success) {
-                  console.log('[OrderContext] Shiprocket COD order created successfully');
+              .then(shipResult => {
+                if (shipResult.success) {
+                  console.log('[Shiprocket] Auto-ship success:', shipResult);
+                  setOrders(currentOrders => {
+                    const mapped = currentOrders.map(o => {
+                      if (o.id === safeOrder.id) {
+                        return {
+                          ...o,
+                          shipmentId: shipResult.shipmentId,
+                          awbCode: shipResult.awbCode,
+                          courierName: shipResult.courierName,
+                          trackingStatus: 'processing',
+                        };
+                      }
+                      return o;
+                    });
+                    saveOrdersSafely(mapped);
+                    return mapped;
+                  });
                 } else {
-                  console.warn('[OrderContext] Shiprocket deferred:', srResult.error);
+                  console.warn('[Shiprocket] Auto-ship deferred/failed:', shipResult.error);
                 }
               })
-              .catch(err => {
-                console.error('[OrderContext] Shiprocket background sync failed:', err.message);
-              });
-          } else {
-            console.log('[OrderContext] Prepaid order — Shiprocket will be triggered after payment verification.');
+              .catch(err => console.error('[Shiprocket] Auto-ship network error:', err));
           }
         })
-        .catch(err => console.error('[OrderContext] MongoDB Sync Error:', err));
+        .catch(dbErr => {
+          console.error('[OrderContext] MongoDB save network failure:', dbErr);
+        });
 
       return updated;
     });
-    
-    // Return the pre-calculated one, it's virtually guaranteed to match
+
     return newOrder.id;
   };
 
-  const updateOrderStatus = async (id, newStatus, color, text) => {
+  /**
+   * Update an order's status both locally and in MongoDB
+   */
+  const updateOrderStatus = async (id, newStatus) => {
+    const { bg: color, fg: text } = getStatusColors(newStatus);
+
     setOrders(prev => {
-      const updated = prev.map(o => o.id === id ? { ...o, status: newStatus, color, text } : o);
+      const updated = prev.map(order => 
+        order.id === id ? { ...order, status: newStatus, color, text } : order
+      );
       saveOrdersSafely(updated);
       return updated;
     });
 
-    // Persist status change to MongoDB
     try {
       console.log('[OrderContext] Updating order status in DB:', id, '->', newStatus);
       const res = await fetch('/api/orders', {
@@ -246,8 +292,67 @@ export function OrderProvider({ children }) {
     }
   };
 
+  /**
+   * Fetch ALL orders without user email filter (for admin dashboard only).
+   */
+  const fetchAllOrders = async () => {
+    try {
+      const res = await fetch('/api/orders?admin=true');
+      if (!res.ok) throw new Error('DB Error');
+      const data = await res.json();
+      if (data && Array.isArray(data) && (!data.length || !data[0].error)) {
+        const uniqueOrders = deduplicateOrders(data.map(mapDbOrder));
+        setOrders(uniqueOrders);
+      }
+    } catch (err) {
+      console.warn('fetchAllOrders error:', err);
+    }
+  };
+
+  /**
+   * Look up order(s) by email or orderId (e.g., from order lookup or tracking form)
+   */
+  const lookupOrder = async (queryStr) => {
+    if (!queryStr || !queryStr.trim()) return null;
+    const clean = queryStr.trim();
+    try {
+      let res;
+      if (clean.includes('@')) {
+        res = await fetch(`/api/orders?email=${encodeURIComponent(clean)}`);
+      } else {
+        res = await fetch(`/api/orders/${encodeURIComponent(clean)}`);
+      }
+      if (!res.ok) return null;
+      const data = await res.json();
+
+      if (Array.isArray(data) && data.length > 0) {
+        const mapped = deduplicateOrders(data.map(mapDbOrder));
+        setOrders(prev => deduplicateOrders([...mapped, ...prev]));
+        if (clean.includes('@')) {
+          localStorage.setItem('khd_user_email', clean);
+        }
+        return mapped;
+      } else if (data && data.orderId) {
+        const mapped = mapDbOrder(data);
+        setOrders(prev => deduplicateOrders([mapped, ...prev]));
+        try {
+          const myOrderIds = JSON.parse(localStorage.getItem('khd_my_order_ids') || '[]');
+          if (!myOrderIds.includes(mapped.id)) {
+            myOrderIds.push(mapped.id);
+            localStorage.setItem('khd_my_order_ids', JSON.stringify(myOrderIds));
+          }
+        } catch (e) {}
+        return [mapped];
+      }
+      return null;
+    } catch (e) {
+      console.error('lookupOrder error:', e);
+      return null;
+    }
+  };
+
   return (
-    <OrderContext.Provider value={{ orders, addOrder, updateOrderStatus }}>
+    <OrderContext.Provider value={{ orders, addOrder, updateOrderStatus, fetchAllOrders, lookupOrder }}>
       {children}
     </OrderContext.Provider>
   );

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useWishlist } from '@/context/WishlistContext';
 
 import { getDisplayPrice, getOldPrice, getDiscountText } from '@/lib/priceUtils';
+import { getProductUrl } from '@/lib/slugUtils';
 
 export default function MinimalProductCarousel({ title, products = [] }) {
   const scrollRef = useRef(null);
@@ -49,7 +50,7 @@ export default function MinimalProductCarousel({ title, products = [] }) {
             return (
               <Link 
                 key={item._id || idx}
-                href={`/product/${item._id}`}
+                href={getProductUrl(item)}
                 style={{ textDecoration: 'none', color: 'inherit', minWidth: '220px', maxWidth: '220px', cursor: 'pointer', display: 'flex', flexDirection: 'column' }}
                 onMouseEnter={(e) => {
                   const img = e.currentTarget.querySelector('img');

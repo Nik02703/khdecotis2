@@ -34,10 +34,12 @@
 .logo {
   display: flex;
   align-items: center;
+  margin-left: 5.5rem; /* Moved further rightward as requested */
+  transition: margin-left 0.3s ease;
 }
 
 .logoImage {
-  height: 55px; /* Shrinks the navbar proportionally */
+  height: 78px; /* Made bigger as requested (was 55px) */
   width: auto;
   object-fit: contain;
   transition: height 0.3s ease;
@@ -45,18 +47,19 @@
 
 .navLinks {
   display: flex;
-  gap: var(--spacing-6);
+  gap: clamp(2.5rem, 3.5vw, 4rem); /* Increased space between navigation buttons */
   align-items: center;
 }
 
 .navLink {
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 0.92rem; /* Refined slightly smaller size (between 0.85rem and 1.05rem) */
+  font-weight: 600;
   color: var(--text-main);
   position: relative;
   padding: 0.5rem 0;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
+  transition: color var(--transition-fast);
 }
 
 .navLink::after {
@@ -78,6 +81,7 @@
   display: flex;
   gap: var(--spacing-3);
   align-items: center;
+  flex-shrink: 0;
 }
 
 .iconBtn {
@@ -89,6 +93,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .iconBtn:hover {
@@ -328,6 +333,12 @@
   cursor: pointer;
 }
 
+@media (max-width: 1200px) and (min-width: 901px) {
+  .logo {
+    margin-left: 2.5rem;
+  }
+}
+
 @media (max-width: 900px) {
   .navLinks {
     display: none;
@@ -340,8 +351,11 @@
     align-items: center;
     justify-content: center;
   }
+  .logo {
+    margin-left: 0;
+  }
   .logoImage {
-    height: 32px;
+    height: 48px;
   }
   .inner {
     padding-left: 0;

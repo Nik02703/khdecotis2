@@ -3,26 +3,59 @@ import connectToDatabase from '@/lib/mongoose';
 import Order from '@/models/Order'; // Assuming we create this model later
 import { decrementOrderStock } from '@/lib/stock';
 
-export async function GET() {
+export async function GET(req) {
   try {
     const db = await connectToDatabase();
     
     if (!db) {
       return NextResponse.json([]);
     }
-    
-    const orders = await Order.find({}).sort({ createdAt: -1 }).limit(200).allowDiskUse(true);
-    
-    if (orders.length === 0) {
+
+    const { searchParams } = new URL(req.url);
+    const emailFilter = searchParams.get('email');
+    const orderIdsParam = searchParams.get('orderIds');
+    const isAdmin = searchParams.get('admin') === 'true';
+
+    let query = null;
+
+    if (isAdmin) {
+      // Admin dashboard requests all orders
+      query = {};
+    } else {
+      const conditions = [];
+
+      if (emailFilter && emailFilter.trim()) {
+        const cleanEmail = emailFilter.trim();
+        const escaped = cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const emailRegex = new RegExp(`^${escaped}$`, 'i');
+        conditions.push({ email: { $regex: emailRegex } });
+        conditions.push({ 'shippingDetails.email': { $regex: emailRegex } });
+      }
+
+      if (orderIdsParam && orderIdsParam.trim()) {
+        const ids = orderIdsParam.split(',').map(s => s.trim()).filter(Boolean);
+        if (ids.length > 0) {
+          conditions.push({ orderId: { $in: ids } });
+        }
+      }
+
+      if (conditions.length > 0) {
+        query = { $or: conditions };
+      }
+    }
+
+    // If not admin and no user filter specified, return empty array to prevent website-wide order leakage
+    if (!query) {
       return NextResponse.json([]);
     }
 
-    return NextResponse.json(orders);
+    const orders = await Order.find(query).sort({ createdAt: -1 }).limit(200).allowDiskUse(true);
+    
+    return NextResponse.json(orders || []);
     
   } catch (error) {
     console.error("Error fetching orders:", error);
-    // Never crash the UI on a DB error
-    return NextResponse.json([{ _id: 'ERR-500', user: { name: 'System Local' }, totalAmount: 0, status: 'Processing', createdAt: new Date() }], { status: 200 });
+    return NextResponse.json([], { status: 200 });
   }
 }
 

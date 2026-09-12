@@ -12,8 +12,29 @@ export default function OrdersPage() {
   const [trackingLoading, setTrackingLoading] = useState(false);
   const [trackingOrderId, setTrackingOrderId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const { orders } = useOrders();
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupMessage, setLookupMessage] = useState('');
+  const { orders, lookupOrder } = useOrders();
   const router = useRouter();
+
+  const handleLookup = async (queryText) => {
+    const q = (queryText || searchQuery).trim();
+    if (!q) return;
+    setLookupLoading(true);
+    setLookupMessage('');
+    try {
+      const results = await lookupOrder(q);
+      if (!results || results.length === 0) {
+        setLookupMessage(`No orders found for "${q}". Please check your order ID or email address.`);
+      } else {
+        setLookupMessage(`Found ${results.length} order${results.length > 1 ? 's' : ''}!`);
+      }
+    } catch (e) {
+      setLookupMessage('Failed to look up order. Please try again.');
+    } finally {
+      setLookupLoading(false);
+    }
+  };
 
   const fetchTracking = useCallback(async (orderId) => {
     setTrackingLoading(true);
@@ -73,15 +94,16 @@ export default function OrdersPage() {
         <div style={{ 
           display: 'flex', alignItems: 'center', gap: '12px', 
           background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', 
-          padding: '12px 16px', transition: 'border-color 0.2s',
+          padding: '8px 12px 8px 16px', transition: 'border-color 0.2s',
           boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
         }}>
           <Search size={20} color="#94a3b8" />
           <input 
             type="text"
-            placeholder="Search by order ID, email, or name..."
+            placeholder="Search or lookup by order ID (e.g. #KHD-1234) or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleLookup(); }}
             style={{ 
               flex: 1, border: 'none', outline: 'none', fontSize: '1rem', 
               color: '#0f172a', background: 'transparent', fontFamily: 'inherit'
@@ -89,13 +111,42 @@ export default function OrdersPage() {
           />
           {searchQuery && (
             <button 
-              onClick={() => setSearchQuery('')}
+              onClick={() => { setSearchQuery(''); setLookupMessage(''); }}
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '2px' }}
             >
               <X size={18} />
             </button>
           )}
+          <button
+            onClick={() => handleLookup()}
+            disabled={lookupLoading || !searchQuery.trim()}
+            style={{
+              background: '#0f172a',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '8px 16px',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              cursor: lookupLoading || !searchQuery.trim() ? 'not-allowed' : 'pointer',
+              opacity: lookupLoading || !searchQuery.trim() ? 0.6 : 1,
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {lookupLoading ? 'Searching...' : 'Find Order'}
+          </button>
         </div>
+        {lookupMessage && (
+          <p style={{
+            marginTop: '8px',
+            fontSize: '0.875rem',
+            fontWeight: 500,
+            paddingLeft: '4px',
+            color: lookupMessage.includes('Found') ? '#16a34a' : '#ef4444'
+          }}>
+            {lookupMessage}
+          </p>
+        )}
       </div>
       
       {/* Modern Tabs */}
@@ -389,13 +440,15 @@ export default function OrdersPage() {
             )}
           </div>
         )) : (
-          <div style={{ textAlign: 'center', padding: '6rem 2rem', background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
+          <div style={{ textAlign: 'center', padding: '5rem 2rem', background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
             <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
               <Package size={36} color="#94a3b8" />
             </div>
-            <h3 style={{ fontSize: '1.35rem', color: '#0f172a', margin: '0 0 8px 0', fontWeight: 800 }}>No Orders Found</h3>
-            <p style={{ color: '#64748b', fontSize: '1rem', margin: '0 0 24px 0' }}>
-              {searchQuery ? `No orders match "${searchQuery}".` : `It looks like there are no ${filter !== 'All' ? filter.toLowerCase() : ''} orders yet.`}
+            <h3 style={{ fontSize: '1.35rem', color: '#0f172a', margin: '0 0 8px 0', fontWeight: 800 }}>No Orders Displayed</h3>
+            <p style={{ color: '#64748b', fontSize: '1rem', margin: '0 auto 24px auto', maxWidth: '520px', lineHeight: 1.6 }}>
+              {searchQuery 
+                ? `No orders match "${searchQuery}". Try using the "Find Order" button to search directly in our database.`
+                : 'You only see orders associated with your account or device. If you ordered using another device or guest checkout, enter your order ID (e.g. #KHD-1234) or email in the search box above to track it.'}
             </p>
             <Link href="/shop">
               <button style={{ padding: '14px 32px', background: '#0f172a', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '1rem', cursor: 'pointer', fontFamily: 'inherit' }}>

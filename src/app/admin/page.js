@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
-import { LayoutDashboard, ShoppingBag, Users, Settings, LogOut, TrendingUp, DollarSign, PackageOpen, MousePointerClick, Search, Bell, Menu, Trash2, IndianRupee, X, Edit, UploadCloud, ChevronLeft, ChevronRight, MessageSquare, Phone, ExternalLink, CheckCircle, Eye, RefreshCw } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Users, Settings, LogOut, TrendingUp, DollarSign, PackageOpen, MousePointerClick, Search, Bell, Menu, Trash2, IndianRupee, X, Edit, UploadCloud, ChevronLeft, ChevronRight, MessageSquare, Phone, ExternalLink, CheckCircle, Eye, RefreshCw, Mail } from 'lucide-react';
 
 import { useOrders } from '@/context/OrderContext';
 import { useProducts } from '@/context/ProductContext';
@@ -32,11 +32,42 @@ export default function AdminPage() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('orders'); // set orders as default for testing
-  const { orders, updateOrderStatus } = useOrders();
+  const { orders, updateOrderStatus, fetchAllOrders } = useOrders();
   const { products, addProduct, removeProduct, editProduct } = useProducts();
   const { messages, markAsRead, deleteMessage } = useMessages();
   const unreadCount = messages ? messages.filter(m => m.status === 'unread').length : 0;
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Subscribers state
+  const [subscribers, setSubscribers] = useState([]);
+  const [subscribersLoading, setSubscribersLoading] = useState(false);
+
+  const fetchSubscribers = async () => {
+    setSubscribersLoading(true);
+    try {
+      const res = await fetch('/api/subscribers');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.subscribers) setSubscribers(data.subscribers);
+      }
+    } catch (e) {
+      console.error('Failed to fetch subscribers:', e);
+    } finally {
+      setSubscribersLoading(false);
+    }
+  };
+
+  const handleDeleteSubscriber = async (id) => {
+    if (!confirm('Remove this subscriber?')) return;
+    try {
+      const res = await fetch(`/api/subscribers?id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchSubscribers();
+      }
+    } catch (e) {
+      alert('Failed to delete subscriber');
+    }
+  };
 
   const [abandonedCarts, setAbandonedCarts] = useState([]);
   const [abandonedLoading, setAbandonedLoading] = useState(false);
@@ -61,6 +92,8 @@ export default function AdminPage() {
   useEffect(() => {
     if (isAdminLoggedIn) {
       fetchAbandonedCarts();
+      fetchSubscribers();
+      fetchAllOrders();
     }
   }, [isAdminLoggedIn, activeTab]);
 
@@ -92,7 +125,7 @@ export default function AdminPage() {
   };
 
 
-  const [newProd, setNewProd] = useState({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', barcode: '', productNumber: '' });
+  const [newProd, setNewProd] = useState({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', responsibleDesign: '', care: '', barcode: '', productNumber: '' });
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [newCoupon, setNewCoupon] = useState({ code: '', discount: '', maxUses: '' });
   const [tmpColorName, setTmpColorName] = useState('');
@@ -203,6 +236,8 @@ export default function AdminPage() {
       colors: newProd.colors || [],
       sizes: newProd.sizes || [],
       productDetails: newProd.productDetails || '',
+      responsibleDesign: newProd.responsibleDesign || '',
+      care: newProd.care || '',
       barcode: newProd.barcode || '',
       productNumber: newProd.productNumber || ''
     };
@@ -213,7 +248,7 @@ export default function AdminPage() {
     } else {
       await addProduct(productData);
       alert('Product successfully published across global storefront databases!');
-      setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', barcode: '', productNumber: '' });
+      setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', responsibleDesign: '', care: '', barcode: '', productNumber: '' });
       setActiveTab('manageProducts');
     }
   };
@@ -392,53 +427,58 @@ export default function AdminPage() {
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', fontFamily: "var(--font-ui), 'Inter', sans-serif" }} className="animate-fade-in">
       
       {/* Sidebar Navigation */}
-      <aside style={{ width: '260px', background: '#fff', borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', position: 'fixed', height: '100vh', zIndex: 40, overflowY: 'auto', transition: 'transform 0.3s ease', transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(0)' }} className="admin-sidebar">
-        <div style={{ padding: '24px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h2 style={{ fontFamily: "var(--font-primary), 'Manrope', sans-serif", fontWeight: 600, letterSpacing: '-0.025em', fontSize: '1.5rem', m: 0, color: '#0f172a' }}>Khdecotis</h2>
-        </div>
-        <nav style={{ padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+      <aside style={{ width: '280px', background: '#fff', borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', position: 'fixed', height: '100vh', zIndex: 40, overflowY: 'auto', transition: 'transform 0.3s ease', transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(0)' }} className="admin-sidebar">
+        <nav style={{ padding: '24px 14px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
           <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: '12px', marginBottom: '8px' }}>Analytics Core</div>
-          <button onClick={() => setActiveTab('dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'dashboard' ? '#eff6ff' : 'transparent', color: activeTab === 'dashboard' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'dashboard' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
-            <LayoutDashboard size={20} /> Dashboard
+          <button onClick={() => setActiveTab('dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'dashboard' ? '#eff6ff' : 'transparent', color: activeTab === 'dashboard' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'dashboard' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+            <LayoutDashboard size={20} style={{ flexShrink: 0 }} /> Dashboard
           </button>
-          <button onClick={() => setActiveTab('orders')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'orders' ? '#eff6ff' : 'transparent', color: activeTab === 'orders' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'orders' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
-            <ShoppingBag size={20} /> Orders & Fulfillment
+          <button onClick={() => setActiveTab('orders')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'orders' ? '#eff6ff' : 'transparent', color: activeTab === 'orders' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'orders' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+            <ShoppingBag size={20} style={{ flexShrink: 0 }} /> Orders & Fulfillment
           </button>
-          <button onClick={() => { setActiveTab('abandonedCarts'); fetchAbandonedCarts(); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'abandonedCarts' ? '#fff7ed' : 'transparent', color: activeTab === 'abandonedCarts' ? '#ea580c' : '#64748b', border: 'none', fontWeight: activeTab === 'abandonedCarts' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
-            <ShoppingBag size={20} color={activeTab === 'abandonedCarts' ? '#ea580c' : '#64748b'} /> Abandoned Carts
+          <button onClick={() => { setActiveTab('abandonedCarts'); fetchAbandonedCarts(); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'abandonedCarts' ? '#fff7ed' : 'transparent', color: activeTab === 'abandonedCarts' ? '#ea580c' : '#64748b', border: 'none', fontWeight: activeTab === 'abandonedCarts' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+            <ShoppingBag size={20} color={activeTab === 'abandonedCarts' ? '#ea580c' : '#64748b'} style={{ flexShrink: 0 }} /> Abandoned Carts
             {abandonedCarts.filter(c => c.status === 'abandoned').length > 0 && (
-              <span style={{ background: '#f97316', color: '#fff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, marginLeft: 'auto' }}>
+              <span style={{ background: '#f97316', color: '#fff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, marginLeft: 'auto', flexShrink: 0 }}>
                 {abandonedCarts.filter(c => c.status === 'abandoned').length}
               </span>
             )}
           </button>
 
-          <button onClick={() => { setActiveTab('addProduct'); setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', barcode: '', productNumber: '' }); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'addProduct' ? '#eff6ff' : 'transparent', color: activeTab === 'addProduct' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'addProduct' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
-            <PackageOpen size={20} /> Add New Product
+          <button onClick={() => { setActiveTab('addProduct'); setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', responsibleDesign: '', care: '', barcode: '', productNumber: '' }); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'addProduct' ? '#eff6ff' : 'transparent', color: activeTab === 'addProduct' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'addProduct' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+            <PackageOpen size={20} style={{ flexShrink: 0 }} /> Add New Product
           </button>
-          <button onClick={() => setActiveTab('manageProducts')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'manageProducts' ? '#eff6ff' : 'transparent', color: activeTab === 'manageProducts' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'manageProducts' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
-            <Trash2 size={20} /> Manage Products
+          <button onClick={() => setActiveTab('manageProducts')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'manageProducts' ? '#eff6ff' : 'transparent', color: activeTab === 'manageProducts' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'manageProducts' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+            <Trash2 size={20} style={{ flexShrink: 0 }} /> Manage Products
           </button>
-          <button onClick={() => setActiveTab('messages')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'messages' ? '#eff6ff' : 'transparent', color: activeTab === 'messages' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'messages' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
-            <Bell size={20} /> Customer Messages
-            {unreadCount > 0 && <span style={{ background: '#ef4444', color: '#fff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, marginLeft: 'auto' }}>{unreadCount}</span>}
+          <button onClick={() => setActiveTab('messages')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'messages' ? '#eff6ff' : 'transparent', color: activeTab === 'messages' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'messages' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+            <MessageSquare size={20} style={{ flexShrink: 0 }} /> Customer Messages
+            {unreadCount > 0 && <span style={{ background: '#ef4444', color: '#fff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, marginLeft: 'auto', flexShrink: 0 }}>{unreadCount}</span>}
           </button>
-          <button onClick={() => setActiveTab('coupons')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'coupons' ? '#eff6ff' : 'transparent', color: activeTab === 'coupons' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'coupons' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
-            <DollarSign size={20} /> Promo Coupons
+          <button onClick={() => setActiveTab('coupons')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'coupons' ? '#eff6ff' : 'transparent', color: activeTab === 'coupons' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'coupons' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+            <DollarSign size={20} style={{ flexShrink: 0 }} /> Promo Coupons
+          </button>
+          <button onClick={() => { setActiveTab('subscribers'); fetchSubscribers(); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'subscribers' ? '#f0fdf4' : 'transparent', color: activeTab === 'subscribers' ? '#16a34a' : '#64748b', border: 'none', fontWeight: activeTab === 'subscribers' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+            <Mail size={20} color={activeTab === 'subscribers' ? '#16a34a' : '#64748b'} style={{ flexShrink: 0 }} /> Newsletter Subscribers
+            {subscribers.length > 0 && (
+              <span style={{ background: '#16a34a', color: '#fff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, marginLeft: 'auto', flexShrink: 0 }}>
+                {subscribers.length}
+              </span>
+            )}
           </button>
           <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <button onClick={() => setActiveTab('settings')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: activeTab === 'settings' ? '#eff6ff' : 'transparent', color: activeTab === 'settings' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'settings' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
-              <Settings size={20} /> Site Configuration
+            <button onClick={() => setActiveTab('settings')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'settings' ? '#eff6ff' : 'transparent', color: activeTab === 'settings' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'settings' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+              <Settings size={20} style={{ flexShrink: 0 }} /> Site Configuration
             </button>
-             <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', background: '#fef2f2', color: '#ef4444', border: 'none', fontWeight: 500, cursor: 'pointer', textAlign: 'left' }}>
-              <LogOut size={20} /> Terminate Session
+             <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: '#fef2f2', color: '#ef4444', border: 'none', fontWeight: 500, cursor: 'pointer', textAlign: 'left', whiteSpace: 'nowrap' }}>
+              <LogOut size={20} style={{ flexShrink: 0 }} /> Terminate Session
             </button>
           </div>
         </nav>
       </aside>
 
       {/* Main Content Area */}
-      <main style={{ flex: 1, marginLeft: '260px', display: 'flex', flexDirection: 'column', minHeight: '100vh', maxWidth: '100%', overflowX: 'hidden' }} className="admin-main">
+      <main style={{ flex: 1, marginLeft: '280px', display: 'flex', flexDirection: 'column', minHeight: '100vh', maxWidth: '100%', overflowX: 'hidden' }} className="admin-main">
         {/* Top Header */}
         <header style={{ height: '72px', background: '#fff', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 32px', position: 'sticky', top: 0, zIndex: 30 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
@@ -652,10 +692,29 @@ export default function AdminPage() {
 
         {/* Add Product Content */}
         {activeTab === 'addProduct' && (
-          <div style={{ padding: '32px', maxWidth: '800px', width: '100%' }}>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Publish New Product</h2>
-            <p style={{ color: '#64748b', marginBottom: '32px' }}>Upload new inventory items directly to the storefront catalog without developer intervention.</p>
-            <form onSubmit={handlePublish} style={{ background: '#fff', padding: '32px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ padding: '32px', maxWidth: '1600px', width: '100%', margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                  {newProd._id || newProd.id ? `Edit Product: ${newProd.title || ''}` : 'Publish New Product'}
+                </h2>
+                <p style={{ color: '#64748b', margin: '4px 0 0 0' }}>
+                  {newProd._id || newProd.id ? 'Modify specifications, pricing, inventory stock, images, and product page accordions.' : 'Upload new inventory items directly to the storefront catalog without developer intervention.'}
+                </p>
+              </div>
+              {(newProd._id || newProd.id) && (
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', responsibleDesign: '', care: '', barcode: '', productNumber: '' });
+                  }}
+                  style={{ padding: '10px 18px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, color: '#475569', fontSize: '0.9rem' }}
+                >
+                  + Switch to New Product
+                </button>
+              )}
+            </div>
+            <form onSubmit={handlePublish} style={{ background: '#fff', padding: '36px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '24px' }}>
               
               {/* BARCODE / UPC LOOKUP */}
               <div style={{ background: '#f8fafc', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
@@ -689,41 +748,43 @@ export default function AdminPage() {
 
               <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '8px 0' }} />
 
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Product Title</label>
-                <input id="product-title-input" type="text" value={newProd.title} onChange={e => setNewProd({...newProd, title: e.target.value})} placeholder="e.g. Premium Linen Bedsheet" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem' }} />
-              </div>
-              {newProd.productNumber && (
+              <div style={{ display: 'grid', gridTemplateColumns: newProd.productNumber ? '2fr 1fr 1fr' : '2fr 1fr', gap: '20px' }}>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Product Number</label>
-                  <input type="text" value={newProd.productNumber} readOnly style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem', background: '#f1f5f9', color: '#475569', cursor: 'not-allowed' }} />
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Product Title</label>
+                  <input id="product-title-input" type="text" value={newProd.title} onChange={e => setNewProd({...newProd, title: e.target.value})} placeholder="e.g. Premium Linen Bedsheet" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem', boxSizing: 'border-box' }} />
                 </div>
-              )}
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Barcode / UPC</label>
-                <input type="text" value={newProd.barcode || ''} onChange={e => setNewProd({...newProd, barcode: e.target.value})} placeholder="e.g. 4011200296908" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem' }} />
+                {newProd.productNumber && (
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Product Number</label>
+                    <input type="text" value={newProd.productNumber} readOnly style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem', background: '#f1f5f9', color: '#475569', cursor: 'not-allowed', boxSizing: 'border-box' }} />
+                  </div>
+                )}
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Barcode / UPC</label>
+                  <input type="text" value={newProd.barcode || ''} onChange={e => setNewProd({...newProd, barcode: e.target.value})} placeholder="e.g. 4011200296908" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem', boxSizing: 'border-box' }} />
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: '20px' }}>
-                <div style={{ flex: 1 }}>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+                <div>
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Selling Price (₹)</label>
-                  <input type="number" value={newProd.price || ''} onChange={e => setNewProd({...newProd, price: e.target.value})} placeholder="1499" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem' }} />
+                  <input type="number" value={newProd.price || ''} onChange={e => setNewProd({...newProd, price: e.target.value})} placeholder="1499" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem', boxSizing: 'border-box' }} />
                 </div>
-                <div style={{ flex: 1 }}>
+                <div>
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>MRP / Original Price (₹)</label>
-                  <input type="number" value={newProd.oldPrice || ''} onChange={e => setNewProd({...newProd, oldPrice: e.target.value})} placeholder="2999" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem' }} />
+                  <input type="number" value={newProd.oldPrice || ''} onChange={e => setNewProd({...newProd, oldPrice: e.target.value})} placeholder="2999" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem', boxSizing: 'border-box' }} />
                 </div>
-                <div style={{ flex: 1 }}>
+                <div>
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Stock Quantity</label>
-                  <input type="number" value={newProd.stock !== undefined ? newProd.stock : ''} onChange={e => setNewProd({...newProd, stock: e.target.value})} placeholder="10" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem' }} />
+                  <input type="number" value={newProd.stock !== undefined ? newProd.stock : ''} onChange={e => setNewProd({...newProd, stock: e.target.value})} placeholder="10" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem', boxSizing: 'border-box' }} />
                 </div>
-              </div>
-              <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-                <div style={{ flex: 1, minWidth: '200px' }}>
+                <div>
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Primary Category Placement</label>
-                  <select value={newProd.category} onChange={e => setNewProd({...newProd, category: e.target.value})} style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem', background: '#fff' }}>
+                  <select value={newProd.category} onChange={e => setNewProd({...newProd, category: e.target.value})} style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem', background: '#fff', boxSizing: 'border-box' }}>
                     <option value="Bedsheets">Bedsheets</option><option value="Comforter">Comforter</option><option value="Blankets">Blankets</option><option value="Dohars">Dohars</option><option value="Mattress">Mattress</option><option value="Cushions">Cushions</option><option value="Cushion Covers">Cushion Covers</option><option value="Sofa Covers">Sofa Covers</option><option value="Carpets">Carpets</option><option value="Runners">Runners</option><option value="Curtains">Curtains</option><option value="Roller Curtains">Roller Curtains</option><option value="Zebra Curtains">Zebra Curtains</option><option value="Mosquito Net">Mosquito Net</option><option value="Pillows">Pillows</option><option value="Door Mats">Door Mats</option><option value="Hand Towels">Hand Towels</option>
                   </select>
                 </div>
+              </div>
                 <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginTop: '14px', flexWrap: 'wrap' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, color: '#334155', fontSize: '0.95rem', cursor: 'pointer' }}>
                     <input type="checkbox" checked={newProd.isDealOfDay} onChange={e => setNewProd({...newProd, isDealOfDay: e.target.checked})} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
@@ -754,7 +815,6 @@ export default function AdminPage() {
                     In Stock
                   </label>
                 </div>
-              </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Product Media (Images & Videos)</label>
                 {newProd.images && newProd.images.length > 0 && (
@@ -890,9 +950,47 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Accordion Details (Product Details Panel)</label>
-                <textarea rows={3} value={newProd.productDetails || ''} onChange={e => setNewProd({...newProd, productDetails: e.target.value})} placeholder="Detailed marketing copy for the Product Details accordion dropdown..." style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem', resize: 'vertical' }}></textarea>
+              {/* Product Page Accordion Sections */}
+              <div style={{ background: '#f8fafc', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', margin: '0 0 4px 0' }}>Product Page Accordions</h3>
+                  <p style={{ color: '#64748b', fontSize: '0.85rem', margin: 0 }}>Provide custom information for the expandable accordion panels displayed on the product page.</p>
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginTop: '4px' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Product Details</label>
+                    <textarea 
+                      rows={5} 
+                      value={newProd.productDetails || ''} 
+                      onChange={e => setNewProd({...newProd, productDetails: e.target.value})} 
+                      placeholder="Detailed specifications, fabric, weave, thread count, materials, dimensions..." 
+                      style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.92rem', background: '#fff', resize: 'vertical', boxSizing: 'border-box' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Responsible Design</label>
+                    <textarea 
+                      rows={5} 
+                      value={newProd.responsibleDesign || ''} 
+                      onChange={e => setNewProd({...newProd, responsibleDesign: e.target.value})} 
+                      placeholder="Eco-friendly packaging, sustainable sourcing, ethical manufacturing standards..." 
+                      style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.92rem', background: '#fff', resize: 'vertical', boxSizing: 'border-box' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Care Instructions</label>
+                    <textarea 
+                      rows={5} 
+                      value={newProd.care || ''} 
+                      onChange={e => setNewProd({...newProd, care: e.target.value})} 
+                      placeholder="Washing guide, drying, ironing instructions (e.g. Machine wash cold, do not bleach)..." 
+                      style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.92rem', background: '#fff', resize: 'vertical', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
               </div>
               <button type="submit" style={{ background: '#2563eb', color: '#fff', padding: '14px', borderRadius: '8px', fontWeight: 600, fontSize: '1rem', border: 'none', cursor: 'pointer', marginTop: '10px' }}>
                 {newProd._id || newProd.id ? 'Save Product Changes' : 'Publish to Storefront'}
@@ -949,7 +1047,7 @@ export default function AdminPage() {
                         <td style={{ padding: '16px 24px', fontSize: '0.95rem', fontWeight: 600, color: '#0f172a' }}>₹{product.price || product.currentPrice}</td>
                         <td style={{ padding: '16px 24px', textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                            <button onClick={() => { setNewProd({...product, images: product.images || [], colors: product.colors || [], sizes: product.sizes || [], productDetails: product.productDetails || '', oldPrice: product.oldPrice || '', isDealOfDay: !!product.isDealOfDay, isNewArrival: !!product.isNewArrival, isBestseller: !!product.isBestseller, inStock: product.inStock !== false, stock: product.stock !== undefined ? product.stock : 10, description: product.description || '', category: product.category || 'Bedsheets', barcode: product.barcode || '', productNumber: product.productNumber || ''}); setActiveTab('addProduct'); }} style={{ background: '#eff6ff', color: '#3b82f6', border: '1px solid #bfdbfe', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>
+                            <button onClick={() => { setNewProd({...product, images: product.images || [], colors: product.colors || [], sizes: product.sizes || [], productDetails: product.productDetails || '', responsibleDesign: product.responsibleDesign || '', care: product.care || '', oldPrice: product.oldPrice || '', isDealOfDay: !!product.isDealOfDay, isNewArrival: !!product.isNewArrival, isBestseller: !!product.isBestseller, inStock: product.inStock !== false, stock: product.stock !== undefined ? product.stock : 10, description: product.description || '', category: product.category || 'Bedsheets', barcode: product.barcode || '', productNumber: product.productNumber || ''}); setActiveTab('addProduct'); }} style={{ background: '#eff6ff', color: '#3b82f6', border: '1px solid #bfdbfe', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>
                               <Edit size={16} /> Edit
                             </button>
                             <button onClick={() => { if(confirm('Permanently delete this product from the global database?')) removeProduct(product._id || product.id); }} style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: 'background 0.2s' }}>
@@ -1081,13 +1179,101 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Other Tabs Fallback */}
-        {!['dashboard', 'addProduct', 'manageProducts', 'messages', 'coupons', 'settings', 'abandonedCarts'].includes(activeTab) && (
-          <div style={{ padding: '32px', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-            <div style={{ textAlign: 'center', color: '#64748b' }}>
-              <PackageOpen size={48} style={{ opacity: 0.3, marginBottom: '16px' }} />
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: '#0f172a', marginBottom: '8px' }}>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Module Offline</h2>
-              <p>This section is currently awaiting database propagation.</p>
+
+
+        {/* Newsletter Subscribers Content */}
+        {activeTab === 'subscribers' && (
+          <div style={{ padding: '32px', maxWidth: '1600px', width: '100%', margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>Newsletter Subscribers</h2>
+                <p style={{ color: '#64748b', margin: '4px 0 0 0' }}>Manage email subscribers collected from the footer newsletter form.</p>
+              </div>
+              <button
+                onClick={fetchSubscribers}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, color: '#475569' }}
+              >
+                <RefreshCw size={16} className={subscribersLoading ? 'spin' : ''} /> Refresh
+              </button>
+            </div>
+
+            {/* Metrics */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+              <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>Total Subscribers</span>
+                <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#16a34a', margin: '8px 0 0 0' }}>
+                  {subscribers.filter(s => s.status === 'active').length}
+                </h3>
+              </div>
+              <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>Unsubscribed</span>
+                <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#94a3b8', margin: '8px 0 0 0' }}>
+                  {subscribers.filter(s => s.status === 'unsubscribed').length}
+                </h3>
+              </div>
+              <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>Total All Time</span>
+                <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#0f172a', margin: '8px 0 0 0' }}>
+                  {subscribers.length}
+                </h3>
+              </div>
+            </div>
+
+            {/* Subscribers Table */}
+            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ background: '#f8fafc' }}>
+                      <th style={{ padding: '16px 24px', fontSize: '0.85rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Email Address</th>
+                      <th style={{ padding: '16px 24px', fontSize: '0.85rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Status</th>
+                      <th style={{ padding: '16px 24px', fontSize: '0.85rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Subscribed On</th>
+                      <th style={{ padding: '16px 24px', fontSize: '0.85rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {subscribers.length > 0 ? subscribers
+                      .filter(sub => {
+                        if (!searchQuery) return true;
+                        return sub.email.toLowerCase().includes(searchQuery.toLowerCase());
+                      })
+                      .map((sub, idx) => (
+                      <tr key={sub._id} style={{ borderTop: idx !== 0 ? '1px solid #e2e8f0' : 'none', transition: 'background-color 0.2s' }}>
+                        <td style={{ padding: '16px 24px', fontSize: '0.95rem', color: '#0f172a', fontWeight: 600 }}>
+                          {sub.email}
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <span style={{
+                            padding: '4px 10px', borderRadius: '12px', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase',
+                            background: sub.status === 'active' ? '#f0fdf4' : '#f1f5f9',
+                            color: sub.status === 'active' ? '#16a34a' : '#64748b',
+                            border: `1px solid ${sub.status === 'active' ? '#bbf7d0' : '#e2e8f0'}`
+                          }}>
+                            {sub.status}
+                          </span>
+                        </td>
+                        <td style={{ padding: '16px 24px', fontSize: '0.9rem', color: '#64748b' }}>
+                          {new Date(sub.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </td>
+                        <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                          <button
+                            onClick={() => handleDeleteSubscriber(sub._id)}
+                            style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', padding: '6px 12px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                          >
+                            <Trash2 size={14} /> Remove
+                          </button>
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td colSpan="4" style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                          No subscribers yet. Subscribers will appear here once users sign up via the newsletter form in the footer.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}

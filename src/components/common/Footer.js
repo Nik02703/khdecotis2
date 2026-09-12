@@ -1,13 +1,52 @@
+'use client';
+import { useState } from 'react';
 import Link from 'next/link';
 import styles from './Footer.module.css';
 
 export default function Footer() {
+  const [email, setEmail] = useState('');
+  const [subStatus, setSubStatus] = useState(null); // 'loading' | 'success' | 'error'
+  const [subMessage, setSubMessage] = useState('');
+
+  const handleSubscribe = async () => {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setSubStatus('error');
+      setSubMessage('Please enter a valid email address.');
+      return;
+    }
+
+    setSubStatus('loading');
+    setSubMessage('');
+
+    try {
+      const res = await fetch('/api/subscribers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setSubStatus('success');
+        setSubMessage(data.message || 'Successfully subscribed!');
+        setEmail('');
+      } else {
+        setSubStatus('error');
+        setSubMessage(data.error || 'Something went wrong.');
+      }
+    } catch (err) {
+      console.error('Subscribe error:', err);
+      setSubStatus('error');
+      setSubMessage('Network error. Please try again.');
+    }
+  };
+
   return (
     <footer className={styles.footer}>
       <div className={`container ${styles.grid}`}>
         <div className={styles.col}>
           <div style={{ marginBottom: '1rem', background: 'rgba(255,255,255,0.9)', display: 'inline-block', padding: '0.5rem', borderRadius: '8px' }}>
-            <img src="/logo_transparent.png" alt="OES" style={{ height: '60px', width: 'auto', objectFit: 'contain' }} />
+            <img src="/logo_transparent.png" alt="KH Decotis" style={{ height: '60px', width: 'auto', objectFit: 'contain' }} suppressHydrationWarning />
           </div>
           <p style={{ color: '#d1d5db', fontSize: '0.9rem', lineHeight: '1.6' }}>
             Elevate your home with our premium, brightly styled collections of everyday essentials and home decor.
@@ -39,9 +78,34 @@ export default function Footer() {
           <h3>Newsletter</h3>
           <p style={{ color: '#d1d5db', fontSize: '0.9rem' }}>Subscribe for vibrant new arrivals and deals.</p>
           <div className={styles.newsletter}>
-            <input type="email" placeholder="Enter your email" className={styles.input} />
-            <button className={styles.btn}>Subscribe</button>
+            <input 
+              type="email" 
+              placeholder="Enter your email" 
+              className={styles.input} 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSubscribe(); }}
+              disabled={subStatus === 'loading'}
+            />
+            <button 
+              className={styles.btn} 
+              onClick={handleSubscribe}
+              disabled={subStatus === 'loading'}
+              style={subStatus === 'loading' ? { opacity: 0.7, cursor: 'not-allowed' } : {}}
+            >
+              {subStatus === 'loading' ? 'Subscribing...' : 'Subscribe'}
+            </button>
           </div>
+          {subMessage && (
+            <p style={{ 
+              marginTop: '0.5rem', 
+              fontSize: '0.85rem', 
+              fontWeight: 500,
+              color: subStatus === 'success' ? '#86efac' : '#fca5a5' 
+            }}>
+              {subMessage}
+            </p>
+          )}
         </div>
       </div>
       <div className="container">

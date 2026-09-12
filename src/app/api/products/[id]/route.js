@@ -7,7 +7,25 @@ export async function GET(request, { params }) {
     await dbConnect();
     const resolvedParams = await params;
     const { id } = resolvedParams || {};
-    const product = await Product.findById(id);
+    const cleanId = decodeURIComponent(id || '').trim();
+    let product = null;
+
+    if (cleanId.length === 24 && /^[0-9a-fA-F]{24}$/.test(cleanId)) {
+      product = await Product.findById(cleanId);
+    }
+
+    if (!product) {
+      product = await Product.findOne({ slug: cleanId });
+    }
+
+    if (!product) {
+      const words = cleanId.split('-').filter(Boolean);
+      if (words.length > 0) {
+        const regexPattern = words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('.*');
+        product = await Product.findOne({ title: { $regex: new RegExp(`^.*${regexPattern}.*$`, 'i') } });
+      }
+    }
+
     if (!product) {
       return NextResponse.json({ success: false, error: 'Product not found' }, { status: 404 });
     }

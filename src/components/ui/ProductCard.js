@@ -1,128 +1,166 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
-import { Heart, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import styles from './ProductCard.module.css';
-
-import { getDisplayPrice, getOldPrice, getDiscountText } from '@/lib/priceUtils';
+import { getDisplayPrice, getOldPrice } from '@/lib/priceUtils';
+import { getProductUrl } from '@/lib/slugUtils';
 
 export default function ProductCard({ product }) {
   const { cartItems, addToCart, initiateBuyNow } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const [isHovered, setIsHovered] = useState(false);
-  const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const [addedNotice, setAddedNotice] = useState(false);
 
-  const images = product?.images?.length > 1
-    ? product.images 
-    : [
-        product?.images?.[0] || product?.image || 'https://via.placeholder.com/400x400?text=Product+Image',
-        product?.images?.[1] || product?.images?.[0] || product?.image || 'https://via.placeholder.com/400x400?text=Hover+Image'
-      ].filter(Boolean);
+  const baseImages = (product?.images?.length ? product.images : [
+    product?.image || '/bedsheets.png',
+    'https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800&q=80'
+  ]).filter(Boolean);
 
   const encodeImg = (url) => {
     if (!url) return '';
-    if (url.startsWith('http') || url.startsWith('data:')) return url;
+    if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('/')) return url;
     return url.split('/').map(p => encodeURIComponent(p)).join('/');
   };
 
-  const rawCurrentImg = images[activeImageIdx % images.length];
-  const currentImg = encodeImg(rawCurrentImg);
+  const firstImg = encodeImg(baseImages[0] || '/bedsheets.png');
+  const secondImg = baseImages[1] ? encodeImg(baseImages[1]) : '';
+  const hasSecondImg = Boolean(secondImg && secondImg !== firstImg);
 
-  const nextImg = (e) => { e.preventDefault(); e.stopPropagation(); setActiveImageIdx(i => i + 1); };
-  const prevImg = (e) => { e.preventDefault(); e.stopPropagation(); setActiveImageIdx(i => (i - 1 + images.length) % images.length); };
-  
   const currentPrice = getDisplayPrice(product);
   const oldPrice = getOldPrice(product, currentPrice);
-  const discountStr = getDiscountText(product, currentPrice, oldPrice);
+
+  const inWishlist = isInWishlist(product?._id || product?.id);
+  const inCart = cartItems?.some(item => (item._id || item.id) === (product?._id || product?.id));
+  const isOutOfStock = product?.inStock === false || (product?.stock !== undefined && product?.stock <= 0);
 
   return (
-    <div className={styles.card}>
-      <div 
-        className={styles.imageWrapper}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => { setIsHovered(false); setActiveImageIdx(0); }}
-        style={{ position: 'relative' }}
-      >
+    <div 
+      className={styles.card}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* 1. IMAGE CONTAINER WITH HOVER 2ND IMAGE & WISHLIST HEART */}
+      <div className={styles.imageWrapper}>
         <button 
-          onClick={(e) => { e.preventDefault(); toggleWishlist(product); }}
+          onClick={(e) => { 
+            e.preventDefault(); 
+            e.stopPropagation(); 
+            toggleWishlist(product); 
+          }}
           aria-label="Toggle Wishlist"
-          style={{ position: 'absolute', top: '12px', right: '12px', background: 'transparent', border: 'none', cursor: 'pointer', zIndex: 10 }}
+          className={styles.heartBtn}
         >
           <Heart 
-            size={24} 
+            size={18} 
             strokeWidth={1.5} 
-            fill={isInWishlist(product._id || product.id) ? '#ef4444' : 'transparent'} 
-            color={isInWishlist(product._id || product.id) ? '#ef4444' : '#525252'} 
+            fill={inWishlist ? '#ef4444' : 'transparent'} 
+            color={inWishlist ? '#ef4444' : '#4b5563'} 
           />
         </button>
 
-        {isHovered && images.length > 1 && (
-          <>
-            <button onClick={prevImg} style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', background: '#fff', border: 'none', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
-              <ChevronLeft size={20} color="#000" />
-            </button>
-            <button onClick={nextImg} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: '#fff', border: 'none', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
-              <ChevronRight size={20} color="#000" />
-            </button>
-          </>
-        )}
-
-        <Link href={`/product/${product._id || product.id}`} style={{ display: 'block', height: '100%' }}>
-          {currentImg && (currentImg.startsWith('data:video') || currentImg.endsWith('.mp4')) ? (
-            <video src={currentImg} className={styles.image} style={{ transition: 'opacity 0.3s ease-in-out', objectFit: 'cover', width: '100%', height: '100%' }} muted loop autoPlay playsInline />
+        <Link href={getProductUrl(product)} className={styles.imageLink}>
+          {firstImg && (firstImg.startsWith('data:video') || firstImg.endsWith('.mp4')) ? (
+            <video 
+              src={firstImg} 
+              className={styles.image} 
+              muted 
+              loop 
+              autoPlay 
+              playsInline 
+            />
           ) : (
-            <img src={currentImg} alt={product.title} className={styles.image} loading="lazy" style={{ transition: 'opacity 0.3s ease-in-out' }} />
+            <div className={styles.imageContainer}>
+              <img 
+                src={firstImg} 
+                alt={product?.title || 'Product'} 
+                className={`${styles.image} ${hasSecondImg && isHovered ? styles.imageHidden : styles.imageVisible}`} 
+                loading="lazy" 
+              />
+              {hasSecondImg && (
+                <img 
+                  src={secondImg} 
+                  alt={`${product?.title || 'Product'} alternate view`} 
+                  className={`${styles.hoverImage} ${isHovered ? styles.hoverImageVisible : styles.hoverImageHidden}`} 
+                  loading="lazy" 
+                />
+              )}
+            </div>
           )}
         </Link>
       </div>
+
+      {/* 2. CARD CONTENT: TITLE, PRICING & ACTION BUTTONS */}
       <div className={styles.content}>
-        <Link href={`/product/${product._id || product.id}`} style={{ textDecoration: 'none' }}>
-          <h3 className={styles.title}>{product.title}</h3>
+        {/* Product Title */}
+        <Link href={getProductUrl(product)} className={styles.titleLink}>
+          <h3 className={styles.title} title={product?.title}>
+            {product?.title || 'Home Decor Essential'}
+          </h3>
         </Link>
-        <p className={styles.category}>{product.category}</p>
+
+        {/* Pricing */}
         <div className={styles.priceRow}>
           <span className={styles.currentPrice}>₹{currentPrice}</span>
-          {oldPrice > currentPrice && <span className={styles.oldPrice}>₹{oldPrice}</span>}
-          {discountStr && <span className={styles.discountBadge}>{discountStr}</span>}
-        </div>
-        
-        <div className={styles.buttonsWrapper}>
-          {product?.inStock === false || (product?.stock !== undefined && product?.stock <= 0) ? (
-            <button 
-              disabled
-              style={{ width: '100%', background: '#d4d4d4', color: '#737373', fontSize: '0.85rem', fontWeight: 800, padding: '10px 4px', border: 'none', borderRadius: '4px', cursor: 'not-allowed', letterSpacing: '1px', textTransform: 'uppercase' }}
-            >
-              OUT OF STOCK
-            </button>
-          ) : (
-            <>
-              {cartItems?.some(item => (item._id || item.id) === (product._id || product.id)) ? (
-                <Link href="/cart" style={{ textDecoration: 'none', width: '100%' }}>
-                  <button className={styles.addToCartBtn} style={{ background: '#3b2d6e', color: '#fff', width: '100%', padding: '10px 4px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
-                    Go To Cart
-                  </button>
-                </Link>
-              ) : (
-                <button 
-                  className={styles.addToCartBtn} 
-                  onClick={(e) => { e.preventDefault(); addToCart(product); alert(`${product.title} added to cart!`); }}
-                  style={{ width: '100%', padding: '10px 4px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
-                >
-                  Add To Cart
-                </button>
-              )}
-              <button 
-                className={styles.addToCartBtn} 
-                onClick={(e) => { e.preventDefault(); initiateBuyNow(product); window.location.href = '/checkout'; }}
-                style={{ width: '100%', background: '#3b2d6e', color: '#fff', padding: '10px 4px', fontSize: '0.85rem', border: '1px solid #3b2d6e', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
-              >
-                Buy Now
-              </button>
-            </>
+          {oldPrice > currentPrice && (
+            <span className={styles.oldPrice}>₹{oldPrice}</span>
           )}
         </div>
+
+        {/* Action Buttons: Add to Cart & Buy Now */}
+        {isOutOfStock ? (
+          <button 
+            disabled 
+            className={styles.outOfStockBtn}
+          >
+            OUT OF STOCK
+          </button>
+        ) : (
+          <div className={styles.buttonsWrapper}>
+            {inCart ? (
+              <button 
+                type="button"
+                className={styles.addToCartBtn}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.location.href = '/cart';
+                }}
+              >
+                Go to Cart
+              </button>
+            ) : (
+              <button 
+                type="button"
+                className={styles.addToCartBtn}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  addToCart(product);
+                  setAddedNotice(true);
+                  setTimeout(() => setAddedNotice(false), 1800);
+                }}
+              >
+                {addedNotice ? '✓ Added' : 'Add To Cart'}
+              </button>
+            )}
+
+            <button 
+              type="button"
+              className={styles.buyNowBtn}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                initiateBuyNow(product);
+                window.location.href = '/checkout';
+              }}
+            >
+              Buy Now
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

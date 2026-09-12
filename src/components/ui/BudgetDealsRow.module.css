@@ -1,0 +1,295 @@
+.section {
+  padding: 3rem 0 4rem 0;
+  background-color: transparent;
+  position: relative;
+  width: 100%;
+}
+
+/* 4-Card Grid - Completely visible at once with no scroll buttons */
+.dealsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Base Deal Card - Made Bigger (510px height) */
+.dealCard {
+  width: 100%;
+  min-width: 0;
+  height: 510px;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  text-decoration: none;
+  cursor: pointer;
+  padding: 20px 16px 16px 16px;
+  box-sizing: border-box;
+}
+
+.dealCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.15);
+}
+
+/* Card Themes */
+.cardBedsheets {
+  background-color: #eae1d5;
+}
+
+.cardPopularDeals {
+  background-color: #f75555;
+  cursor: default;
+}
+
+.cardPillows {
+  background-color: #0060aa;
+}
+
+.cardDohars {
+  background-color: #23140c;
+}
+
+/* Background Images */
+.cardBgImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  transition: transform 0.35s ease;
+}
+
+.dealCard:hover .cardBgImage {
+  transform: scale(1.03);
+}
+
+/* Card Header */
+.cardHeader {
+  z-index: 3;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.priceHeading {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: clamp(1.35rem, 1.65vw, 1.85rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+
+.subHeading {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: clamp(0.85rem, 0.95vw, 1.05rem);
+  font-weight: 500;
+  line-height: 1.25;
+  margin: 4px 0 0 0;
+}
+
+.textDark {
+  color: #0f1111 !important;
+}
+
+.textWhite {
+  color: #ffffff !important;
+}
+
+/* Two-column Tagline: Top brands | Latest trends */
+.dualColTagline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: clamp(0.62rem, 0.7vw, 0.75rem);
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.dualCol {
+  display: flex;
+  flex-direction: column;
+}
+
+.colDividerDark {
+  width: 1px;
+  height: 22px;
+  background-color: #0f1111;
+  opacity: 0.45;
+}
+
+.colDividerWhite {
+  width: 1px;
+  height: 22px;
+  background-color: #ffffff;
+  opacity: 0.45;
+}
+
+/* Card 2: 2x2 Grid - Enlarged */
+.grid2x2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 12px 0;
+  z-index: 3;
+  position: relative;
+  flex: 1;
+}
+
+.gridItem {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-decoration: none;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.08);
+  transition: transform 0.15s ease;
+  overflow: hidden;
+  height: 175px;
+  box-sizing: border-box;
+}
+
+.gridItem:hover {
+  transform: scale(1.03);
+}
+
+.gridImgWrap {
+  width: 100%;
+  height: 105px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.gridItemImg {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.gridItemPriceRow {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  margin-top: 4px;
+}
+
+.priceCurrentWrap {
+  display: flex;
+  align-items: flex-start;
+  color: #0f1111;
+  line-height: 1;
+  font-weight: 800;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.currencySymbol {
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-right: 1px;
+  margin-top: 1px;
+}
+
+.priceMain {
+  font-size: 1.02rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.priceSup {
+  font-size: 0.62rem;
+  font-weight: 700;
+  top: -0.2em;
+}
+
+.gridItemOldPrice {
+  font-size: 0.68rem;
+  color: #565959;
+  text-decoration: line-through;
+  display: block;
+  margin-top: 1px;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Card Bottom & Clean Action CTA */
+.cardBottom {
+  z-index: 3;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.actionCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  box-sizing: border-box;
+  transition: all 0.22s ease;
+  backdrop-filter: blur(8px);
+}
+
+.actionCtaDark {
+  background: rgba(255, 255, 255, 0.88);
+  color: #111827;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.actionCtaWhite {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.dealCard:hover .actionCtaDark {
+  background: #ffffff;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.dealCard:hover .actionCtaWhite {
+  background: rgba(255, 255, 255, 0.32);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.arrowIcon {
+  font-size: 0.95rem;
+  transition: transform 0.2s ease;
+}
+
+.dealCard:hover .arrowIcon {
+  transform: translateX(4px);
+}
+
+@media (max-width: 1024px) {
+  .dealsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .dealsGrid {
+    grid-template-columns: 1fr;
+  }
+}

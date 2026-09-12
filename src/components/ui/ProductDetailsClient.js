@@ -9,10 +9,16 @@ import { useProducts } from '@/context/ProductContext';
 
 
 import { getDisplayPrice, getOldPrice, getDiscountText, getDefaultSizeName } from '@/lib/priceUtils';
+import { slugify } from '@/lib/slugUtils';
 
 export default function ProductDetailsClient({ product: serverProduct, productId, similarProducts = [] }) {
   const { products } = useProducts();
-  const clientProduct = products.find(p => (p._id || p.id) === productId);
+  const cleanId = decodeURIComponent(productId || '').trim();
+  const clientProduct = products.find(p => 
+    (p._id || p.id) === cleanId || 
+    slugify(p.title) === cleanId || 
+    p.slug === cleanId
+  );
   const product = clientProduct || serverProduct || null;
 
   // Build images array: merge product images + any per-color images that aren't already in the array
@@ -41,8 +47,21 @@ export default function ProductDetailsClient({ product: serverProduct, productId
   const [accordion, setAccordion] = useState({ details: false, specs: false });
   const [pincode, setPincode] = useState('');
   const [pincodeResult, setPincodeResult] = useState(null);
+  const [shareUrl, setShareUrl] = useState('');
   const { cartItems, addToCart, initiateBuyNow } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setShareUrl(window.location.href);
+    }
+  }, [product]);
+
+  const skuCode = product?.productNumber || product?.barcode || (product?._id ? `KHD-${String(product._id).slice(-5).toUpperCase()}` : 'KHD-001');
+  const rawCategory = product?.category || 'Bedsheets';
+  const categoryName = rawCategory.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  const categorySlug = slugify(rawCategory);
+  const encodedShareUrl = encodeURIComponent(shareUrl || (typeof window !== 'undefined' ? window.location.href : ''));
 
   // Derive matching variant safely with optional chaining
   const selectedVariant = product?.variants?.find(
@@ -102,7 +121,7 @@ export default function ProductDetailsClient({ product: serverProduct, productId
     <div suppressHydrationWarning style={{ fontFamily: "var(--font-ui), 'Inter', sans-serif", background: '#fff' }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', alignItems: 'start', borderBottom: '1px solid #e5e5e5' }}>
       
-        <div style={{ position: 'sticky', top: '100px', width: '100%', background: '#f5f5f5', overflow: 'hidden', display: 'flex', flexDirection: 'column', zIndex: 10 }}>
+        <div style={{ position: 'sticky', top: '80px', alignSelf: 'start', width: '100%', background: '#f5f5f5', overflow: 'hidden', display: 'flex', flexDirection: 'column', zIndex: 10 }}>
           
           {/* Top Overlays */}
           <div style={{ position: 'absolute', top: '24px', left: '24px', background: '#000', color: '#fff', fontSize: '0.75rem', fontFamily: "var(--font-ui), 'Inter', sans-serif", fontWeight: 600, padding: '4px 12px', borderRadius: '4px', letterSpacing: '0.06em', zIndex: 20 }}>
@@ -157,12 +176,6 @@ export default function ProductDetailsClient({ product: serverProduct, productId
         {/* RIGHT COLUMN: Details */}
         <div style={{ display: 'flex', flexDirection: 'column', padding: '2rem 10%', background: '#fff' }}>
           <h1 style={{ fontSize: '36px', fontFamily: "var(--font-primary), 'Manrope', sans-serif", fontWeight: 500, lineHeight: 1.15, letterSpacing: '-0.03em', color: '#0f172a', margin: '0 0 12px 0' }}>{product?.title || "Khaki Beige-Clove Field Tote Bag"}</h1>
-          
-          {product?.productNumber && (
-            <div style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '16px', fontWeight: 500 }}>
-              Product Number: <span style={{ color: '#0f172a', fontWeight: 600 }}>{product.productNumber}</span>
-            </div>
-          )}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '1.8rem', fontFamily: "var(--font-primary), 'Manrope', sans-serif", fontWeight: 700, letterSpacing: '-0.02em', color: '#000' }}>₹{displayPrice}</span>
@@ -363,6 +376,149 @@ export default function ProductDetailsClient({ product: serverProduct, productId
             )}
           </div>
 
+          {/* SKU, CATEGORY & SOCIAL SHARE BLOCK */}
+          <div style={{ 
+            padding: '20px 0', 
+            borderBottom: '1px solid #e5e5e5', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '14px' 
+          }}>
+            <div style={{ 
+              fontSize: '0.95rem', 
+              color: '#333333', 
+              fontFamily: "var(--font-ui), 'Inter', sans-serif",
+              letterSpacing: '-0.01em',
+              display: 'flex',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '6px'
+            }}>
+              <span style={{ color: '#444444' }}>SKU:</span>
+              <span style={{ color: '#222222', fontWeight: 500, marginRight: '16px' }}>{skuCode}</span>
+              <span style={{ color: '#444444' }}>Category:</span>
+              <Link 
+                href={`/category/${encodeURIComponent(categorySlug)}`}
+                style={{ 
+                  color: '#8B1E1E', 
+                  fontWeight: 500, 
+                  textDecoration: 'none',
+                  transition: 'text-decoration 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+              >
+                {categoryName}
+              </Link>
+            </div>
+
+            {/* Social Share Buttons */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <a
+                href={`https://www.facebook.com/sharer/sharer.php?u=${encodedShareUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Share on Facebook"
+                aria-label="Share on Facebook"
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  backgroundColor: '#2b5a9f',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '2px',
+                  color: '#ffffff',
+                  textDecoration: 'none',
+                  transition: 'opacity 0.2s ease, transform 0.15s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12.017h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562v1.893h2.773l-.443 2.89h-2.33v6.988C18.343 21.145 22 17.008 22 12.017 22 6.484 17.523 2 12 2z"/>
+                </svg>
+              </a>
+
+              <a
+                href={`https://twitter.com/intent/tweet?url=${encodedShareUrl}&text=${encodeURIComponent(product?.title || 'KH Decotis')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Share on X"
+                aria-label="Share on X"
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  backgroundColor: '#000000',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '2px',
+                  color: '#ffffff',
+                  textDecoration: 'none',
+                  transition: 'opacity 0.2s ease, transform 0.15s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+              >
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+              </a>
+
+              <a
+                href={`https://pinterest.com/pin/create/button/?url=${encodedShareUrl}&media=${encodeURIComponent(images[0] || '')}&description=${encodeURIComponent(product?.title || 'KH Decotis')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Share on Pinterest"
+                aria-label="Share on Pinterest"
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  backgroundColor: '#cb2027',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '2px',
+                  color: '#ffffff',
+                  textDecoration: 'none',
+                  transition: 'opacity 0.2s ease, transform 0.15s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+              >
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.401.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.354-.629-2.758-1.379l-.749 2.848c-.269 1.045-1.004 2.352-1.498 3.146 1.123.345 2.306.535 3.545.535 6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z" />
+                </svg>
+              </a>
+
+              <a
+                href={`mailto:?subject=${encodeURIComponent(product?.title || 'KH Decotis')}&body=${encodeURIComponent("Check out this product on KH Decotis: " + (shareUrl || ''))}`}
+                title="Share via Email"
+                aria-label="Share via Email"
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  backgroundColor: '#0084c8',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '2px',
+                  color: '#ffffff',
+                  textDecoration: 'none',
+                  transition: 'opacity 0.2s ease, transform 0.15s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+              >
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2" />
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                </svg>
+              </a>
+            </div>
+          </div>
+
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {[
               'Product Details', 
@@ -380,8 +536,11 @@ export default function ProductDetailsClient({ product: serverProduct, productId
                 </button>
                 {accordion[item] && (
                   <div style={{ paddingBottom: '24px', fontSize: '0.9rem', color: '#525252', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
-                    {item === 'Product Details' && product?.productDetails ? product.productDetails : 
-                     item === 'Dimensions' ? sizes.find(s => s.name === activeSize)?.dimensions || 'Select a size to view dimensions.' : 
+                    {item === 'Product Details' ? (product?.productDetails || product?.description || 'Crafted with premium materials for lasting comfort and durability.') : 
+                     item === 'Responsible Design' ? (product?.responsibleDesign || 'Ethically crafted with premium sustainably-sourced materials, prioritizing environmental consciousness and timeless quality.') :
+                     item === 'Care' ? (product?.care || 'Machine wash cold with gentle detergent. Do not bleach. Tumble dry low or line dry in shade. Warm iron if needed.') :
+                     item === 'Dimensions' ? (sizes.find(s => s.name === activeSize)?.dimensions || 'Select a size to view dimensions.') : 
+                     item === 'Delivery Time & Returns' ? 'Standard delivery within 3-5 business days. Easy 7-day returns for unused items in original packaging.' :
                      `Detailed information mapping to the specific ${item.toLowerCase()} constraint goes here filling out the layout.`}
                   </div>
                 )}

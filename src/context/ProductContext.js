@@ -57,6 +57,8 @@ export const ProductProvider = ({ children }) => {
       colors: productParams.colors || [],
       sizes: productParams.sizes || [],
       productDetails: productParams.productDetails || '',
+      responsibleDesign: productParams.responsibleDesign || '',
+      care: productParams.care || '',
       isBestseller: !!productParams.isBestseller
     };
     
