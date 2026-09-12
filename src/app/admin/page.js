@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { LayoutDashboard, ShoppingBag, Users, Settings, LogOut, TrendingUp, DollarSign, PackageOpen, MousePointerClick, Search, Bell, Menu, Trash2, IndianRupee, X, Edit, UploadCloud, ChevronLeft, ChevronRight, MessageSquare, Phone, ExternalLink, CheckCircle, Eye, RefreshCw, Mail } from 'lucide-react';
 
@@ -51,8 +52,21 @@ export default function AdminPage() {
   const unreadCount = messages ? messages.filter(m => m.status === 'unread').length : 0;
   const [searchQuery, setSearchQuery] = useState('');
   const [previewModalImage, setPreviewModalImage] = useState(null);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Subscribers state
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (previewModalImage) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [previewModalImage]);
   const [subscribers, setSubscribers] = useState([]);
   const [subscribersLoading, setSubscribersLoading] = useState(false);
 
@@ -1824,23 +1838,27 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Image Zoom Modal */}
-        {previewModalImage && (
+        {/* Image Zoom Modal (Portaled directly to document.body to guarantee centered viewport position with zero scrolling) */}
+        {isMounted && previewModalImage && createPortal(
           <div 
             onClick={() => setPreviewModalImage(null)} 
             style={{ 
               position: 'fixed', 
+              inset: 0,
               top: 0, 
               left: 0, 
               right: 0, 
               bottom: 0, 
-              background: 'rgba(0,0,0,0.75)', 
-              zIndex: 9999, 
+              width: '100vw',
+              height: '100vh',
+              background: 'rgba(15, 23, 42, 0.82)', 
+              zIndex: 999999, 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center', 
-              padding: '20px',
-              backdropFilter: 'blur(4px)'
+              padding: '24px',
+              backdropFilter: 'blur(8px)',
+              boxSizing: 'border-box'
             }}
           >
             <div 
@@ -1848,35 +1866,38 @@ export default function AdminPage() {
               style={{ 
                 background: '#fff', 
                 borderRadius: '16px', 
-                maxWidth: '700px', 
+                maxWidth: '750px', 
                 width: '100%', 
+                maxHeight: '90vh',
                 overflow: 'hidden', 
-                boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                margin: 'auto'
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid #e2e8f0' }}>
-                <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#fff' }}>
+                <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: '16px' }}>
                   {previewModalImage.title}
                 </h3>
                 <button 
                   type="button"
                   onClick={() => setPreviewModalImage(null)}
-                  style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' }}
+                  style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#475569', flexShrink: 0, transition: 'all 0.2s' }}
                 >
                   <X size={18} />
                 </button>
               </div>
-              <div style={{ padding: '16px', display: 'flex', justifyContent: 'center', background: '#f8fafc', maxHeight: '75vh' }}>
+              <div style={{ padding: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#f8fafc', flex: 1, overflow: 'hidden', maxHeight: 'calc(85vh - 70px)' }}>
                 <img 
                   src={previewModalImage.url} 
                   alt={previewModalImage.title} 
-                  style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain', borderRadius: '8px' }} 
+                  style={{ maxWidth: '100%', maxHeight: 'calc(80vh - 80px)', objectFit: 'contain', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }} 
                 />
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </main>
       
