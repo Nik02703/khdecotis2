@@ -1,6 +1,9 @@
+'use client';
+
 import Link from 'next/link';
 import styles from './BudgetDealsRow.module.css';
 import { getProductUrl } from '@/lib/slugUtils';
+import { encodeImg } from '@/lib/imageUtils';
 
 const DEFAULT_POPULAR_DEALS = [
   {
@@ -44,7 +47,8 @@ export default function BudgetDealsRow({ products = [] }) {
   const dealProducts = sourceProducts.map((p) => {
     const priceNum = Number(p.price) || 649;
     const oldPriceNum = Number(p.oldPrice) || Math.round(priceNum * 1.3);
-    const imgUrl = p.images?.[0] || '/bedsheets.png';
+    const rawImg = p.images?.[0] || '/bedsheets.png';
+    const imgUrl = encodeImg(rawImg);
     const linkUrl = getProductUrl(p);
 
     return {
@@ -70,6 +74,10 @@ export default function BudgetDealsRow({ products = [] }) {
               src="/deal_bedsheets.jpg" 
               alt="Cotton bedsheets" 
               className={styles.cardBgImage}
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/bedsheets.png';
+              }}
             />
             
             <div className={styles.cardHeader}>
@@ -108,7 +116,15 @@ export default function BudgetDealsRow({ products = [] }) {
               {dealProducts.map((prod) => (
                 <Link key={prod.id} href={prod.link} className={styles.gridItem}>
                   <div className={styles.gridImgWrap}>
-                    <img src={prod.image} alt={prod.title} className={styles.gridItemImg} />
+                    <img 
+                      src={prod.image} 
+                      alt={prod.title} 
+                      className={styles.gridItemImg} 
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = '/bedsheets.png';
+                      }}
+                    />
                   </div>
                   <div className={styles.gridItemPriceRow}>
                     <div className={styles.priceCurrentWrap}>
@@ -131,6 +147,10 @@ export default function BudgetDealsRow({ products = [] }) {
               src="/deal_pillows.jpg" 
               alt="Pillows & Cushions" 
               className={styles.cardBgImage}
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/cushions.avif';
+              }}
             />
             
             <div className={styles.cardHeader}>
@@ -163,6 +183,10 @@ export default function BudgetDealsRow({ products = [] }) {
               src="/deal_dohars.jpg" 
               alt="Dohars & Comforters" 
               className={styles.cardBgImage}
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/Blanket.avif';
+              }}
             />
             
             <div className={styles.cardHeader}>

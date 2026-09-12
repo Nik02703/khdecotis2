@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { encodeImg } from '@/lib/imageUtils';
 
 export default function ProductGallery({ images, title }) {
   // Ensure we always have an array of images. If only 1 exists, we'll duplicate it for demo purposes so the gallery is visible.
@@ -32,14 +33,31 @@ export default function ProductGallery({ images, title }) {
               transition: 'all 0.2s ease'
             }}
           >
-            <img src={img} alt={`${title} Thumbnail ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img 
+              src={encodeImg(img)} 
+              alt={`${title} Thumbnail ${idx + 1}`} 
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/bedsheets.png';
+              }}
+            />
           </button>
         ))}
       </div>
 
       {/* Main Image Stage */}
       <div style={{ flex: 1, position: 'relative', background: '#f8fafc', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border)' }}>
-        <img src={activeImg} alt={title} style={{ width: '100%', height: '100%', maxHeight: '600px', objectFit: 'contain', display: 'block' }} className="main-stage-img" />
+        <img 
+          src={encodeImg(activeImg)} 
+          alt={title} 
+          style={{ width: '100%', height: '100%', maxHeight: '600px', objectFit: 'contain', display: 'block' }} 
+          className="main-stage-img" 
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = '/bedsheets.png';
+          }}
+        />
         
         {/* Optional Magnifier/Zoom Hint icon */}
         <div style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(255,255,255,0.8)', padding: '8px', borderRadius: '50%', color: '#64748b', display: 'flex', pointerEvents: 'none' }}>

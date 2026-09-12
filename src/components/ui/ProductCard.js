@@ -7,6 +7,7 @@ import { useWishlist } from '@/context/WishlistContext';
 import styles from './ProductCard.module.css';
 import { getDisplayPrice, getOldPrice } from '@/lib/priceUtils';
 import { getProductUrl } from '@/lib/slugUtils';
+import { encodeImg } from '@/lib/imageUtils';
 
 export default function ProductCard({ product }) {
   const { cartItems, addToCart, initiateBuyNow } = useCart();
@@ -19,11 +20,7 @@ export default function ProductCard({ product }) {
     'https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800&q=80'
   ]).filter(Boolean);
 
-  const encodeImg = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('/')) return url;
-    return url.split('/').map(p => encodeURIComponent(p)).join('/');
-  };
+
 
   const firstImg = encodeImg(baseImages[0] || '/bedsheets.png');
   const secondImg = baseImages[1] ? encodeImg(baseImages[1]) : '';
@@ -78,6 +75,10 @@ export default function ProductCard({ product }) {
                 alt={product?.title || 'Product'} 
                 className={`${styles.image} ${hasSecondImg && isHovered ? styles.imageHidden : styles.imageVisible}`} 
                 loading="lazy" 
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = '/bedsheets.png';
+                }}
               />
               {hasSecondImg && (
                 <img 
@@ -85,6 +86,10 @@ export default function ProductCard({ product }) {
                   alt={`${product?.title || 'Product'} alternate view`} 
                   className={`${styles.hoverImage} ${isHovered ? styles.hoverImageVisible : styles.hoverImageHidden}`} 
                   loading="lazy" 
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = '/bedsheets.png';
+                  }}
                 />
               )}
             </div>
