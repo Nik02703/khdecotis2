@@ -27,6 +27,13 @@ const inter = Inter({
 export const metadata = {
   title: 'KH Decotis – Style Up Your Space',
   description: 'Buy Home Decorative Items & essentials Online. Choose from a wide range of premium home decor products at KH Decotis.',
+  icons: {
+    icon: [
+      { url: '/icon.png', sizes: '512x512', type: 'image/png' },
+      { url: '/favicon.ico', sizes: 'any' }
+    ],
+    apple: '/apple-icon.png'
+  }
 };
 
 export default function RootLayout({ children }) {
