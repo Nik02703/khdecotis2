@@ -588,13 +588,13 @@ export default function CheckoutPage() {
   const hasAddress = Boolean(formData.firstName && formData.address && formData.phone);
 
   return (
-    <div className={`container animate-fade-in ${styles.page}`} suppressHydrationWarning style={{ maxWidth: '1200px', margin: '0 auto', padding: '2.5rem 1rem 2.5rem 0' }}>
+    <div className={`container animate-fade-in ${styles.page}`} suppressHydrationWarning>
 
 
-      <form onSubmit={paymentMethod === 'online' ? handleOnlinePayment : handleCODSubmit} suppressHydrationWarning style={{ display: 'grid', gridTemplateColumns: '440px 1fr', gap: '50px', alignItems: 'start' }}>
+      <form onSubmit={paymentMethod === 'online' ? handleOnlinePayment : handleCODSubmit} suppressHydrationWarning className={styles.checkoutGrid}>
         
         {/* ──── LEFT COLUMN: Shipping & Billing Details ──── */}
-        <div suppressHydrationWarning style={{ display: 'flex', flexDirection: 'column', gap: '20px', paddingRight: '25px', borderRight: '1px solid #e2e8f0', maxWidth: '440px', marginLeft: '-25px' }}>
+        <div suppressHydrationWarning className={styles.leftCol}>
 
 
 
@@ -992,7 +992,7 @@ export default function CheckoutPage() {
         </div>
 
         {/* ──── RIGHT COLUMN: Order Summary & Payment ──── */}
-        <div suppressHydrationWarning style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div suppressHydrationWarning className={styles.rightCol}>
 
           
           {/* ORDER SUMMARY */}
@@ -1003,15 +1003,15 @@ export default function CheckoutPage() {
           {/* Items preview */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '20px', borderBottom: '1px solid #e2e8f0' }}>
             {activeItems.map((item, idx) => (
-              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <img src={encodeImg(item.images?.[0] || item.imageUrl || item.image) || '/placeholder.png'} alt={item.title} style={{ width: '56px', height: '56px', borderRadius: '6px', objectFit: 'cover', border: '1px solid #e2e8f0' }} onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.png'; }} />
-                  <div>
-                    <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0f172a', maxWidth: '320px', lineHeight: 1.35 }}>{item.title}</div>
+              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0, flex: 1 }}>
+                  <img src={encodeImg(item.images?.[0] || item.imageUrl || item.image) || '/placeholder.png'} alt={item.title} style={{ width: '56px', height: '56px', borderRadius: '6px', objectFit: 'cover', border: '1px solid #e2e8f0', flexShrink: 0 }} onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.png'; }} />
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0f172a', lineHeight: 1.35, wordBreak: 'break-word' }}>{item.title}</div>
                     <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '3px' }}>Qty: {item.quantity || 1}</div>
                   </div>
                 </div>
-                <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '1.05rem' }}>₹{(Number(item.price || 0) * (item.quantity || 1)).toLocaleString('en-IN')}</div>
+                <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '1.05rem', whiteSpace: 'nowrap', flexShrink: 0, marginLeft: '8px' }}>₹{(Number(item.price || 0) * (item.quantity || 1)).toLocaleString('en-IN')}</div>
               </div>
             ))}
           </div>

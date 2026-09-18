@@ -10,34 +10,6 @@
   box-sizing: border-box;
 }
 
-@media (max-width: 900px) {
-  .section {
-    flex-direction: column;
-    width: calc(100% - 2rem);
-    margin: var(--spacing-6) auto;
-    padding: var(--spacing-4);
-    border-radius: 24px;
-  }
-  .leftSidebar {
-    width: 100%;
-    padding: var(--spacing-4);
-  }
-}
-
-@media (max-width: 768px) {
-  .section {
-    width: calc(100% - 1.25rem);
-    margin: 1.25rem auto;
-    padding: 1.25rem 0.75rem;
-    border-radius: 20px;
-    gap: 12px;
-  }
-  .leftSidebar {
-    width: 100%;
-    padding: 0.5rem 0.25rem 0.75rem 0.25rem;
-  }
-}
-
 .leftSidebar {
   width: 320px;
   background-color: transparent;
@@ -118,18 +90,10 @@
   letter-spacing: -1.5px;
 }
 
-@media (max-width: 768px) {
-  .wordDeal, .wordDay {
-    font-size: 2.2rem;
-    letter-spacing: -1px;
-  }
-  .wordOf {
-    font-size: 1.2rem;
-    margin: 2px 0;
-  }
-  .titleWrap {
-    margin-bottom: 10px;
-  }
+.timerWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .endsInText {
@@ -138,13 +102,6 @@
   margin-bottom: var(--spacing-2);
   font-size: 1.15rem;
   font-family: var(--font-ui), 'Inter', sans-serif;
-}
-
-@media (max-width: 768px) {
-  .endsInText {
-    font-size: 0.95rem;
-    margin-bottom: 4px;
-  }
 }
 
 .timer {
@@ -166,14 +123,6 @@
   display: flex;
   align-items: baseline;
   gap: 2px;
-}
-
-@media (max-width: 768px) {
-  .timeBlock {
-    padding: 6px 8px;
-    font-size: 0.95rem;
-    border-radius: 6px;
-  }
 }
 
 .timeLabel {
@@ -229,19 +178,6 @@
 .dealCard:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-md);
-}
-
-@media (max-width: 768px) {
-  .dealCard {
-    flex: 0 0 100%;
-    min-width: 100%;
-    max-width: 100%;
-    scroll-snap-align: center;
-    border-radius: 16px;
-  }
-  .dealCard:hover {
-    transform: none;
-  }
 }
 
 .cardImageWrapper {
@@ -398,19 +334,6 @@
   right: 8px;
 }
 
-@media (max-width: 768px) {
-  .navBtn {
-    width: 36px;
-    height: 36px;
-  }
-  .navBtnLeft {
-    left: 6px;
-  }
-  .navBtnRight {
-    right: 6px;
-  }
-}
-
 /* Carousel Footer / Dots / Counter */
 .carouselFooter {
   display: flex;
@@ -469,4 +392,225 @@
   color: #5a3fc0;
   font-weight: 700;
   margin-left: 2px;
+}
+
+/* ==========================================================================
+   RESPONSIVE MEDIA QUERIES (Consolidated at end to guarantee precedence)
+   ========================================================================== */
+
+@media (max-width: 900px) {
+  .section {
+    flex-direction: column;
+    width: calc(100% - 1.5rem);
+    margin: 1.5rem auto;
+    padding: 14px 12px 16px 12px;
+    border-radius: 20px;
+    gap: 10px;
+  }
+
+  .leftSidebar {
+    width: 100%;
+    padding: 6px 8px 8px 8px;
+    border-radius: 14px;
+  }
+
+  .sidebarContent {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 10px;
+    padding: 0 4px;
+  }
+
+  .titleWrap {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 0;
+  }
+
+  .wordDeal, .wordDay {
+    font-size: 1.5rem;
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+
+  .wordOf {
+    font-size: 0.95rem;
+    margin: 0 2px;
+    line-height: 1;
+  }
+
+  .timerWrapper {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .endsInText {
+    font-size: 0.85rem;
+    margin-bottom: 0;
+    white-space: nowrap;
+    color: #7c2d12;
+    font-weight: 600;
+  }
+
+  .timer {
+    gap: 4px;
+  }
+
+  .timeBlock {
+    padding: 4px 8px;
+    font-size: 0.88rem;
+    border-radius: 6px;
+  }
+
+  .timeLabel {
+    font-size: 0.65rem;
+  }
+
+  .colon {
+    font-size: 0.85rem;
+    color: #7c2d12;
+  }
+
+  .carouselTrack {
+    gap: 12px;
+    padding: 2px 0 8px 0;
+  }
+
+  .dealCard {
+    flex: 0 0 280px;
+    min-width: 280px;
+    max-width: 280px;
+    scroll-snap-align: start;
+    border-radius: 16px;
+  }
+
+  .dealCard:hover {
+    transform: none;
+  }
+
+  /* Hide floating chevrons on mobile/tablet touch screens to prevent visual overlap */
+  .navBtn {
+    display: none !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .section {
+    width: calc(100% - 1.25rem);
+    margin: 1.25rem auto;
+    padding: 12px 10px 14px 10px;
+    border-radius: 18px;
+    gap: 8px;
+  }
+
+  .leftSidebar {
+    padding: 4px 2px 6px 2px;
+    border-radius: 12px;
+  }
+
+  /* 2 clean centered rows: Title on top, Timer below it — guarantees 0 clipping on any mobile screen */
+  .sidebarContent {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 2px 0;
+  }
+
+  .titleWrap {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: center;
+    gap: 5px;
+    margin-bottom: 0;
+  }
+
+  .wordDeal, .wordDay {
+    font-size: 1.35rem;
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+
+  .wordOf {
+    font-size: 0.9rem;
+    margin: 0 2px;
+    line-height: 1;
+  }
+
+  .timerWrapper {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .endsInText {
+    font-size: 0.8rem;
+    margin-bottom: 0;
+    white-space: nowrap;
+    color: #7c2d12;
+    font-weight: 600;
+  }
+
+  .timer {
+    gap: 4px;
+  }
+
+  .timeBlock {
+    padding: 3px 6px;
+    font-size: 0.82rem;
+    border-radius: 6px;
+  }
+
+  .timeLabel {
+    font-size: 0.65rem;
+  }
+
+  .colon {
+    font-size: 0.8rem;
+    color: #7c2d12;
+  }
+
+  /* Full width card on mobile to eliminate broken sliced card slivers */
+  .dealCard {
+    flex: 0 0 100%;
+    min-width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    scroll-snap-align: start;
+    border-radius: 14px;
+  }
+
+  .cardImageWrapper {
+    height: 180px;
+  }
+
+  .cardBody {
+    padding: 12px 14px;
+  }
+
+  .productTitle {
+    font-size: 0.9rem;
+    line-height: 1.3;
+  }
+
+  .priceRow {
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .currentPrice {
+    font-size: 1.1rem;
+  }
+
+  .carouselFooter {
+    margin-top: 10px;
+    padding: 0 4px;
+  }
 }

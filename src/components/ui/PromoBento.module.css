@@ -109,11 +109,11 @@
   .tallCard { grid-row: span 2; }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 600px) {
   .bentoGrid {
     grid-template-columns: 1fr;
     grid-template-rows: auto;
-    grid-auto-rows: 300px;
+    grid-auto-rows: 260px;
   }
   .tallCard { grid-row: span 1; }
 }

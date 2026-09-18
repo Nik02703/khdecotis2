@@ -45,7 +45,6 @@ export default async function Home() {
         />
         <div className={styles.heroOverlay}></div>
         <div className={styles.heroContent}>
-          <img src="/logo1_transparent.png" alt="KH Decotis Logo" className={styles.heroLogo} />
           <h1 className={styles.heroTitle}>The Art of Living</h1>
           <p className={styles.heroSubtitle}>
             Curated premium essentials designed to bring comfort, elegance, and unrivaled quality to your sanctuary.

@@ -117,6 +117,7 @@
   flex-direction: column;
   gap: 2px;
   transition: opacity 0.4s ease;
+  white-space: nowrap;
 }
 
 .authorName {
@@ -126,13 +127,15 @@
   letter-spacing: 0.1em;
   color: #1c1a17;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .authorLocation {
   font-family: var(--font-ui), 'Inter', sans-serif;
   font-size: 0.78rem;
   font-style: italic;
-  color: #7a7060;
+  color: #5c5446;
+  white-space: nowrap;
 }
 
 .dots {
@@ -171,27 +174,120 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .section {
+    padding: 2rem 1rem;
+  }
+
   .bannerContainer {
     height: auto;
-    min-height: 460px;
+    min-height: 440px;
+    width: 100%;
+    border-radius: 16px;
   }
 
   .content {
     max-width: 100%;
-    padding: 2.5rem 2rem 2rem 2rem;
+    padding: 2.25rem 1.75rem 1.75rem 1.75rem;
   }
 
   .scrim {
     background: linear-gradient(
       to bottom,
       rgba(244, 240, 234, 0.98) 0%,
-      rgba(244, 240, 234, 0.96) 55%,
-      rgba(244, 240, 234, 0.7) 80%,
-      rgba(244, 240, 234, 0) 100%
+      rgba(244, 240, 234, 0.95) 55%,
+      rgba(244, 240, 234, 0.88) 80%,
+      rgba(244, 240, 234, 0.78) 100%
     );
   }
 
   .quoteText {
-    font-size: 1.4rem;
+    font-size: clamp(1.25rem, 3.8vw, 1.6rem);
+    line-height: 1.35;
+  }
+
+  /* 2-row layout for mobile & tablet: Author on row 1, Navigation controls on row 2 */
+  .controls {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 14px 10px;
+    align-items: center;
+    padding-top: 1.25rem;
+    margin-top: 1.5rem;
+    border-top: 1px solid rgba(180, 160, 135, 0.4);
+  }
+
+  .authorBlock {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    white-space: nowrap;
+  }
+
+  .navBtn {
+    width: 38px;
+    height: 38px;
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  .navBtn:first-of-type {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .dots {
+    grid-column: 2;
+    grid-row: 2;
+    margin: 0 auto;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .navBtn:last-of-type {
+    grid-column: 3;
+    grid-row: 2;
+  }
+}
+
+@media (max-width: 480px) {
+  .section {
+    padding: 1.5rem 0.75rem;
+  }
+
+  .bannerContainer {
+    min-height: 420px;
+    border-radius: 14px;
+  }
+
+  .content {
+    padding: 1.75rem 1.25rem 1.25rem 1.25rem;
+  }
+
+  .quoteText {
+    font-size: 1.2rem;
+    line-height: 1.35;
+  }
+
+  .controls {
+    gap: 12px 8px;
+    padding-top: 1rem;
+    margin-top: 1.25rem;
+  }
+
+  .navBtn {
+    width: 34px;
+    height: 34px;
+  }
+
+  .dot {
+    width: 7px;
+    height: 7px;
+  }
+
+  .activeDot {
+    width: 18px;
   }
 }

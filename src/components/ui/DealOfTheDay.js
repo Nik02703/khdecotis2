@@ -121,13 +121,15 @@ export default function DealOfTheDay() {
             <span className={styles.wordOf}>of the</span>
             <span className={styles.wordDay}>DAY</span>
           </div>
-          <p className={styles.endsInText}>Ends In</p>
-          <div className={styles.timer}>
-            <div className={styles.timeBlock}>{formatZero(h)}<span className={styles.timeLabel}>h</span></div>
-            <span className={styles.colon}>:</span>
-            <div className={styles.timeBlock}>{formatZero(m)}<span className={styles.timeLabel}>m</span></div>
-            <span className={styles.colon}>:</span>
-            <div className={styles.timeBlock}>{formatZero(s)}<span className={styles.timeLabel}>s</span></div>
+          <div className={styles.timerWrapper}>
+            <p className={styles.endsInText}>Ends In</p>
+            <div className={styles.timer}>
+              <div className={styles.timeBlock}>{formatZero(h)}<span className={styles.timeLabel}>h</span></div>
+              <span className={styles.colon}>:</span>
+              <div className={styles.timeBlock}>{formatZero(m)}<span className={styles.timeLabel}>m</span></div>
+              <span className={styles.colon}>:</span>
+              <div className={styles.timeBlock}>{formatZero(s)}<span className={styles.timeLabel}>s</span></div>
+            </div>
           </div>
         </div>
       </div>

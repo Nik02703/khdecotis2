@@ -1,40 +1,74 @@
 .page {
-  padding: 2.5rem 1rem;
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .checkoutGrid {
   display: grid;
   grid-template-columns: 440px 1fr;
-  gap: 3.5rem;
+  gap: 50px;
   align-items: start;
-}
-
-@media (max-width: 900px) {
-  .checkoutGrid {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .leftCol {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 20px;
   max-width: 440px;
+  width: 100%;
+  padding-right: 25px;
+  border-right: 1px solid #e2e8f0;
+  box-sizing: border-box;
 }
 
 .rightCol {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  background: #ffffff;
-  padding: 2rem;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+  gap: 24px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Desktop layout preservation */
+@media (min-width: 901px) {
+  .page {
+    padding: 2.5rem 1rem 2.5rem 0;
+  }
+
+  .leftCol {
+    margin-left: -25px;
+  }
+}
+
+/* Mobile layout - fix cropping and overflow on every phone */
+@media (max-width: 900px) {
+  .page {
+    padding: 1.25rem 0.5rem;
+    overflow-x: hidden;
+  }
+
+  .checkoutGrid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    width: 100%;
+  }
+
+  .leftCol {
+    max-width: 100%;
+    width: 100%;
+    padding-right: 0;
+    border-right: none;
+    margin-left: 0 !important;
+  }
+
+  .rightCol {
+    max-width: 100%;
+    width: 100%;
+  }
 }
 
 .sectionHeading {

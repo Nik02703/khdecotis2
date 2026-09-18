@@ -62,10 +62,6 @@ export default function CategoriesPage() {
           <img src="/mattress%20protector.avif" alt="Mattress" className={styles.categoryImg} />
           <h3 className={styles.categoryTitle}>Mattress</h3>
         </Link>
-        <Link href="/category/cushions" className={styles.categoryCard}>
-          <img src="/cushions.avif" alt="Cushions" className={styles.categoryImg} />
-          <h3 className={styles.categoryTitle}>Cushions</h3>
-        </Link>
         <Link href="/category/pillows" className={styles.categoryCard}>
           <img src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=600&q=80" alt="Pillows" className={styles.categoryImg} />
           <h3 className={styles.categoryTitle}>Pillows</h3>

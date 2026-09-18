@@ -353,14 +353,22 @@
   }
   .logo {
     margin-left: 0;
+    display: flex;
+    align-items: center;
   }
   .logoImage {
-    height: 48px;
+    height: 40px;
+    max-height: 42px;
+    width: auto;
+    object-fit: contain;
+    transition: height 0.2s ease;
   }
   .inner {
-    padding-left: 0;
-    padding-top: var(--spacing-1);
-    padding-bottom: var(--spacing-1);
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    min-height: 58px;
   }
   .icons {
     gap: 8px;
@@ -368,5 +376,17 @@
   .authNav {
     font-size: 0.7rem;
     padding: 6px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .logoImage {
+    height: 36px;
+    max-height: 38px;
+  }
+  .inner {
+    padding-left: 8px;
+    padding-right: 8px;
+    min-height: 52px;
   }
 }
