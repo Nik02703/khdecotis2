@@ -12,6 +12,9 @@ import connectToDatabase from '@/lib/mongoose';
 import Product from '@/models/Product';
 import { DUMMY_PRODUCTS } from '@/lib/dummyProducts';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function Home() {
   // Fetch bestseller products from DB
   let bestsellerProducts = DUMMY_PRODUCTS; // fallback

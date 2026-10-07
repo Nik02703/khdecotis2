@@ -86,29 +86,44 @@ export const ProductProvider = ({ children }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(rawProduct)
       });
-      if (res.ok) {
-        const newProduct = await res.json();
-        setProducts(prev => {
-          const updated = [newProduct, ...prev];
-          localStorage.setItem('khd_products_db', JSON.stringify(updated));
-          return updated;
-        });
-        return newProduct;
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Server returned error status ${res.status}`);
       }
-    } catch (e) { console.error('Add failed', e); }
-    return rawProduct;
+      const newProduct = await res.json();
+      setProducts(prev => {
+        const updated = [newProduct, ...prev.filter(p => (p._id || p.id) !== (newProduct._id || newProduct.id))];
+        try {
+          localStorage.setItem('khd_products_db', JSON.stringify(updated));
+        } catch (e) {}
+        return updated;
+      });
+      return newProduct;
+    } catch (e) {
+      console.error('Failed to add product:', e);
+      throw e;
+    }
   };
 
   const removeProduct = async (id) => {
     try {
       if (!id.toString().startsWith('prod_')) { // Real mongo ID vs old dummy local ID
-        await fetch(`/api/products/${id}`, { method: 'DELETE' });
+        const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || `Failed to delete product (HTTP ${res.status})`);
+        }
       }
-    } catch (e) { console.error('Delete failed', e); }
+    } catch (e) {
+      console.error('Delete failed:', e);
+      throw e;
+    }
 
     setProducts(prev => {
       const updated = prev.filter(p => (p._id || p.id) !== id);
-      localStorage.setItem('khd_products_db', JSON.stringify(updated));
+      try {
+        localStorage.setItem('khd_products_db', JSON.stringify(updated));
+      } catch (e) {}
       return updated;
     });
   };
@@ -122,13 +137,20 @@ export const ProductProvider = ({ children }) => {
 
     try {
       if (!id.toString().startsWith('prod_')) { // Real mongo ID
-         await fetch(`/api/products/${id}`, {
+         const res = await fetch(`/api/products/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(changes)
          });
+         if (!res.ok) {
+           const errData = await res.json().catch(() => ({}));
+           throw new Error(errData.error || `Failed to update product (HTTP ${res.status})`);
+         }
       }
-    } catch (e) { console.error('Edit error', e); }
+    } catch (e) {
+      console.error('Edit error:', e);
+      throw e;
+    }
 
     setProducts(prev => {
       const updated = prev.map(p => 
@@ -136,7 +158,9 @@ export const ProductProvider = ({ children }) => {
           ? { ...p, ...changes, images: updatedParams.images?.length > 0 ? updatedParams.images : p.images }
           : p
       );
-      localStorage.setItem('khd_products_db', JSON.stringify(updated));
+      try {
+        localStorage.setItem('khd_products_db', JSON.stringify(updated));
+      } catch (e) {}
       return updated;
     });
   };

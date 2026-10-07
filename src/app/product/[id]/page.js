@@ -8,6 +8,9 @@ import { slugify } from '@/lib/slugUtils';
 import { DUMMY_PRODUCTS } from '@/lib/dummyProducts';
 import { redirect } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function ProductPage({ params }) {
   const resolvedParams = await params;
   const { id } = resolvedParams || {};

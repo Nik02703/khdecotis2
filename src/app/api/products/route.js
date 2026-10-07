@@ -3,6 +3,9 @@ import connectToDatabase from '@/lib/mongoose';
 import Product from '@/models/Product';
 import { DUMMY_PRODUCTS } from '@/lib/dummyProducts';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   try {
     const db = await connectToDatabase();
@@ -38,9 +41,22 @@ export async function POST(request) {
     }
     
     const body = await request.json();
+
+    // Sanitize fields before creating product
+    if (!body.productNumber || !body.productNumber.toString().trim()) {
+      delete body.productNumber;
+    }
+    if (!body.description || !body.description.toString().trim()) {
+      body.description = body.title ? `Premium ${body.title}` : 'Premium home decor item';
+    }
+    if (!body.images || !Array.isArray(body.images) || body.images.length === 0) {
+      body.images = ['https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&q=80'];
+    }
+
     const newProduct = await Product.create(body);
     return NextResponse.json(newProduct, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to create product via Mongoose Hook" }, { status: 500 });
+    console.error("[api/products POST] Failed to create product:", error);
+    return NextResponse.json({ error: error.message || "Failed to create product" }, { status: 500 });
   }
 }

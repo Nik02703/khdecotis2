@@ -48,6 +48,11 @@ export default function AdminPage() {
       setIsSyncingProducts(false);
     }
   };
+
+  const navigateTab = (tab) => {
+    setActiveTab(tab);
+    setMobileMenuOpen(false);
+  };
   const { messages, markAsRead, deleteMessage } = useMessages();
   const unreadCount = messages ? messages.filter(m => m.status === 'unread').length : 0;
   const [searchQuery, setSearchQuery] = useState('');
@@ -156,6 +161,7 @@ export default function AdminPage() {
   };
 
 
+  const [isPublishing, setIsPublishing] = useState(false);
   const [newProd, setNewProd] = useState({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', responsibleDesign: '', care: '', barcode: '', productNumber: '' });
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [newCoupon, setNewCoupon] = useState({ code: '', discount: '', maxUses: '' });
@@ -252,37 +258,45 @@ export default function AdminPage() {
     e.preventDefault();
     if (!newProd.title || !newProd.price) return alert("Title and Selling Price are strictly required.");
     
-    const productData = {
-      title: newProd.title,
-      price: newProd.price,
-      oldPrice: newProd.oldPrice,
-      category: newProd.category,
-      images: newProd.images && newProd.images.length > 0 ? newProd.images : ['https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&q=80'],
-      description: newProd.description,
-      isDealOfDay: newProd.isDealOfDay,
-      isNewArrival: newProd.isNewArrival,
-      isBestseller: newProd.isBestseller,
-      inStock: newProd.inStock !== false,
-      stock: newProd.stock !== '' && newProd.stock !== undefined ? Number(newProd.stock) : 10,
-      colors: newProd.colors || [],
-      sizes: newProd.sizes || [],
-      productDetails: newProd.productDetails || '',
-      responsibleDesign: newProd.responsibleDesign || '',
-      care: newProd.care || '',
-      barcode: newProd.barcode || '',
-      productNumber: newProd.productNumber || ''
-    };
+    setIsPublishing(true);
+    try {
+      const trimmedTitle = newProd.title.trim();
+      const productData = {
+        title: trimmedTitle,
+        price: Number(newProd.price),
+        oldPrice: newProd.oldPrice ? Number(newProd.oldPrice) : Math.round(Number(newProd.price) * 1.5),
+        category: newProd.category || 'Bedsheets',
+        images: newProd.images && newProd.images.length > 0 ? newProd.images : ['https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&q=80'],
+        description: newProd.description?.trim() || `Premium ${trimmedTitle}`,
+        isDealOfDay: !!newProd.isDealOfDay,
+        isNewArrival: !!newProd.isNewArrival,
+        isBestseller: !!newProd.isBestseller,
+        inStock: newProd.inStock !== false,
+        stock: newProd.stock !== '' && newProd.stock !== undefined ? Number(newProd.stock) : 10,
+        colors: newProd.colors || [],
+        sizes: newProd.sizes || [],
+        productDetails: newProd.productDetails || '',
+        responsibleDesign: newProd.responsibleDesign || '',
+        care: newProd.care || '',
+        barcode: newProd.barcode || '',
+        productNumber: newProd.productNumber || ''
+      };
 
-    if (newProd._id || newProd.id) {
-      await editProduct(newProd._id || newProd.id, productData);
-      alert('Product successfully updated!');
+      if (newProd._id || newProd.id) {
+        await editProduct(newProd._id || newProd.id, productData);
+        alert('Product successfully updated!');
+      } else {
+        await addProduct(productData);
+        alert('Product successfully published and added to catalog!');
+      }
+
       setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', responsibleDesign: '', care: '', barcode: '', productNumber: '' });
       setActiveTab('manageProducts');
-    } else {
-      await addProduct(productData);
-      alert('Product successfully published across global storefront databases!');
-      setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', responsibleDesign: '', care: '', barcode: '', productNumber: '' });
-      setActiveTab('manageProducts');
+    } catch (err) {
+      console.error('Publish error:', err);
+      alert(`Failed to save product: ${err.message || 'Please check server connection'}`);
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -458,18 +472,55 @@ export default function AdminPage() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', fontFamily: "var(--font-ui), 'Inter', sans-serif" }} className="animate-fade-in">
-      
+      {/* Mobile Drawer Backdrop */}
+      {mobileMenuOpen && (
+        <div 
+          onClick={() => setMobileMenuOpen(false)}
+          className="admin-mobile-backdrop"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.45)',
+            backdropFilter: 'blur(3px)',
+            zIndex: 998
+          }}
+        />
+      )}
+
       {/* Sidebar Navigation */}
-      <aside style={{ width: '280px', background: '#fff', borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', position: 'fixed', height: '100vh', zIndex: 40, overflowY: 'auto', transition: 'transform 0.3s ease', transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(0)' }} className="admin-sidebar">
-        <nav style={{ padding: '24px 14px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+      <aside className={`admin-sidebar ${mobileMenuOpen ? 'open' : ''}`} style={{ background: '#fff', borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 18px 16px', borderBottom: '1px solid #f1f5f9' }} className="admin-sidebar-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontWeight: 800, fontSize: '1.2rem', color: '#0f172a', letterSpacing: '-0.025em' }}>KH Decotis</span>
+            <span style={{ fontSize: '0.68rem', background: '#eff6ff', color: '#2563eb', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>PORTAL</span>
+          </div>
+          <button 
+            type="button" 
+            onClick={() => setMobileMenuOpen(false)}
+            className="admin-sidebar-close-btn"
+            aria-label="Close Navigation"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#64748b',
+              padding: '6px',
+              borderRadius: '6px'
+            }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <nav style={{ padding: '20px 14px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
           <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: '12px', marginBottom: '8px' }}>Analytics Core</div>
-          <button onClick={() => setActiveTab('dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'dashboard' ? '#eff6ff' : 'transparent', color: activeTab === 'dashboard' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'dashboard' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+          <button onClick={() => navigateTab('dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'dashboard' ? '#eff6ff' : 'transparent', color: activeTab === 'dashboard' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'dashboard' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
             <LayoutDashboard size={20} style={{ flexShrink: 0 }} /> Dashboard
           </button>
-          <button onClick={() => setActiveTab('orders')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'orders' ? '#eff6ff' : 'transparent', color: activeTab === 'orders' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'orders' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+          <button onClick={() => navigateTab('orders')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'orders' ? '#eff6ff' : 'transparent', color: activeTab === 'orders' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'orders' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
             <ShoppingBag size={20} style={{ flexShrink: 0 }} /> Orders & Fulfillment
           </button>
-          <button onClick={() => { setActiveTab('abandonedCarts'); fetchAbandonedCarts(); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'abandonedCarts' ? '#fff7ed' : 'transparent', color: activeTab === 'abandonedCarts' ? '#ea580c' : '#64748b', border: 'none', fontWeight: activeTab === 'abandonedCarts' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+          <button onClick={() => { navigateTab('abandonedCarts'); fetchAbandonedCarts(); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'abandonedCarts' ? '#fff7ed' : 'transparent', color: activeTab === 'abandonedCarts' ? '#ea580c' : '#64748b', border: 'none', fontWeight: activeTab === 'abandonedCarts' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
             <ShoppingBag size={20} color={activeTab === 'abandonedCarts' ? '#ea580c' : '#64748b'} style={{ flexShrink: 0 }} /> Abandoned Carts
             {abandonedCarts.filter(c => c.status === 'abandoned').length > 0 && (
               <span style={{ background: '#f97316', color: '#fff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, marginLeft: 'auto', flexShrink: 0 }}>
@@ -478,23 +529,23 @@ export default function AdminPage() {
             )}
           </button>
 
-          <button onClick={() => { setActiveTab('addProduct'); setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', responsibleDesign: '', care: '', barcode: '', productNumber: '' }); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'addProduct' ? '#eff6ff' : 'transparent', color: activeTab === 'addProduct' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'addProduct' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+          <button onClick={() => { navigateTab('addProduct'); setNewProd({ title: '', price: '', oldPrice: '', category: 'Bedsheets', stock: '10', images: [], description: '', isDealOfDay: false, isNewArrival: false, isBestseller: false, inStock: true, colors: [], sizes: [], productDetails: '', responsibleDesign: '', care: '', barcode: '', productNumber: '' }); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'addProduct' ? '#eff6ff' : 'transparent', color: activeTab === 'addProduct' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'addProduct' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
             <PackageOpen size={20} style={{ flexShrink: 0 }} /> Add New Product
           </button>
-          <button onClick={() => { setActiveTab('manageProducts'); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: (activeTab === 'manageProducts' || activeTab === 'editProduct') ? '#eff6ff' : 'transparent', color: (activeTab === 'manageProducts' || activeTab === 'editProduct') ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: (activeTab === 'manageProducts' || activeTab === 'editProduct') ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+          <button onClick={() => navigateTab('manageProducts')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: (activeTab === 'manageProducts' || activeTab === 'editProduct') ? '#eff6ff' : 'transparent', color: (activeTab === 'manageProducts' || activeTab === 'editProduct') ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: (activeTab === 'manageProducts' || activeTab === 'editProduct') ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
             <Trash2 size={20} style={{ flexShrink: 0 }} /> Manage Products
             {activeTab === 'editProduct' && (
               <span style={{ fontSize: '0.7rem', background: '#3b82f6', color: '#fff', padding: '2px 8px', borderRadius: '12px', fontWeight: 700, marginLeft: 'auto', flexShrink: 0 }}>Editing</span>
             )}
           </button>
-          <button onClick={() => setActiveTab('messages')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'messages' ? '#eff6ff' : 'transparent', color: activeTab === 'messages' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'messages' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+          <button onClick={() => navigateTab('messages')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'messages' ? '#eff6ff' : 'transparent', color: activeTab === 'messages' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'messages' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
             <MessageSquare size={20} style={{ flexShrink: 0 }} /> Customer Messages
             {unreadCount > 0 && <span style={{ background: '#ef4444', color: '#fff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, marginLeft: 'auto', flexShrink: 0 }}>{unreadCount}</span>}
           </button>
-          <button onClick={() => setActiveTab('coupons')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'coupons' ? '#eff6ff' : 'transparent', color: activeTab === 'coupons' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'coupons' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+          <button onClick={() => navigateTab('coupons')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'coupons' ? '#eff6ff' : 'transparent', color: activeTab === 'coupons' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'coupons' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
             <DollarSign size={20} style={{ flexShrink: 0 }} /> Promo Coupons
           </button>
-          <button onClick={() => { setActiveTab('subscribers'); fetchSubscribers(); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'subscribers' ? '#f0fdf4' : 'transparent', color: activeTab === 'subscribers' ? '#16a34a' : '#64748b', border: 'none', fontWeight: activeTab === 'subscribers' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+          <button onClick={() => { navigateTab('subscribers'); fetchSubscribers(); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'subscribers' ? '#f0fdf4' : 'transparent', color: activeTab === 'subscribers' ? '#16a34a' : '#64748b', border: 'none', fontWeight: activeTab === 'subscribers' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
             <Mail size={20} color={activeTab === 'subscribers' ? '#16a34a' : '#64748b'} style={{ flexShrink: 0 }} /> Newsletter Subscribers
             {subscribers.length > 0 && (
               <span style={{ background: '#16a34a', color: '#fff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, marginLeft: 'auto', flexShrink: 0 }}>
@@ -502,11 +553,11 @@ export default function AdminPage() {
               </span>
             )}
           </button>
-          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <button onClick={() => setActiveTab('settings')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'settings' ? '#eff6ff' : 'transparent', color: activeTab === 'settings' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'settings' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '16px' }}>
+            <button onClick={() => navigateTab('settings')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: activeTab === 'settings' ? '#eff6ff' : 'transparent', color: activeTab === 'settings' ? '#1d4ed8' : '#64748b', border: 'none', fontWeight: activeTab === 'settings' ? 600 : 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
               <Settings size={20} style={{ flexShrink: 0 }} /> Site Configuration
             </button>
-             <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: '#fef2f2', color: '#ef4444', border: 'none', fontWeight: 500, cursor: 'pointer', textAlign: 'left', whiteSpace: 'nowrap' }}>
+            <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '8px', background: '#fef2f2', color: '#ef4444', border: 'none', fontWeight: 500, cursor: 'pointer', textAlign: 'left', whiteSpace: 'nowrap' }}>
               <LogOut size={20} style={{ flexShrink: 0 }} /> Terminate Session
             </button>
           </div>
@@ -514,31 +565,50 @@ export default function AdminPage() {
       </aside>
 
       {/* Main Content Area */}
-      <main style={{ flex: 1, marginLeft: '280px', width: 'calc(100% - 280px)', minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: '100vh', maxWidth: 'calc(100% - 280px)', overflowX: 'hidden', boxSizing: 'border-box' }} className="admin-main">
+      <main className="admin-main" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: '100vh', overflowX: 'hidden', boxSizing: 'border-box' }}>
         {/* Top Header */}
-        <header style={{ height: '72px', background: '#fff', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 32px', position: 'sticky', top: 0, zIndex: 30 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
-            <div style={{ position: 'relative', width: '100%', maxWidth: '400px' }}>
+        <header className="admin-header" style={{ height: '72px', background: '#fff', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 32px', position: 'sticky', top: 0, zIndex: 30, boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0 }}>
+            <button 
+              type="button" 
+              onClick={() => setMobileMenuOpen(true)}
+              className="admin-mobile-menu-btn"
+              aria-label="Open Navigation Menu"
+              style={{
+                background: '#f8fafc',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                padding: '8px',
+                cursor: 'pointer',
+                color: '#1e293b',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}
+            >
+              <Menu size={20} />
+            </button>
+            <div className="admin-search-wrapper" style={{ position: 'relative', width: '100%', maxWidth: '400px' }}>
               <Search size={18} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
               <input 
                 type="text" 
                 placeholder="Search orders, clients, or products..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ width: '100%', padding: '10px 16px 10px 40px', background: '#f1f5f9', border: 'none', borderRadius: '8px', outline: 'none', fontSize: '0.9rem', color: '#334155' }} 
+                style={{ width: '100%', padding: '10px 16px 10px 38px', background: '#f1f5f9', border: 'none', borderRadius: '8px', outline: 'none', fontSize: '0.9rem', color: '#334155', boxSizing: 'border-box' }} 
               />
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <button onClick={() => setActiveTab('messages')} style={{ background: 'none', border: 'none', position: 'relative', cursor: 'pointer' }}>
-              <Bell size={22} color="#64748b" />
-              {unreadCount > 0 && <span style={{ position: 'absolute', top: '-2px', right: '-2px', width: '10px', height: '10px', background: '#ef4444', borderRadius: '50%', border: '2px solid #fff' }}></span>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
+            <button onClick={() => { setActiveTab('messages'); setMobileMenuOpen(false); }} style={{ background: 'none', border: 'none', position: 'relative', cursor: 'pointer', padding: '4px' }}>
+              <Bell size={20} color="#64748b" />
+              {unreadCount > 0 && <span style={{ position: 'absolute', top: '0', right: '0', width: '8px', height: '8px', background: '#ef4444', borderRadius: '50%', border: '2px solid #fff' }}></span>}
             </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <img src="https://ui-avatars.com/api/?name=Admin+User&background=0D8ABC&color=fff" alt="Admin" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} />
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0f172a', lineHeight: 1 }}>Admin User</span>
-                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Superadmin</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <img src="https://ui-avatars.com/api/?name=Admin+User&background=0D8ABC&color=fff" alt="Admin" style={{ width: '34px', height: '34px', borderRadius: '50%', objectFit: 'cover' }} />
+              <div className="admin-header-user-info" style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#0f172a', lineHeight: 1 }}>Admin User</span>
+                <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Superadmin</span>
               </div>
             </div>
           </div>
@@ -546,14 +616,14 @@ export default function AdminPage() {
 
         {/* Dashboard Content */}
         {activeTab === 'dashboard' && (
-        <div style={{ padding: '32px', maxWidth: '1600px', width: '100%', margin: '0 auto' }}>
+        <div className="admin-tab-content" style={{ padding: '32px', maxWidth: '1600px', width: '100%', margin: '0 auto', boxSizing: 'border-box' }}>
           <div style={{ marginBottom: '32px' }}>
             <h1 style={{ fontSize: '1.8rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>Performance Overview</h1>
             <p style={{ color: '#64748b', margin: '4px 0 0 0', fontSize: '0.95rem' }}>Track metrics, visualize revenue pipelines, and monitor conversion streams in real-time.</p>
           </div>
 
           {/* KPI Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+          <div className="admin-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '32px' }}>
             <div style={{ background: '#fff', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                 <div>
@@ -645,13 +715,13 @@ export default function AdminPage() {
           </div>
 
           {/* Data Table */}
-          <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+          <div className="admin-card" style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
             <div style={{ padding: '24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 600, color: '#0f172a', margin: 0 }}>Recent Orders Database</h3>
               <button style={{ background: 'transparent', border: '1px solid #e2e8f0', color: '#0f172a', padding: '8px 16px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>View All Orders</button>
             </div>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <div className="admin-table-container">
+              <table className="admin-table">
                 <thead>
                   <tr style={{ background: '#f8fafc' }}>
                     <th style={{ padding: '16px 24px', fontSize: '0.85rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Order ID</th>
@@ -680,15 +750,15 @@ export default function AdminPage() {
 
         {/* Orders Content */}
         {activeTab === 'orders' && (
-        <div style={{ padding: '32px', maxWidth: '1600px', width: '100%', margin: '0 auto' }}>
-          <div style={{ background: '#fff', padding: '32px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+        <div className="admin-tab-content" style={{ padding: '32px', maxWidth: '1600px', width: '100%', margin: '0 auto', boxSizing: 'border-box' }}>
+          <div className="admin-card" style={{ background: '#fff', padding: '32px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', boxSizing: 'border-box' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: '#0f172a', margin: 0 }}>Order Fulfillment Pipeline</h2>
             </div>
             <p style={{ color: '#64748b', marginBottom: '32px' }}>Review active incoming orders. Accept to dispatch logic or Reject to trigger automatic refund protocols.</p>
 
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <div className="admin-table-container">
+              <table className="admin-table">
                 <thead>
                   <tr style={{ background: '#f8fafc' }}>
                     <th style={{ padding: '16px 24px', fontSize: '0.85rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Order ID</th>
@@ -728,7 +798,7 @@ export default function AdminPage() {
 
         {/* Add / Edit Product Content */}
         {(activeTab === 'addProduct' || activeTab === 'editProduct') && (
-          <div style={{ padding: '32px', maxWidth: '1600px', width: '100%', margin: '0 auto' }}>
+          <div className="admin-tab-content" style={{ padding: '32px', maxWidth: '1600px', width: '100%', margin: '0 auto', boxSizing: 'border-box' }}>
             {(activeTab === 'editProduct' || newProd._id || newProd.id) && (
               <div style={{ marginBottom: '16px' }}>
                 <button 
@@ -798,7 +868,7 @@ export default function AdminPage() {
                 )}
               </div>
             </div>
-            <form onSubmit={handlePublish} style={{ background: '#fff', padding: '36px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <form className="admin-card" onSubmit={handlePublish} style={{ background: '#fff', padding: '36px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '24px', boxSizing: 'border-box' }}>
               
               {/* BARCODE / UPC LOOKUP */}
               <div style={{ background: '#f8fafc', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
@@ -832,7 +902,7 @@ export default function AdminPage() {
 
               <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '8px 0' }} />
 
-              <div style={{ display: 'grid', gridTemplateColumns: newProd.productNumber ? '2fr 1fr 1fr' : '2fr 1fr', gap: '20px' }}>
+              <div className="admin-form-grid" style={{ display: 'grid', gridTemplateColumns: newProd.productNumber ? '2fr 1fr 1fr' : '2fr 1fr', gap: '20px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Product Title</label>
                   <input id="product-title-input" type="text" value={newProd.title} onChange={e => setNewProd({...newProd, title: e.target.value})} placeholder="e.g. Premium Linen Bedsheet" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem', boxSizing: 'border-box' }} />
@@ -849,7 +919,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+              <div className="admin-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Selling Price (₹)</label>
                   <input type="number" value={newProd.price || ''} onChange={e => setNewProd({...newProd, price: e.target.value})} placeholder="1499" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem', boxSizing: 'border-box' }} />
@@ -1092,8 +1162,10 @@ export default function AdminPage() {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
-                <button type="submit" style={{ flex: 1, background: '#2563eb', color: '#fff', padding: '14px', borderRadius: '8px', fontWeight: 600, fontSize: '1rem', border: 'none', cursor: 'pointer' }}>
-                  {activeTab === 'editProduct' || newProd._id || newProd.id ? 'Save Product Changes' : 'Publish to Storefront'}
+                <button type="submit" disabled={isPublishing} style={{ flex: 1, background: isPublishing ? '#94a3b8' : '#2563eb', color: '#fff', padding: '14px', borderRadius: '8px', fontWeight: 600, fontSize: '1rem', border: 'none', cursor: isPublishing ? 'not-allowed' : 'pointer' }}>
+                  {isPublishing 
+                    ? 'Publishing Product...' 
+                    : (activeTab === 'editProduct' || newProd._id || newProd.id ? 'Save Product Changes' : 'Publish to Storefront')}
                 </button>
                 {(activeTab === 'editProduct' || newProd._id || newProd.id) && (
                   <button 
@@ -1114,8 +1186,8 @@ export default function AdminPage() {
 
         {/* Manage Products Content */}
         {activeTab === 'manageProducts' && (
-          <div style={{ padding: '24px 20px', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
-            <div style={{ background: '#fff', padding: '24px 20px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', width: '100%', boxSizing: 'border-box' }}>
+          <div className="admin-tab-content" style={{ padding: '24px 20px', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
+            <div className="admin-card" style={{ background: '#fff', padding: '24px 20px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', width: '100%', boxSizing: 'border-box' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
                 <div>
                   <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>Manage Inventory Directory</h2>
@@ -1146,8 +1218,8 @@ export default function AdminPage() {
                 </button>
               </div>
 
-              <div style={{ width: '100%', overflowX: 'auto', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', tableLayout: 'fixed' }}>
+              <div className="admin-table-container" style={{ width: '100%', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                <table className="admin-table" style={{ width: '100%', minWidth: '650px', borderCollapse: 'collapse', textAlign: 'left', tableLayout: 'fixed' }}>
                   <colgroup>
                     <col style={{ width: '108px' }} />
                     <col />
@@ -1343,15 +1415,15 @@ export default function AdminPage() {
 
         {/* Customer Messages Content */}
         {activeTab === 'messages' && (
-          <div style={{ padding: '32px', maxWidth: '1600px', width: '100%', margin: '0 auto' }}>
-            <div style={{ background: '#fff', padding: '32px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+          <div className="admin-tab-content" style={{ padding: '32px', maxWidth: '1600px', width: '100%', margin: '0 auto', boxSizing: 'border-box' }}>
+            <div className="admin-card" style={{ background: '#fff', padding: '32px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', boxSizing: 'border-box' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: '#0f172a', margin: 0 }}>Customer Inbox</h2>
               </div>
               <p style={{ color: '#64748b', marginBottom: '32px' }}>Review and manage queries sent via the Contact form.</p>
 
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <div className="admin-table-container">
+                <table className="admin-table">
                   <thead>
                     <tr style={{ background: '#f8fafc' }}>
                       <th style={{ padding: '16px 24px', fontSize: '0.85rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Status</th>
@@ -1406,10 +1478,10 @@ export default function AdminPage() {
 
         {/* Coupons Content */}
         {activeTab === 'coupons' && (
-          <div style={{ padding: '32px', maxWidth: '800px', width: '100%' }}>
+          <div className="admin-tab-content" style={{ padding: '32px', maxWidth: '800px', width: '100%', boxSizing: 'border-box' }}>
             <h2 style={{ fontSize: '1.8rem', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Promo & Coupons Configuration</h2>
             <p style={{ color: '#64748b', marginBottom: '32px' }}>Generate discount codes to drive promotional campaigns and influencer sales.</p>
-            <form onSubmit={handleCreateCoupon} style={{ background: '#fff', padding: '32px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <form className="admin-card" onSubmit={handleCreateCoupon} style={{ background: '#fff', padding: '32px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '20px', boxSizing: 'border-box' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Coupon Code</label>
                 <input type="text" value={newCoupon.code} onChange={e => setNewCoupon({...newCoupon, code: e.target.value})} placeholder="e.g. SUMMER50" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem', textTransform: 'uppercase' }} />
@@ -1433,10 +1505,10 @@ export default function AdminPage() {
 
         {/* Settings Content */}
         {activeTab === 'settings' && (
-          <div style={{ padding: '32px', maxWidth: '800px', width: '100%' }}>
+          <div className="admin-tab-content" style={{ padding: '32px', maxWidth: '800px', width: '100%', boxSizing: 'border-box' }}>
             <h2 style={{ fontSize: '1.8rem', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Storefront Global Settings</h2>
             <p style={{ color: '#64748b', marginBottom: '32px' }}>Update platform variables overriding hardcoded application limits.</p>
-            <form style={{ background: '#fff', padding: '32px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <form className="admin-card" style={{ background: '#fff', padding: '32px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: '20px', boxSizing: 'border-box' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Site Name</label>
                 <input type="text" defaultValue="KH Decotis" style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '0.95rem' }} />
@@ -1460,7 +1532,7 @@ export default function AdminPage() {
 
         {/* Newsletter Subscribers Content */}
         {activeTab === 'subscribers' && (
-          <div style={{ padding: '32px', maxWidth: '1600px', width: '100%', margin: '0 auto' }}>
+          <div className="admin-tab-content" style={{ padding: '32px', maxWidth: '1600px', width: '100%', margin: '0 auto', boxSizing: 'border-box' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <div>
                 <h2 style={{ fontSize: '1.8rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>Newsletter Subscribers</h2>
@@ -1475,7 +1547,7 @@ export default function AdminPage() {
             </div>
 
             {/* Metrics */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+            <div className="admin-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '32px' }}>
               <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
                 <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>Total Subscribers</span>
                 <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#16a34a', margin: '8px 0 0 0' }}>
@@ -1497,9 +1569,9 @@ export default function AdminPage() {
             </div>
 
             {/* Subscribers Table */}
-            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <div className="admin-card" style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden', boxSizing: 'border-box' }}>
+              <div className="admin-table-container">
+                <table className="admin-table">
                   <thead>
                     <tr style={{ background: '#f8fafc' }}>
                       <th style={{ padding: '16px 24px', fontSize: '0.85rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Email Address</th>
@@ -1557,7 +1629,7 @@ export default function AdminPage() {
 
         {/* Abandoned Carts Content */}
         {activeTab === 'abandonedCarts' && (
-          <div style={{ padding: '32px' }}>
+          <div className="admin-tab-content" style={{ padding: '32px', maxWidth: '1600px', width: '100%', margin: '0 auto', boxSizing: 'border-box' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <div>
                 <h2 style={{ fontSize: '1.8rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>Abandoned Carts Recovery</h2>
@@ -1572,7 +1644,7 @@ export default function AdminPage() {
             </div>
 
             {/* Metrics Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+            <div className="admin-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '32px' }}>
               <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
                 <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>Total Abandoned</span>
                 <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#ea580c', margin: '8px 0 0 0' }}>
@@ -1614,9 +1686,9 @@ export default function AdminPage() {
             </div>
 
             {/* Carts Table */}
-            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+            <div className="admin-card" style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden', boxSizing: 'border-box' }}>
+              <div className="admin-table-container">
+                <table className="admin-table" style={{ fontSize: '0.9rem' }}>
                   <thead>
                     <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#64748b', fontWeight: 600 }}>
                       <th style={{ padding: '16px 24px' }}>Customer</th>
@@ -1901,14 +1973,113 @@ export default function AdminPage() {
         )}
       </main>
       
-      {/* Inline styles for basic responsiveness lacking global module map */}
+      {/* Inline styles for comprehensive admin responsiveness */}
       <style dangerouslySetInnerHTML={{__html: `
+        /* Desktop layout */
+        .admin-sidebar {
+          width: 280px;
+          position: fixed;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          height: 100vh;
+          z-index: 50;
+          transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .admin-main {
+          margin-left: 280px;
+          width: calc(100% - 280px);
+          max-width: calc(100% - 280px);
+          min-height: 100vh;
+        }
+        .admin-mobile-menu-btn {
+          display: none !important;
+        }
+        .admin-sidebar-close-btn {
+          display: none !important;
+        }
+        .admin-mobile-backdrop {
+          display: none;
+        }
+
+        .admin-table-container {
+          width: 100%;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+        .admin-table {
+          width: 100%;
+          min-width: 650px;
+          border-collapse: collapse;
+          text-align: left;
+        }
+
+        /* Tablet & iPad layout (<= 1024px) */
         @media (max-width: 1024px) {
           .charts-grid { grid-template-columns: 1fr !important; }
+          .admin-sidebar {
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            bottom: 0 !important;
+            height: 100vh !important;
+            width: min(300px, 85vw) !important;
+            z-index: 1000 !important;
+            transform: translateX(-100%) !important;
+            box-shadow: none !important;
+            display: flex !important;
+          }
+          .admin-sidebar.open {
+            transform: translateX(0) !important;
+            box-shadow: 6px 0 28px rgba(15, 23, 42, 0.25) !important;
+          }
+          .admin-sidebar-close-btn {
+            display: inline-flex !important;
+          }
+          .admin-mobile-backdrop {
+            display: block !important;
+          }
+          .admin-main {
+            margin-left: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+          }
+          .admin-mobile-menu-btn {
+            display: inline-flex !important;
+          }
+          .admin-tab-content {
+            padding: 24px 16px !important;
+          }
         }
+
+        /* Mobile layout (<= 768px) */
         @media (max-width: 768px) {
-          .admin-sidebar { display: none !important; }
-          .admin-main { margin-left: 0 !important; }
+          .admin-header {
+            padding: 0 14px !important;
+            height: 60px !important;
+          }
+          .admin-header-user-info {
+            display: none !important;
+          }
+          .admin-search-wrapper {
+            max-width: 180px !important;
+          }
+          .admin-tab-content {
+            padding: 16px 12px !important;
+          }
+          .admin-card {
+            padding: 16px 14px !important;
+            border-radius: 12px !important;
+          }
+          .admin-form-grid {
+            grid-template-columns: 1fr !important;
+            gap: 14px !important;
+          }
+          .admin-kpi-grid {
+            grid-template-columns: 1fr !important;
+            gap: 12px !important;
+          }
         }
       `}} />
     </div>

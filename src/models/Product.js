@@ -14,7 +14,7 @@ const ProductSchema = new mongoose.Schema({
   },
   description: {
     type: String,
-    required: [true, 'Please provide a description'],
+    default: '',
   },
   price: {
     type: Number,
@@ -29,7 +29,7 @@ const ProductSchema = new mongoose.Schema({
   },
   images: {
     type: [String],
-    required: [true, 'Please provide at least one image URL'],
+    default: ['https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&q=80'],
   },
   stock: {
     type: Number,
@@ -85,18 +85,19 @@ const ProductSchema = new mongoose.Schema({
   variants: [VariantSchema]
 }, { timestamps: true });
 
-ProductSchema.pre('save', async function(next) {
+ProductSchema.pre('save', async function() {
   if (this.title && !this.slug) {
-    this.slug = this.title
+    const generatedSlug = this.title
       .toString()
       .toLowerCase()
       .trim()
       .replace(/[^\w\s-]/g, '')
       .replace(/[\s_-]+/g, '-')
       .replace(/^-+|-+$/g, '');
+    this.slug = generatedSlug || `prod-${Date.now()}`;
   }
 
-  if (!this.productNumber) {
+  if (!this.productNumber || !this.productNumber.trim()) {
     let isUnique = false;
     let code = '';
     while (!isUnique) {
@@ -109,7 +110,6 @@ ProductSchema.pre('save', async function(next) {
     }
     this.productNumber = code;
   }
-  next();
 });
 
 export default mongoose.models.Product || mongoose.model('Product', ProductSchema);
